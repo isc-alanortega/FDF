@@ -1,0 +1,346 @@
+﻿@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Entities;
+@inherits BookingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudGrid>
+            <MudItem md="6" sm="12" xs="12">
+                <MudStack AlignItems="@AlignItems.Center" Row="true">
+                    <MudCheckBox Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")"
+                                 T="bool" Checked="@((bool)TryGetContentsField("ISINSURED")!)"
+                                 CheckedChanged="@(async(args) => await TryModifyField("ISINSURED", args))"
+                                 Color="Color.Tertiary"
+                                 ReadOnly="@GetElementReadonly()"
+                                 Disabled="@GetElementReadonly()"
+                                 RequiredError="@Localize.Get("errmsg_required")">
+                    </MudCheckBox>
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_isinsured")</strong></MudText>
+                </MudStack>
+            </MudItem>
+            @if ((bool)TryGetContentsField("ISINSURED")!)
+            {
+                <MudItem md="6" sm="12" xs="12">
+                    <MudStack Spacing="1">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_insurancedocument")</strong></MudText>
+                        <MudStack Row="true">
+                            <MudFileUpload T="IBrowserFile" Files="@GetDocumentFile()" FilesChanged="@OnFileChanged" Accept=".pdf" Disabled="@GetDocumentReadonly()" RequiredError="@Localize.Get("errmsg_required")">
+                                <ButtonTemplate>
+                                    <MudButton HtmlTag="label"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                                               for="@context">
+                                        @Localize.Get("btn_upload_document")
+                                    </MudButton>
+                                </ButtonTemplate>
+                            </MudFileUpload>
+                            <MudStack Spacing="1" AlignItems="AlignItems.Center" Row="true">
+                                @if (Full_Document_Data.Document_Uploaded)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.SimCardDownload" Color="Color.Primary" OnClick="@(async () => await DownloadPDF())"></MudIconButton>
+                                }
+                                @if (Full_Document_Data.Document_Status is not null)
+                                {
+                                    switch (Full_Document_Data.Document_Status)
+                                    {
+                                        case EDocumentStatus.LOADED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_inprocess")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Warning" Class="doc-status-icon loaded" Icon="@Icons.Material.Rounded.HourglassFull"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.APPROVED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_accepted")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Success" Class="doc-status-icon approved" Icon="@Icons.Material.Rounded.FactCheck"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.REJECTED:
+                                            {
+                                                @if (Full_Document_Data.Document_Rejection_Reason is not null)
+                                                {
+                                                    <MudTooltip Text="@GetRejectionString()" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="@Localize.Get("document_rejected")" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                break;
+                                            }
+
+                                    }
+                                }
+                            </MudStack>
+                        </MudStack>
+                    </MudStack>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudStack>
+</div>
+
+@code {
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private DocumentCheckData Element_Source { get; set; } = new DocumentCheckData();
+    private IBrowserFile? Document_File { get; set; }
+    private FullDocumentData Full_Document_Data { get; set; } =
+    new FullDocumentData()
+        {
+            Document_Uploaded = false,
+            Document_File = null,
+            Uploaded_Document_ID = null,
+            Document_Rejection_Reason = null,
+            Document_Status = null
+        };
+    private bool Insurance_Document_Disabled { get; set; } = false;
+    private IJSObjectReference? module_download;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteUnsharedElementValue(Element_Source, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            else
+            {
+                var element_data = (DocumentCheckData)BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID]!;
+                Element_Source = element_data;
+                var data = element_data.Assigned_Document;
+                if (data is not null)
+                {
+                    Full_Document_Data.Document_Uploaded = data.Document_Uploaded;
+                    Full_Document_Data.Document_File = data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Document_Data.Uploaded_Document_ID = data.Uploaded_Document_ID;
+                    Full_Document_Data.Document_Rejection_Reason = data.Document_Rejection_Reason;
+                    Full_Document_Data.Document_Status = data.Document_Status;
+                }
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+        else
+        {
+            if (BookingData.GetSharedStorage()[ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteSharedElementValue(Element_Source, ElementData.Element_ID);
+            }
+            else
+            {
+                var element_data = (DocumentCheckData)BookingData.GetSharedStorage()[ElementData.Element_ID]!;
+                Element_Source = element_data;
+                var data = element_data.Assigned_Document;
+                if (data is not null)
+                {
+                    Full_Document_Data.Document_Uploaded = data.Document_Uploaded;
+                    Full_Document_Data.Document_File = data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Document_Data.Uploaded_Document_ID = data.Uploaded_Document_ID;
+                    Full_Document_Data.Document_Rejection_Reason = data.Document_Rejection_Reason;
+                    Full_Document_Data.Document_Status = data.Document_Status;
+                }
+            }
+            Insurance_Document_Disabled = Full_Document_Data.Document_Uploaded && (Full_Document_Data.Document_Status.HasValue && Full_Document_Data.Document_Status!.Value != EDocumentStatus.REJECTED);
+            await SetComplexElementValid(ValidateElement());
+        }
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private string GetRejectionString()
+    {
+        switch (((DocumentData)TryGetContentsField("INSURANCEDOCUMENT")!).Document_Rejection_Reason)
+        {
+            case EDocumentRejections.UNREADABLE:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.UNREADABLE}");
+                }
+            case EDocumentRejections.INCORRECT:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.INCORRECT}");
+                }
+            case EDocumentRejections.EXPIRED:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.EXPIRED}");
+                }
+        }
+        return string.Empty;
+    }
+
+    private async Task DownloadPDF()
+    {
+        if (Full_Document_Data.Uploaded_Document_ID.HasValue)
+        {
+            var FILESTREAM = await DATA_ACCESS.PostDownloadBookingDocument(Full_Document_Data.Uploaded_Document_ID!.Value);
+            if (FILESTREAM is not null && module_download is not null)
+            {
+                var fileName = Localize.Get("label_imosecurity");
+                using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                await module_download.InvokeVoidAsync("downloadFileFromStream", $"{fileName}.pdf", streamRef);
+            }
+        }
+    }
+
+    private IBrowserFile? GetDocumentFile()
+    {
+        return Document_File;
+    }
+
+    private async Task OnFileChanged(IBrowserFile file)
+    {
+        var result = await DATA_ACCESS.PostUploadBookingFile(file, 1029, BookingData.Invoice, BookingData.User_ID, BookingData.Client_ID, Full_Document_Data.Uploaded_Document_ID);
+
+        if (result.Operation_Succeeded && result.Result.HasValue)
+        {
+            Insurance_Document_Disabled = true;
+            Full_Document_Data = new FullDocumentData()
+                {
+                    Document_Uploaded = true,
+                    Document_File = file,
+                    Uploaded_Document_ID = result.Result,
+                    Document_Status = EDocumentStatus.LOADED
+                };
+            await TryModifyField("INSURANCEDOCUMENT", Full_Document_Data);
+        }
+
+    }
+
+    protected bool GetDocumentReadonly()
+    {
+
+        if (BookingData.GetIsReadonly())
+        {
+            bool reupload_enabled = false;
+            var status = Full_Document_Data.Document_Status;
+            reupload_enabled = status is not null && status.Value == EDocumentStatus.REJECTED;
+            return !reupload_enabled || Insurance_Document_Disabled;
+        }
+
+        return Insurance_Document_Disabled;
+    }
+
+    private bool ValidateElement()
+    {
+        if (Element_Source is null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task SetSource()
+    {
+        if (IsCollection)
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteUnsharedElementValue(Element_Source, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteSharedElementValue(Element_Source, ElementData.Element_ID);
+        }
+    }
+
+    private object? TryGetContentsField(string field_name)
+    {
+        switch (field_name)
+        {
+            case "ISINSURED":
+                {
+                    return Element_Source.Is_Selected;
+                }
+            case "INSURANCEDOCUMENT":
+                {
+                    return Element_Source.Assigned_Document;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private IEnumerable<KeyValue> GetPreloadedList(string field_name)
+    {
+        if (ElementData.Complex_Data[field_name].Contains_List && !ElementData.Complex_Data[field_name].Is_Autocomplete_List)
+        {
+            return GetComplexPreloadedListAs<KeyValue>(field_name);
+        }
+        return Enumerable.Empty<KeyValue>();
+    }
+
+    private async Task TryModifyField(string field_name, object? value)
+    {
+        switch (field_name)
+        {
+            case "ISINSURED":
+                {
+                    Element_Source.Is_Selected = (bool?)value ?? false;
+                    break;
+                }
+            case "INSURANCEDOCUMENT":
+                {
+                    var temp = (FullDocumentData?)value;
+                    if (temp is null)
+                    {
+                        Element_Source!.Assigned_Document = null;
+                    }
+                    else
+                    {
+                        Element_Source!.Assigned_Document = new DocumentData()
+                            {
+                                Document_Uploaded = temp.Document_Uploaded,
+                                Uploaded_Document_ID = temp.Uploaded_Document_ID,
+                                Document_Rejection_Reason = temp.Document_Rejection_Reason,
+                                Document_Status = temp.Document_Status
+                            };
+                    }
+                    break;
+                }
+        }
+        await SetSource();
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

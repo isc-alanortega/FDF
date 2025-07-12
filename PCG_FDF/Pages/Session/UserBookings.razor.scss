@@ -1,0 +1,185 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+
+
+.quotations_wrapper {
+    padding-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+::deep .paper-grey {
+    border-radius: 15px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .list-actions {
+    margin-left: auto;
+}
+
+::deep .list-row {
+    padding: 8px;
+    display: flex;
+
+    &.OBSERVED {
+        background-color: #FBD9D3;
+    }
+
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+.inner-row {
+    width: 80.35%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+::deep .pager-header-wrapper {
+    padding: 8px;
+    width: 80.5%;
+}
+
+.pager-header {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+::deep .grid-item {
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+// BreakpointService.GetIsSmall() == true
+@media (min-width: 600px) and (max-width: 960px) {
+    ::deep .userbookings-date-picker input,
+    ::deep .userbooking-select input,
+    ::deep .userbooking-griditemdisplay-cardheader-item h5 {
+        font-size: 1.8em !important;
+    }
+
+    ::deep .userbookings-date-picker label {
+        font-size: 2.1em !important;
+    }
+
+    ::deep .userbooking-chk p,
+    ::deep .userbooking-chk svg,
+    ::deep .userbooking-select svg,
+    ::deep .userbooking-select-item p,
+    ::deep .userbookings-date-picker sv,
+    ::deep .userbooking-headerdisplay-stack h6,
+    ::deep .userbooking-griditemdisplay-cardactions p,
+    ::deep .userbooking-griditemdisplay-cardcontent h6,
+    ::deep .userbooking-listitemdisplay-list-content h5,
+    ::deep .userbooking-listitemdisplay-list-content h6,
+    ::deep .userbooking-listitemdisplay-list-actions svg {
+        font-size: 1.6em !important;
+    }   
+}
+
+// BreakpointService.GetIsExtaSmall() == true
+@media (max-width: 599px) {
+    ::deep .userbooking-select input,
+    ::deep .userbookings-date-picker input,
+    ::deep .userbooking-griditemdisplay-cardactions p {
+        font-size: 2.0em !important;
+    }
+
+    ::deep .userbooking-griditemdisplay-main {
+        width: 100%;
+        max-width: 85vw;
+        min-width: 85vw;
+        height: auto;
+        margin: 10px auto;
+        padding: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
+
+    ::deep .userbookings-date-picker label,
+    ::deep .userbooking-griditemdisplay-cardheader-item {
+        font-size: 2.3em !important;
+    }
+
+    ::deep .userbooking-select-item p,
+    ::deep .userbooking-noitemdisplay-text,
+    ::deep .mud-picker-calendar-container p,
+    ::deep .mud-picker-calendar-header-switch svg,
+    ::deep .mud-picker-calendar-header-switch span,
+    ::deep .userbooking-griditemdisplay-cardcontent h6,
+    ::deep .userbooking-griditemdisplay-cardactions svg {
+        font-size: 2.0em !important;
+    }
+
+    ::deep .userbooking-chk p,
+    ::deep .userbooking-chk svg,
+    ::deep .userbooking-select svg,
+    ::deep .userbookings-date-picker svg,
+    ::deep .userbooking-headerdisplay-stack h6,
+    ::deep .userbooking-listitemdisplay-list-content h5,
+    ::deep .userbooking-listitemdisplay-list-content h6,
+    ::deep .userbooking-listitemdisplay-list-actions svg {
+        font-size: 1.8em !important;
+    }
+}
+
+
+//Grid Item Display size
+@media(min-with: 600px) {
+    ::deep .userbooking-griditemdisplay-main {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    ::deep .grid-item {
+        margin: 5px;
+        box-sizing: border-box;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 654px) {
+    ::deep .grid-item {
+        width: calc(37vw - 5px);
+    }
+}
+
+@media (min-width: 654px) and (max-width: 899px) {
+    ::deep .grid-item {
+        width: calc(37.5vw - 5px);
+    }
+}
+
+@media (min-width: 900px) and (max-width: 1012px) {
+    ::deep .grid-item {
+        width: calc(40vw - 10px);
+    }
+}
+
+@media (min-width: 1013px) and (max-width: 1279px) {
+    ::deep .grid-item {
+        width: calc(26vw - 5px);
+    }
+}
+
+@media (min-width: 1280px) and (max-width: 1560px) {
+    ::deep .grid-item {
+        width: calc(26.5vw - 5px);
+    }
+}
+
+@media (min-width: 1561) {
+    ::deep .grid-item {
+        width: calc(19.5vw - 5px);
+    }
+}

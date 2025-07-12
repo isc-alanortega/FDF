@@ -1,0 +1,112 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog Class="@($"selectclientdialog-dialog-mobil")">
+    <DialogContent>
+         <div class="@($"dialog-stack {(BreakpointService.GetIsXsSmScreen() ? "selectclientdialog-dialog-stack" : "")}")">
+            <MudStack>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_send_voucherpayment")</strong></MudText>
+                <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                              MaxLength="500"
+                              Clearable="true"
+                              DebounceInterval="1500"
+                              Required="true"
+                              RequiredError="@Localize.Get("errmsg_required")"
+                              T="string"
+                              Variant="Variant.Outlined"
+                              Placeholder="@($"{Localize.Get("placeholder_input")} email")"
+                              @bind-Value="@EmailToSend">
+                </MudTextField>
+            </MudStack>
+         </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit" Class="@($"{(BreakpointService.GetIsMobile() ? "selectclientdialog-btn-mobil" : "")}")">@Localize.Get("btn_accept")</MudButton>
+        <MudButton Color="Color.Error" OnClick="OnClickCancel" Class="@($"{(BreakpointService.GetIsMobile() ? "selectclientdialog-btn-mobil" : "")}")">@Localize.Get("btn_cancel")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .selectclientdialog-dialog-stack {
+       max-width: 100%;
+       padding: 1rem;
+       display: flex;
+       justify-content: center;
+       align-items: center;
+    }
+
+    .selectclientdialog-dialog-mobil svg {
+        font-size: 1.4em !important;
+    }
+
+    .selectclientdialog-btn-mobil,
+    .selectclientdialog-dialog-stack svg
+    .selectclientdialog-dialog-stack label,
+    .selectclientdialog-location-popover-mobil p,
+    .selectclientdialog-MudAutocomplete-mobil input {
+        font-size: 1.9em !important;
+    }
+
+    .selectclientdialog-element-h5 {
+        font-size: 2.1em !important;
+    }
+
+    .selectclientdialog-MudAutocomplete-mobil svg {
+        font-size: 2.5em !important;
+    }
+
+    .selectclientdialog-dialog-mobil .mud-dialog-title h6 {
+        font-size: 2.9em !important;
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    private string EmailToSend { get; set;  }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(EmailToSend));
+    }
+
+    public void OnClickCancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,136 @@
+﻿.chat-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-content {
+    padding-top: 10px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    overflow: scroll;
+    padding-left: 8px;
+}
+
+::deep .chat-bottom-bar {
+    flex-grow: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-bottom: 4vh;
+    flex-basis: 16%;
+    align-items: center;
+    width: 100%;
+    box-shadow: 0px -2px 10px 2px #e0e0e0;
+    border-top: 1px solid #e0e0e0;
+}
+
+::deep .chat-text-field {
+    overflow: scroll;
+    margin-left: 5px;
+}
+
+::deep .chat-send-message {
+    height: fit-content;
+}
+
+::deep .assistant-chat-message {
+    width: 80%;
+    margin-bottom: 10px;
+    float: left;
+    clear: both;
+    justify-content: flex-start;
+}
+
+.assistant-chat-bubble {
+    border-radius: 10px;
+    background-color: #e0e0e0;
+    position: relative;
+    padding: 10px;
+    margin-left: 5px;
+    filter: drop-shadow(-4px 4px 2px #a1a1a1);
+}
+
+.assistant-chat-bubble::before {
+    content: '';
+    position: absolute;
+    top: 19px;
+    right: 100%;
+    margin-top: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: transparent #e0e0e0 transparent transparent;
+}
+
+::deep .user-chat-message {
+    width: 80%;
+    margin-bottom: 10px;
+    float: right;
+    justify-content: flex-end;
+    clear: both;
+    overflow: hidden;
+    filter: drop-shadow(4px 4px 2px #a1a1a1);
+}
+
+.user-chat-bubble {
+    border-radius: 10px;
+    background-color: #e0e0e0;
+    position: relative;
+    padding: 10px;
+    margin-right: 10px;
+    text-align: right;
+}
+
+.user-chat-bubble::before {
+    content: '';
+    position: absolute;
+    top: 19px;
+    left: 100%;
+    margin-top: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: transparent transparent transparent #e0e0e0;
+}
+
+.assistant-chat-bubble-typing {
+    width: 30%;
+    border-radius: 10px;
+    background-color: #e0e0e0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 10px;
+    text-align: center;
+}
+
+.assistant-chat-bubble-typing span {
+    display: inline-block;
+    vertical-align: middle;
+    width: 1.5em;
+    height: 1.5em;
+    background: black;
+    border-radius: 20px;
+    animation: loader 0.8s infinite alternate;
+}
+
+.assistant-chat-bubble-typing span:nth-of-type(2) {
+    animation-delay: 0.2s;
+}
+
+.assistant-chat-bubble-typing span:nth-of-type(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes loader {
+    0% {
+        opacity: 0.9;
+        transform: scale(0.5);
+    }
+
+    100% {
+        opacity: 0.1;
+        transform: scale(1);
+    }
+}

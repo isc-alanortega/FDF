@@ -1,0 +1,13 @@
+﻿.element-boundary {
+    margin: 8px 0px;
+}
+
+@media(max-width: 960px) {
+    ::deep .listelement-inpunt-element {
+        font-size: 1.4em !important;
+    }
+
+    ::deep .listelement-inpunt-element svg {
+        font-size: 1.3em;
+    }
+}

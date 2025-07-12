@@ -1,0 +1,13 @@
+::deep .packages-stack {
+  width: 90%;
+}
+
+::deep .services-stack {
+  width: 90%;
+}
+
+::deep .main-stack {
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0px;
+}

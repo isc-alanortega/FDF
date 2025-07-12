@@ -1,0 +1,61 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.DataAccess;
+@inject NavigationManager NavigationManager
+@inject PCG_FDF_DB DATA_ACCESS
+@inject WhiteLabelManager WhiteLabel
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <Authorizing>
+                    <text>Please wait, we are authorizing you...</text>
+                </Authorizing>
+                <NotAuthorized>
+                    @{
+                        var uri = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+                        NavigationManager.NavigateTo($"/login/{uri}");
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code {
+    private IJSObjectReference? module_theme;
+
+    /*
+    * Si es la primera vez que se renderiza el componente, cargar los modulos JS y ejecutar una función de inicialización
+    */
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_theme = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/theme_switch.js");
+            await module_theme.InvokeVoidAsync("ManageThemeSwitch", WhiteLabel.Current_Theme_Data.CSS_Theme_Data);
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_theme is not null)
+        {
+            await module_theme.DisposeAsync();
+        }
+    }
+}

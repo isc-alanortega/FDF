@@ -1,0 +1,101 @@
+﻿@using Newtonsoft.Json.Linq;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using System.Collections;
+@inherits BookingElementBase
+
+<div class="element-boundary section-eelementtype-listelement">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+
+        <MudSelect T="KeyValue"
+                   ToStringFunc="@CustomConverter"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Variant="Variant.Outlined"
+                   Value="@TryGetStorageValue()"
+                   ValueChanged="@(async(args) => await TryWriteStorageValue(args))"
+                   Disabled="@GetElementReadonly()"
+                   ReadOnly="@GetElementReadonly()"
+                   Required="@ElementData.Required"
+                   RequiredError="@Localize.Get("errmsg_required")"
+                   Clearable="@(!ElementData.Required)"
+                   Placeholder="@($"{Localize.Get("placeholder_select")} {ElementData.Element_Name}")"
+                   InputClass="listelement-inpunt-element"
+                   OuterClass="listelement-outer-class"
+                   PopoverClass="listelement-popover-class"
+                   ListClass="listelement-list-element-class"
+                   Class="listelement-select-element">
+
+            @foreach (var option in Options)
+            {
+                <MudSelectItem Value="option" />
+            }
+        </MudSelect>
+    </MudStack>
+</div>
+
+@code {
+    private IEnumerable<KeyValue> Options { get; set; } = Enumerable.Empty<KeyValue>();
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (ElementData.Preload_Value && ElementData.Preloaded_Value is not null)
+        {
+            if (TryGetStorageValue() is null)
+            {
+                await TryWriteStorageValue(GetPreloadedValueAs<KeyValue>());
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        if (ElementData.Contains_List && !ElementData.Is_Autocomplete_List && ElementData.Preloaded_List is not null)
+        {
+            Options = GetPreloadedListAs<KeyValue>();
+        }
+
+        base.OnInitialized();
+    }
+
+    private KeyValue? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<KeyValue?>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedElementValueAs<KeyValue?>(ElementData.Element_ID);
+        }
+    }
+
+    private async Task TryWriteStorageValue(KeyValue? value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedElementValue(value, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedElementValue(value, ElementData.Element_ID);
+        }
+    }
+}

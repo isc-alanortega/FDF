@@ -1,0 +1,75 @@
+﻿@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudDatePicker Editable="true"
+                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                       DateFormat="dd/MM/yyyy"
+                       Date="@GetDate()"
+                       DateChanged="@(async (args) => await SetDate(args))"
+                       ReadOnly="@GetElementReadonly()"
+                       Disabled="@GetElementReadonly()"
+                       Required="true"
+                       RequiredError="@Localize.Get("errmsg_required")"
+                       Placeholder="@($"{Localize.Get("placeholder_set")} {GetElementName()}")" />
+        <MudTimePicker AmPm="true"
+                       TimeFormat="hh:mm tt"
+                       Time="@GetTime()"
+                       TimeChanged="@(async (args) => await SetTime(args))"
+                       ReadOnly="@GetElementReadonly()"
+                       Disabled="@GetElementReadonly()"
+                       Required="true"
+                       RequiredError="@Localize.Get("errmsg_required")"
+                       Placeholder="@($"{Localize.Get("placeholder_set")} {GetElementName()}")" />
+    </MudStack>
+</div>
+
+@code {
+    private DateTime? bound_date { get; set; }
+    private TimeSpan? bound_time { get; set; }
+
+    private DateTime? GetDate()
+    {
+        return bound_date;
+    }
+
+    private TimeSpan? GetTime()
+    {
+        return bound_time;
+    }
+
+    private async Task SetDate(DateTime? value)
+    {
+        bound_date = value;
+        await TryWriteStorageValue();
+    }
+
+    private async Task SetTime(TimeSpan? value)
+    {
+        bound_time = value;
+        await TryWriteStorageValue();
+    }
+
+    private async Task TryWriteStorageValue()
+    {
+        DateTime? data = null;
+
+        if (bound_date.HasValue && bound_time.HasValue)
+        {
+            data = new DateTime(bound_date.Value.Year, bound_date.Value.Month, bound_date.Value.Day, bound_time.Value.Hours, bound_time.Value.Minutes, 0);
+        }
+
+        await Quotation_Data.WriteSharedElementValue(data, Card.Card_ID, ElementData.Element_ID);
+    }
+}

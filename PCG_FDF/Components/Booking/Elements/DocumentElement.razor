@@ -1,0 +1,263 @@
+﻿@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Components.Booking.Document
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Data.Localization
+@inject PCG_FDF_DB DATA_ACCESS
+@inherits BookingDocumentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@DocumentData.Document_Subtype_Name</strong></MudText>
+            @if (DocumentData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudStack Row="true">
+            <MudFileUpload T="IBrowserFile" Files="@GetDocumentFile()" FilesChanged="@OnFileChanged" Accept=".pdf" Disabled="@GetDocumentReadonly()" Required="@DocumentData.Required" RequiredError="@Localize.Get("errmsg_required")">
+                <ButtonTemplate>
+                    <MudButton HtmlTag="label"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                               for="@context">
+                        @Localize.Get("btn_upload_document")
+                    </MudButton>
+                </ButtonTemplate>
+            </MudFileUpload>
+            <MudStack Spacing="1" AlignItems="AlignItems.Center" Row="true">
+                @if (GetSource().Document_Uploaded)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.SimCardDownload" Color="Color.Primary" OnClick="@(async () => await DownloadPDF())"></MudIconButton>
+                }
+                @if (GetSource().Document_Status is not null)
+                {
+                    switch (GetSource().Document_Status)
+                    {
+                        case EDocumentStatus.LOADED:
+                            {
+                                <MudTooltip Text="@Localize.Get("document_inprocess")" Arrow="true" Placement="Placement.Top">
+                                    <MudIcon Color="@Color.Warning" Class="doc-status-icon loaded" Icon="@Icons.Material.Rounded.HourglassFull"></MudIcon>
+                                </MudTooltip>
+                                break;
+                            }
+                        case EDocumentStatus.APPROVED:
+                            {
+                                <MudTooltip Text="@Localize.Get("document_accepted")" Arrow="true" Placement="Placement.Top">
+                                    <MudIcon Color="@Color.Success" Class="doc-status-icon approved" Icon="@Icons.Material.Rounded.FactCheck"></MudIcon>
+                                </MudTooltip>
+                                break;
+                            }
+                        case EDocumentStatus.REJECTED:
+                            {
+                                @if (GetSource().Document_Rejection_Reason is not null)
+                                {
+                                    <MudTooltip Text="@GetRejectionString()" Arrow="true" Placement="Placement.Top">
+                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                    </MudTooltip>
+                                }
+                                else
+                                {
+                                    <MudTooltip Text="@Localize.Get("document_rejected")" Arrow="true" Placement="Placement.Top">
+                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                    </MudTooltip>
+                                }
+                                break;
+                            }
+
+                    }
+                }
+            </MudStack>
+        </MudStack>
+    </MudStack>
+    <CascadingValue Name="DocumentData" Value="@DocumentData">
+        <CascadingValue Name="DocumentDisabled" Value="@Document_Disabled">
+            @foreach (var metadata_element in DocumentData.Metadata.Values.OrderBy(metadata => metadata.Metadata_Sequence))
+            {
+                switch (metadata_element.Data_Type_ID)
+                {
+                    case 2:
+                        {
+                            <TextFieldMetadata MetadataData="@metadata_element"></TextFieldMetadata>
+                            break;
+                        }
+                    case 3:
+                        {
+                            <IntegerInputMetadata MetadataData="@metadata_element"></IntegerInputMetadata>
+                            break;
+                        }
+                    case 5:
+                        {
+                            <CheckBoxMetadata MetadataData="@metadata_element"></CheckBoxMetadata>
+                            break;
+                        }
+                    case 7:
+                        {
+                            <DateMetadata MetadataData="@metadata_element"></DateMetadata>
+                            break;
+                        }
+                    case 8:
+                        {
+                            <TimeMetadata MetadataData="@metadata_element"></TimeMetadata>
+                            break;
+                        }
+                    case 9:
+                        {
+                            <DateTimeMetadata MetadataData="@metadata_element"></DateTimeMetadata>
+                            break;
+                        }
+                }
+            }
+        </CascadingValue>
+    </CascadingValue>
+</div>
+
+@code {
+    private IJSObjectReference? module_download;
+
+    private IBrowserFile? GetDocumentFile()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return GetSource().Document_File;
+        }
+        // Shared
+        else
+        {
+            return GetSource().Document_File;
+        }
+    }
+
+    private async Task OnFileChanged(IBrowserFile file)
+    {
+        if (DocumentData.Metadata.Any())
+        {
+
+        }
+        var result = await DATA_ACCESS.PostUploadBookingFile(file, DocumentData.Document_Subtype_ID, BookingData.Invoice, BookingData.User_ID, BookingData.Client_ID, GetSource().Uploaded_Document_ID);
+
+        if (result.Operation_Succeeded && result.Result.HasValue)
+        {
+            Document_Disabled = true;
+            var data = new DocumentMetadata()
+                {
+                    Document_ID = result.Result!.Value,
+                    Document_Metadata = new List<MetadataEntidad>()
+                };
+
+            // Unshared
+            if (IsCollection)
+            {
+                var metadata = BookingData.GetUnsharedMetadataStorage();
+                if (metadata.TryGetValue(SectionData.Key, out var section) && section.TryGetValue(SectionData.Value.Keys.First(), out var inner_section) && inner_section.TryGetValue(DocumentData.Document_Subtype_ID, out var document_metadata))
+                {
+                    foreach (var metadata_kvp in document_metadata)
+                    {
+                        data.Document_Metadata.Add(CreateMetadata(metadata_kvp));
+                    }
+                }
+
+                await BookingData.WriteUnsharedDocument(new FullDocumentData()
+                    {
+                        Document_Uploaded = true,
+                        Document_File = file,
+                        Uploaded_Document_ID = result.Result,
+                        Document_Status = EDocumentStatus.LOADED
+                    }, SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID);
+            }
+            // Shared
+            else
+            {
+                var metadata = BookingData.GetSharedMetadataStorage();
+                if (metadata.TryGetValue(DocumentData.Document_Subtype_ID, out var document_metadata))
+                {
+                    foreach (var metadata_kvp in document_metadata)
+                    {
+                        data.Document_Metadata.Add(CreateMetadata(metadata_kvp));
+                    }
+                }
+
+                await BookingData.WriteSharedDocument(new FullDocumentData()
+                    {
+                        Document_Uploaded = true,
+                        Document_File = file,
+                        Uploaded_Document_ID = result.Result,
+                        Document_Status = EDocumentStatus.LOADED
+                    }, DocumentData.Document_Subtype_ID);
+            }
+
+            var metadata_result = await DATA_ACCESS.PostSaveMetadata(data);
+        }
+
+    }
+
+    private MetadataEntidad CreateMetadata(KeyValuePair<int, object?> metadata_kvp)
+    {
+        return new MetadataEntidad()
+            {
+                Metadata_ID = metadata_kvp.Key,
+                Data_Type = BookingData.GetDocuments()[DocumentData.Document_Subtype_ID].Metadata[metadata_kvp.Key].Data_Type_ID,
+                Value = metadata_kvp.Value
+            };
+    }
+
+    private string GetRejectionString()
+    {
+        switch (GetSource().Document_Rejection_Reason)
+        {
+            case EDocumentRejections.UNREADABLE:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.UNREADABLE}");
+                }
+            case EDocumentRejections.INCORRECT:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.INCORRECT}");
+                }
+            case EDocumentRejections.EXPIRED:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.EXPIRED}");
+                }
+        }
+        return string.Empty;
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task DownloadPDF()
+    {
+        if (GetSource().Uploaded_Document_ID.HasValue)
+        {
+            var FILESTREAM = await DATA_ACCESS.PostDownloadBookingDocument(GetSource().Uploaded_Document_ID!.Value);
+            if (FILESTREAM is not null && module_download is not null)
+            {
+                var fileName = DocumentData.Document_Subtype_Name;
+                using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                await module_download.InvokeVoidAsync("downloadFileFromStream", $"{fileName}.pdf", streamRef);
+            }
+        }
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

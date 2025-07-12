@@ -1,0 +1,92 @@
+﻿@using PCG_FDF.Utility;
+@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudTextField Required="true"
+                      MaxLength="@MaxLength"
+                      Validation="@((string? args) => ValidateField(args))"
+                      Clearable="false"
+                      RequiredError="@Localize.Get("errmsg_required")"
+                      Disabled="@GetElementReadonly()"
+                      ReadOnly="@GetElementReadonly()"
+                      DebounceInterval="1500"
+                      T="string"
+                      Value="@TryGetStorageValue()"
+                      ValueChanged="@(async (args) => await TryWriteStorageValue(args))"
+                      Variant="Variant.Outlined"
+                      Placeholder="@($"{Localize.Get("placeholder_input")} {GetElementName()}")" />
+    </MudStack>
+</div>
+
+@code {
+    private int MaxLength = 524288;
+
+    protected override void OnInitialized()
+    {
+        if (ElementData.Validations is not null && ElementData.Validations.TryGetValue("MAX", out var MaxValidation))
+        {
+            MaxLength = Convert.ToInt32(MaxValidation.Validation_Value);
+        }
+        base.OnInitialized();
+    }
+
+    private string? TryGetStorageValue()
+    {
+        return Quotation_Data.GetElementValueAs<string?>(Card.Card_ID, ElementData.Element_ID);
+    }
+
+    private async Task TryWriteStorageValue(string? value)
+    {
+        await Quotation_Data.WriteSharedElementValue(value, Card.Card_ID, ElementData.Element_ID);
+    }
+
+    private string? ValidateField(string? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (ElementData.Validations is null || !ElementData.Validations.Any())
+        {
+            return null;
+        }
+
+        foreach (var validation in ElementData.Validations.OrderBy(kvp => kvp.Value.Sequence))
+        {
+            switch (validation.Key)
+            {
+                case "MAX":
+                    {
+                        if (value.Length > Convert.ToInt32(validation.Value.Validation_Value))
+                        {
+                            return validation.Value.Error_Message;
+                        }
+                        continue;
+                    }
+                case "REGEX":
+                    {
+                        if (!Validations.ValidateString(value, validation.Value.Validation_Value))
+                        {
+                            return validation.Value.Error_Message;
+                        }
+                        continue;
+                    }
+            }
+        }
+
+        return null;
+    }
+}

@@ -1,0 +1,67 @@
+﻿@inherits MetadataElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@MetadataData.Metadata_Name</strong></MudText>
+            @if (MetadataData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudTimePicker Disabled="@GetElementReadonly()"
+                       ReadOnly="@GetElementReadonly()" AmPm="true"
+                       TimeFormat="hh:mm tt"
+                       Time="@TryGetStorageValue()"
+                       TimeChanged="@(async(args) => await TryWriteStorageValue(args))"
+                       Required="@MetadataData.Required"
+                       RequiredError="@Localize.Get("errmsg_required")" />
+    </MudStack>
+</div>
+
+@code {
+    private TimeSpan? TryGetStorageValue()
+    {
+        TimeSpan? time = null;
+        DateTime? value = null;
+
+        // Unshared
+        if (IsCollection)
+        {
+            value = BookingData.GetUnsharedMetadataValueAs<DateTime?>(SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            value = BookingData.GetSharedMetadataValueAs<DateTime?>(DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+
+        if (value.HasValue)
+        {
+            time = new TimeSpan(value.Value.Hour, value.Value.Minute, 0);
+        }
+
+        return time;
+    }
+
+    private async Task TryWriteStorageValue(TimeSpan? value)
+    {
+        DateTime? data = null;
+
+        if (value.HasValue)
+        {
+            data = DateTime.Today.AddHours(value.Value.Hours).AddMinutes(value.Value.Minutes);
+        }
+
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedMetadataValue(value, SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedMetadataValue(data, DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+}

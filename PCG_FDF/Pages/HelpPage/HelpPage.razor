@@ -1,0 +1,67 @@
+﻿@page "/help"
+@page "/help/{SectionId}"
+@inject NavigationManager NavigationManager
+@using Components;
+@using PCG_FDF.Pages.HelpPage.Components
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+
+<MudCard Class="m-4">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Style="text-align:center" Typo="Typo.h3">@localize.Get("lbl_helpcenter")</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+
+    <MudCardContent>
+        @if (SectionId is null)
+        {
+            <MudText>@localize.Get("lbl_seleccion_contenido_help")</MudText>
+        }
+        else
+        {
+            @switch (SectionId)
+            {
+                case "customer-credit": //CARGA CON CRÉDITO
+                    <HelpSectionComponent VideoUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/cb-maniobra-carga-con-credito.mp4"
+                                          PdfUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/manual-maniobra-carga-con-credito.pdf"
+                                          Titulo="@($"{localize.Get("label_client_with_credit")} - {localize.Get("lbl_maneuvers_expo")}")" />
+                    break;
+
+                case "load-without-credit": //CARGA SIN CRÉDITO
+                    <HelpSectionComponent VideoUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/cb-maniobra-carga-sin-credito.mp4"
+                                          PdfUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/manual-maniobra-carga-sin-credito.pdf"
+                                          Titulo="@($"{localize.Get("lbl_customer_without_credir")} - {localize.Get("lbl_maneuvers_expo")}")" />
+                    break;
+                case "customer-credit-discharge": //DESCARGA CON CRÉDITO
+                    <HelpSectionComponent VideoUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/cb-maniobra-descarga-con-credito.mp4"
+                                          PdfUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/manual-maniobra-descarga-con-credito.pdf"
+                                          Titulo="@($"{localize.Get("label_client_with_credit")} - {localize.Get("lbl_maneuvers_impo")}")" />
+                    break;
+                case "download-without-credit": //DESCARGA SIN CRÉDITO
+                    <HelpSectionComponent VideoUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/cb-maniobra-descarga-sin-credito.mp4"
+                                          PdfUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/manual-maniobra-descarga-sin-credito.pdf"
+                                          Titulo="@($"{localize.Get("lbl_customer_without_credir")} - {localize.Get("lbl_maneuvers_impo")}")" />
+                    break;
+                case "custom-invoice":
+                    <HelpSectionComponent VideoUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/cb-pago-facturas-vacios.mp4"
+                                          PdfUrl=""
+                                          Titulo="@localize.Get("lbl_bill_payment")" />
+                    break;
+                case "customers":
+                    <HelpSectionComponent VideoUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/cb-mis-clientes.mp4"
+                                          PdfUrl="https://assets.cimagroup.com.mx/tutorials/cima-booking/manual-mis-clientes.pdf"
+                                          Titulo="@localize.Get("lbl_customer_management")" />
+                    break;
+                default:
+                    <MudText>Contenido no disponible para esta sección.</MudText>
+                    break;
+            }
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public string? SectionId { get; set; }
+}

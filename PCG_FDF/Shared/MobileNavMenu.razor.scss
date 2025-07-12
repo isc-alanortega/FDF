@@ -1,0 +1,108 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+.icon-wrapper {
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+::deep .reg-button {
+    color: css-color-var(global-fullwhite);
+    background: css-color-var(secondary);
+    align-self: center;
+    height: 6rem;
+}
+
+::deep .internal-cima-icon {
+    font-size: 8rem;
+    width: 130px !important;
+    height: auto !important;
+
+    #cima-logo-outline {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-middle {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-left {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-right {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-top {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-thesharks-icon {
+    #deepblue {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #lightblue {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-shipping-icon {
+    #red-group {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #blue-group {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-bafar-icon {
+    #mane-gold {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #face-blue {
+        fill: css-color-var(global-RGBA-transparent);
+    }
+}
+
+.language-wrapper {
+    margin-left: 20px;
+}
+
+@font-face {
+    font-family: 'FDF-Icons';
+    src: url("/fonts/FDF-Icons.ttf") format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+::deep .e-dropdown-btn.e-custom {
+    height: 60px;
+    width: 40px;
+    padding: 0px;
+    background: none;
+    border: none;
+    box-shadow: none !important;
+
+    .icon {
+        font-family: 'FDF-Icons' !important;
+        margin: 0px;
+        padding: 0px;
+        width: unset;
+        font-size: 22px;
+    }
+}
+
+::deep .search-button-icon {
+    .mud-icon-root {
+        font-size: 40px !important;
+        fill: white !important;
+    }
+}
+
+::deep .e-dropdown-btn.e-custom .sf-icon-user-wf::before {
+    content: "\e702";
+}

@@ -1,0 +1,35 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+@font-face {
+    font-family: 'FDF-Icons';
+    src: url("/fonts/FDF-Icons.ttf") format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+::deep .e-dropdown-btn.e-custom {
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    box-shadow: none !important;
+    background-color: css-color-var(global-fullwhite);
+    border-radius: 100px;
+
+    .icon {
+        font-family: 'FDF-Icons' !important;
+        margin: 0px;
+        padding: 0px;
+        width: unset;
+        font-size: 18px;
+        color: css-color-var(primary);
+
+        @media (max-width: 1280px) {
+            color: css-color-var(global-fullwhite);
+        }
+    }
+}
+
+::deep .e-dropdown-btn.e-custom .sf-icon-globe-wf::before {
+    content: "\e700";
+}
+

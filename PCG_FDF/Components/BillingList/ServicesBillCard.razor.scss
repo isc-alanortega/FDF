@@ -1,0 +1,45 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+
+::deep .card-active {
+    background: css-color-var(primary-lighten) !important;
+    animation: none;
+}
+
+::deep .internal-icon {
+    fill: css-color-var(primary) !important;
+    stroke: css-color-var(primary);
+
+    &.resize-it {
+        font-size: 2.4rem;
+    }
+}
+
+::deep .text-stack {
+    align-items: center;
+}
+
+::deep .stack-card {
+    border-radius: 12px;
+    background: css-color-var(complex-chip);
+    padding: 20px;
+    grid-template-columns: 4fr 1fr;
+    grid-column-gap: 10px;
+    display: grid;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@include keyframes(card-popup) {
+    @include anim-popup-center-frames();
+}
+
+@include keyframes(card-color-change) {
+    @include anim-color-change-2x-frames(css-color-var(primary), css-color-var(primary-lighten));
+}
+
+@media(max-width: 960px){
+    ::deep servicesbillcard h5 {
+        font-size: 1.9em;
+    }
+}

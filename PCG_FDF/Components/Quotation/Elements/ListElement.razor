@@ -1,0 +1,71 @@
+﻿@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using System.Collections;
+@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudSelect T="KeyValueUUID"
+                   ToStringFunc="@CustomConverter"
+                   AnchorOrigin="Origin.BottomCenter"
+                   Variant="Variant.Outlined"
+                   Value="@TryGetStorageValue()"
+                   ValueChanged="@(async (args) => await TryWriteStorageValue(args))"
+                   Disabled="@GetElementReadonly()"
+                   ReadOnly="@GetElementReadonly()"
+                   Required="true"
+                   Clearable="@false"
+                   RequiredError="@Localize.Get("errmsg_required")"
+                   Placeholder="@($"{Localize.Get("placeholder_select")} {GetElementName()}")">
+
+            @foreach (var option in Options)
+            {
+                <MudSelectItem Value="option" />
+            }
+        </MudSelect>
+    </MudStack>
+</div>
+
+@code {
+    private IEnumerable<KeyValueUUID> Options { get; set; } = Enumerable.Empty<KeyValueUUID>();
+    private Func<KeyValueUUID, string> CustomConverter = kvp => kvp?.Value!;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (ElementData.Preload_Value && ElementData.Preloaded_Value is not null)
+        {
+            await TryWriteStorageValue(GetPreloadedValueAs<KeyValueUUID>());
+        }
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        if (ElementData.Contains_List && !ElementData.Is_Autocomplete_List && ElementData.Preloaded_List is not null)
+        {
+            Options = GetPreloadedListAs<KeyValueUUID>();
+        }
+
+        base.OnInitialized();
+    }
+
+    private KeyValueUUID? TryGetStorageValue()
+    {
+        return Quotation_Data.GetElementValueAs<KeyValueUUID?>(Card.Card_ID, ElementData.Element_ID);
+    }
+
+    private async Task TryWriteStorageValue(KeyValueUUID? value)
+    {
+        await Quotation_Data.WriteSharedElementValue(value, Card.Card_ID, ElementData.Element_ID);
+    }
+}

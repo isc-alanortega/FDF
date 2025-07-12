@@ -1,0 +1,16 @@
+﻿::deep .selected {
+    background-color: #E3E3E3 !important;
+}
+
+::deep .complex-element-required {
+    .mud-input-label {
+        color: red !important;
+    }
+}
+
+/*@media(min-width: 600px) {
+    .mud-input-error.me-auto {
+        font-size: 1.7em;
+    }
+}
+*/

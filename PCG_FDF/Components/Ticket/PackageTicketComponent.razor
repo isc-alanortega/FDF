@@ -1,0 +1,132 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities.Tariffs;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_ENTITIES.Extensions
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.Entities
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalBreakpointService BreakpointService
+@inject QuotationDataCollection quotationService
+@implements IDisposable
+
+<div>
+    <MudPaper Class="paper-transparent" Elevation="0">
+        <MudExpansionPanels DisableBorders="true" Elevation="0">
+            <MudExpansionPanel @bind-IsExpanded="isOpen" Class="paper-transparent ticket-package-panel" HideIcon=true>
+                <TitleContent>
+                    <MudStack Class="title-row" Row="true">
+                        <MudIcon Size="Size.Large" Icon="@(isOpen ? Icons.Material.Rounded.KeyboardArrowUp : Icons.Material.Rounded.KeyboardArrowDown)" Class="@($"ticket-panels-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"></MudIcon>
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@quotationService.GetQuotationCart().GetPackages()[PackageTariff.ID_Paquete].Paquete.Nombre_Corto_Paquete</MudText>
+                        @if (PackageTariff.Tarifa_Comercial is not null)
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">
+                                $@(
+                                   string.Format("{0:N2}", PackageTariff.Tarifa_Comercial.Tarifa_Total) + " " + money_kind
+                                   )
+                            </MudText>
+                        }
+                        else if (PackageTariff.Tarifa_Preferencial is not null)
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">
+                                $@(
+                                   string.Format("{0:N2}", PackageTariff.Tarifa_Preferencial.Tarifa_Total) + " " + money_kind
+                                   )
+                            </MudText>
+                        }
+                        else if (PackageTariff.Tarifa_Base_Minima is not null)
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">
+                                $@(
+                                   string.Format("{0:N2}", PackageTariff.Tarifa_Base_Minima.Tarifa_Total) + " " + money_kind
+                                   )
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">
+                                $@(
+                                   string.Format("{0:N2}", PackageTariff.Tarifa_Base.Tarifa_Total) + " " + money_kind
+                                   )
+                            </MudText>
+                        }
+                    </MudStack>
+                </TitleContent>
+                <ChildContent>
+                    @{
+                        IDictionary<int, ServiceTariff> tariffs;
+                        if (PackageTariff.Tarifa_Base_Minima is not null)
+                        {
+                            tariffs = PackageTariff.Tarifa_Base_Minima.Tarifas_Servicios;
+                        }
+                        else if (PackageTariff.Tarifa_Base.Tarifas_Servicios_Spread is not null)
+                        {
+                            tariffs = PackageTariff.Tarifa_Base.Tarifas_Servicios_Spread;
+                        } else
+                        {
+                            tariffs = PackageTariff.Tarifa_Base.Tarifas_Servicios;
+                        }
+                    }
+                    @foreach (var item in tariffs)
+                    {
+                        @if (item.Value is null || !item.Value.Valid_Tariff)
+                        {
+                            <MudStack Class="ticket-row" Row="true">
+                                <MudText Typo="Typo.h5">@quotationService.GetQuotationCart().GetPackages()[PackageTariff.ID_Paquete].Servicios[item.Key].FullName</MudText>
+                                <MudStack Row="true">
+                                    <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Secondary" Size="Size.Large"></MudIcon>
+                                    <MudText Typo="Typo.h5">@localize.Get("com_ticket_tariffnotfound")</MudText>
+                                </MudStack>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <ServiceTicketComponent IsPackage="true" PackageID="@PackageTariff.ID_Paquete" ServiceTariff="@item.Value"></ServiceTicketComponent>
+                        }
+                    }
+                    <MudStack Class="package-discount-row" Row="true">
+                        @if (PackageTariff.Tarifa_Comercial is not null && PackageTariff.Tarifa_Comercial.Descuento_Base_Porcentaje_Calculado > 0)
+                        {
+                            <MudText Color="Color.Secondary" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("com_ticket_discount") (@(string.Format("{0:N2}", PackageTariff.Tarifa_Comercial.Descuento_Base_Porcentaje_Calculado) + "%"))</MudText>
+                            <MudText Color="Color.Secondary" Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">-$@(string.Format("{0:N2}", PackageTariff.Tarifa_Comercial.Descuento_Base_Total_Calculado) + " " + money_kind)</MudText>
+                        }
+                        else if (PackageTariff.Tarifa_Preferencial is not null && PackageTariff.Tarifa_Preferencial.Descuento_Porcentaje_Calculado > 0)
+                        {
+                            <MudText Color="Color.Secondary" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("com_ticket_discount") (@(string.Format("{0:N2}", PackageTariff.Tarifa_Preferencial.Descuento_Porcentaje_Calculado) + "%"))</MudText>
+                            <MudText Color="Color.Secondary" Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">-$@(string.Format("{0:N2}", PackageTariff.Tarifa_Preferencial.Descuento_Total_Calculado) + " " + money_kind)</MudText>
+                        }
+                        else if (PackageTariff.Tarifa_Base_Minima is not null)
+                        {
+                            <MudText Color="Color.Secondary" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("com_ticket_discount") (@(string.Format("{0:N2}", PackageTariff.Tarifa_Base_Minima.Descuento_Porcentaje_Calculado) + "%"))</MudText>
+                            <MudText Color="Color.Secondary" Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">-$@(string.Format("{0:N2}", PackageTariff.Tarifa_Base_Minima.Descuento_Total_Calculado) + " " + money_kind)</MudText>
+                        }
+                    </MudStack>
+                </ChildContent>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PackageTariff PackageTariff { get; set; }
+
+    private bool isOpen { get; set; }
+    private string money_kind { get; set; } = "USD";
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        money_kind = quotationService.Money_Kind.GetStringValue();
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

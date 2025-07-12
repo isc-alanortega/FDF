@@ -1,0 +1,241 @@
+﻿@using Newtonsoft.Json
+@using PCG_ENTITIES
+@using PCG_ENTITIES.PCG
+@using PCG_ENTITIES.PCG.Session;
+@using PCG_FDF.Components.Dialogs;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalBreakpointService BreakpointService
+@inject NavigationManager NavigationManager
+@inject WhiteLabelManager WhiteLabel
+@inject ApplicationState AppState
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@inject IAuthService AuthService
+@implements IDisposable
+@* @implements IAsyncDisposable *@
+
+<div class=@($"login-wrapper {Class}")>
+    <MudPaper Class="paper-grey">
+        <MudStack>
+            <EditForm class="d-flex flex-column" style="padding-top: 1.5%;" Model="@loginModel" OnValidSubmit="@Login">
+                @*Title: Iniciar Sesión*@
+                <MudText Style="@($"{(BreakpointService.GetIsMobile() ? "font-size: 3.0rem;" : "")} padding-bottom: 0.5em")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4)" Class="login-text title"><strong>@localize.Get("com_log_login")</strong></MudText>
+                
+                @*Email*@
+                <MudText Style="@Text_In_Mobil" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body2)" Class="login-text body">@localize.Get("com_reg_email")</MudText>
+                <MudTextField Class="@($"email-field {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" @bind-Value="@loginModel.User" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+                
+                @*Password*@
+                <MudText Style="@($"padding-top: 0.5em; {Text_In_Mobil}")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body2)" Class="login-text body">@localize.Get("com_reg_password")</MudText>
+                <MudTextField Class="@($"password-field {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" @bind-Value="@loginModel.Password" Margin="Margin.Dense" Variant="Variant.Outlined" InputType="@PasswordInput" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="showPassword" AdornmentAriaLabel="Mostrar Contraseña" />
+                
+                @*Password Forget*@
+                @* <MudText Style="@Text_In_Mobil" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body2)" Class="login-text password-forget">@localize.Get("com_log_passwordforget")</MudText>*@
+               
+                @*BtnLogin*@
+                <MudButton ButtonType="ButtonType.Submit" Class="@($"login-button {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Variant="Variant.Filled" Color="Color.Secondary">
+                    <MudText Class="button-text" Style="@Text_In_Mobil">@localize.Get("nav_login")</MudText>
+                    <div class="@(in_progress ? "progress active" : "progress")"></div>
+                </MudButton>
+            </EditForm>
+
+           @* <div class="mini-style-container">
+                <MudDivider Class="divider"></MudDivider>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body2)" Style="@Text_In_Mobil" Class="login-text styled"><strong>@localize.Get("com_log_or")</strong></MudText>
+                <MudDivider Class="divider"></MudDivider>
+            </div>*@
+
+            @*No has account?*@
+            @*<div class="no-account">
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h6 : Typo.body1)" Class="login-text body" Style="@Text_In_Mobil">@localize.Get("com_log_noaccount")&nbsp;</MudText>
+                <div>
+                    <NavLink class="nav-link login-text password-forget" href="register">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h6 : Typo.body1)" Style="@Text_In_Mobil" Class="login-text password-forget">@localize.Get("com_reg_register")</MudText>
+                    </NavLink>
+                </div>
+            </div>*@
+        </MudStack>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public string? Redirect { get; set; }
+    [Parameter]
+    public string Class { get; set; }
+
+    public string Text_In_Mobil { get; set; } = "";
+
+    private LoginModel loginModel = new LoginModel();
+    private bool isShow;
+    private bool in_progress { get; set; } = false;
+    private InputType PasswordInput = InputType.Password;
+
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    // private IJSObjectReference? module_iframe;
+
+    private async Task Login()
+    {
+        try
+        {
+            if (!in_progress)
+            {
+                in_progress = true;
+                if (loginModel.User.Contains("@"))
+                {
+                    var login_result = await AuthService.Login(loginModel);
+
+                    if (login_result.Successful)
+                    {
+                        await AppState.SetUserAuthenticated(true);
+                        if (login_result.Subclientes is not null && login_result.Subclientes.Any())
+                        {
+                            await AppState.SetClients(login_result.Subclientes);
+                            if (login_result.Subclientes.Count == 1)
+                            {
+                                await AppState.SetCurrentClient(login_result.Subclientes.Keys.First());
+                            }
+                            else
+                            {
+                                var parameters = new DialogParameters();
+                                parameters.Add("From_Login", true);
+                                DialogOptions options = new DialogOptions() { DisableBackdropClick = true, CloseButton = false,};
+                                var dialog = await DialogService.ShowAsync<SelectClientDialog>(localize.Get("msg_information"), parameters, options);
+                                var result = await dialog.Result;
+                            }
+                        }
+                        if (Redirect is not null && (Redirect == "quote" || Redirect == "user_quotations"))
+                        {
+                            NavigationManager.NavigateTo($"/{Redirect}");
+                        }
+                        else
+                        {
+                            NavigationManager.NavigateTo("/");
+                        }
+                    }
+                    else
+                    {
+                        await AppState.SetUserAuthenticated(false);
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(localize.Get(login_result.Error), Severity.Error);
+                    }
+                }
+                else
+                {
+                    // if (module_iframe is not null)
+                    // {
+                    //     var result = await module_iframe.InvokeAsync<bool>("TryInteconLogin", new object?[] { loginModel.User, loginModel.Password });
+
+                    //     if (result)
+                    //     {
+                    //         AppState.SetInteconAuthenticated(true);
+                    //         AppState.SetInteconUser(loginModel.User);
+                    //         AppState.SetInteconPassword(loginModel.Password);
+                    //         if (Redirect is not null && Redirect == "Embedding")
+                    //         {
+                    //             NavigationManager.NavigateTo($"/{Redirect}");
+                    //         }
+                    //         else
+                    //         {
+                    //             NavigationManager.NavigateTo("/");
+                    //         }
+                    //     }
+                    //     else
+                    //     {
+                    //         ShowLoginError();
+                    //     }
+                    // }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            in_progress = false;
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        loginModel.Endpoint = WhiteLabel.Current_Page;
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+        Set_Text_In_Mobil();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            // module_iframe = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/simplex_iframe.js");
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+
+        Set_Text_In_Mobil();
+    }
+
+    private void Set_Text_In_Mobil()
+    {
+        Text_In_Mobil = BreakpointService.GetIsMobile() ? "font-size: 1.9rem;" : "";
+    }
+
+    public void Dispose()
+    {
+        loginModel.User = "";
+        loginModel.Password = "";
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    /*
+    * Eliminar los modulos JS cargados al terminar de usar el componente actual
+       */
+    // async ValueTask IAsyncDisposable.DisposeAsync()
+    // {
+    //     // if (module_iframe is not null)
+    //     // {
+    //     //     await module_iframe.DisposeAsync();
+    //     // }
+    //     Dispose();
+    // }
+
+    private void ShowLoginError()
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+        Snackbar.Add(localize.Get("snackbar_login_error"), Severity.Error);
+    }
+
+    private void ShowEmptyError()
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+        Snackbar.Add(localize.Get("snackbar_login_empty"), Severity.Error);
+    }
+
+    void showPassword()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+}

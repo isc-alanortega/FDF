@@ -1,0 +1,1513 @@
+﻿@using PCG_ENTITIES.Enums
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Utility
+@inherits BookingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@implements IAsyncDisposable
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+
+        @*CONTAINERS*@
+        <MudItem md="12" sm="12" xs="12">
+            @*ACTIONS HEADER*@
+            <MudStack>
+                <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@DisableDownload()" OnClick="@DownloadForm">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_download_form")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.FileDownload"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                        <MudFileUpload Class="form-upload-button" T="IBrowserFile" FilesChanged="@OnFileChanged" Accept=".xlsx" Disabled="@DisableForm()">
+                            <ButtonTemplate>
+                                <MudButton HtmlTag="label"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Size="Size.Large"
+                                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                                           for="@context">
+                                    @Localize.Get("btn_upload_document")
+                            </MudButton>
+                        </ButtonTemplate>
+                    </MudFileUpload>
+                    <MudButton Variant="Variant.Filled" Color="Color.Info" Disabled="@DeleteContainerDisabled()" OnClick="@TryEditContainer">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_editcontainer")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Edit"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                    </MudStack>
+                    @*CONTAINERS TABLE VIEW*@
+                    <MudTable SelectedItem="@Selected_Container" @ref="@Containers_Table" SelectedItemChanged="@SetSelectedContainer" RowClassFunc="@ContainersSelectedRowClassFunc" OnRowClick="ContainersRowClickEvent" Items="@GetContainers()" T="ContainerDataLocal" Hover="true" Breakpoint="Breakpoint.Sm" MultiSelection="false">
+                        <HeaderContent>
+                            <MudTh>@Localize.Get("label_container")</MudTh>
+                            <MudTh>Serial</MudTh>
+                            <MudTh>@Localize.Get("label_partition")</MudTh>
+                            <MudTh>@Localize.Get("label_containersize")</MudTh>
+                            <MudTh>@Localize.Get("label_containertype")</MudTh>
+                            <MudTh>@Localize.Get("label_reference")</MudTh>
+                            <MudTh>@Localize.Get("label_shippingcompany")</MudTh>
+                            <MudTh>@Localize.Get("label_request")</MudTh>
+                            <MudTh>@Localize.Get("label_considerations")</MudTh>
+                            <MudTh>@Localize.Get("label_seal")</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="@Localize.Get("label_container")">@context.Container_Consecutive</MudTd>
+                            <MudTd DataLabel="Serial">@context.Container_Serial</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_partition")">@context.Partition</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_containersize")">@ContainerTripletConverter.Invoke(context.Size)</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_containertype")">@CustomConverterKVP.Invoke(context.Type)</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_reference")">@context.Reference</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_shippingcompany")">@CustomConverterKVP.Invoke(context.Shipping_Company)</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_request")">@context.Request</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_considerations")">@context.Considerations</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_seal")">@context.Seal</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
+            </MudItem>
+            <MudDivider Class="my-2"></MudDivider>
+
+            @*OPERATIONS GRID*@
+            @if (Adding_Container)
+        {
+            <MudGrid>
+                <MudItem md="6" sm="12" xs="12">
+                    @*CONTAINER SIZE*@
+                    <MudSelect T="ContainerInfoTriplet"
+                               Class="complex-element-required"
+                               ToStringFunc="@ContainerTripletConverter"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined"
+                               Value="@((ContainerInfoTriplet?)TryGetNewContainerField("CONTAINERSIZE"))"
+                               ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERSIZE"))"
+                               Disabled="@GetElementReadonly()"
+                               ReadOnly="@GetElementReadonly()"
+                               RequiredError="@Localize.Get("errmsg_required")"
+                               Label="@Localize.Get("label_containersize")"
+                               Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_containersize")}")">
+
+                        @foreach (var option in GetSizes())
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    @*CONTAINER TYPE*@
+                    <MudSelect T="KeyValue"
+                               Class="complex-element-required"
+                               ToStringFunc="@CustomConverterKVP"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined"
+                               Value="@((KeyValue?)TryGetNewContainerField("CONTAINERTYPE"))"
+                               ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERTYPE"))"
+                               Disabled="@GetElementReadonly()"
+                               ReadOnly="@GetElementReadonly()"
+                               RequiredError="@Localize.Get("errmsg_required")"
+                               Label="@Localize.Get("label_containertype")"
+                               Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_containertype")}")">
+
+                        @foreach (var option in GetTypes())
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    @*CONTAINER SERIAL*@
+                    <MudTextField Class="@($"text-input complex-element-required {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  MaxLength="500"
+                                  Clearable="true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  T="string"
+                                  Value="@((string?)TryGetNewContainerField("CONTAINERSERIAL"))"
+                                  ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERSERIAL"))"
+                                  Variant="Variant.Outlined"
+                                  Label="@Localize.Get("label_containerserial")"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_containerserial")}")" />
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    <MudNumericField Class="@($"numerical-input {(GetPartitionRequired() ? "complex-element-required" : string.Empty)} {(BreakpointService.GetIsMobile() ? "increase-it" : string.Empty)}")"
+                                     T="int?"
+                                     Variant="Variant.Outlined"
+                                     Value="@((int?)TryGetNewContainerField("PARTITION"))"
+                                     ValueChanged="@((args) => TryModifyNewContainerField(args, "PARTITION"))"
+                                     Disabled="@GetElementReadonly()"
+                                     ReadOnly="@GetElementReadonly()"
+                                     RequiredError="@Localize.Get("errmsg_required")"
+                                     Label="@Localize.Get("label_partition")"
+                                     Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_partition")}")"
+                                     Min="1"
+                                     Max="@ContainersInfo.Quantity" />
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  MaxLength="500"
+                                  Clearable="true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  T="string"
+                                  Value="@((string?)TryGetNewContainerField("REFERENCE"))"
+                                  ValueChanged="@((args) => TryModifyNewContainerField(args, "REFERENCE"))"
+                                  Variant="Variant.Outlined"
+                                  Label="@Localize.Get("label_reference")"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_reference")}")" />
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    <MudAutocomplete T="KeyValue"
+                                     Class="@($"booking-searchbar complex-element-required {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                     PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                     ToStringFunc="@CustomConverterKVP"
+                                     ResetValueOnEmptyText="false"
+                                     CoerceText="true"
+                                     CoerceValue="false"
+                                     MaxItems="null"
+                                     AdornmentIcon="@Icons.Material.Filled.Search"
+                                     AdornmentColor="Color.Primary"
+                                     Clearable="false"
+                                     Value="@((KeyValue?)TryGetNewContainerField("SHIPPINGC"))"
+                                     ValueChanged="@((args) => TryModifyNewContainerField(args, "SHIPPINGC"))"
+                                     SearchFunc="@(async (args) => await SearchContents(args, "SHIPPINGC"))"
+                                     RequiredError="@Localize.Get("errmsg_required")"
+                                     Label="@Localize.Get("label_shippingcompany")"
+                                     Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_shippingcompany")}")" />
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  MaxLength="500"
+                                  Clearable="true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  T="string"
+                                  Value="@((string?)TryGetNewContainerField("REQUEST"))"
+                                  ValueChanged="@((args) => TryModifyNewContainerField(args, "REQUEST"))"
+                                  Variant="Variant.Outlined"
+                                  Label="@Localize.Get("label_request")"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_request")} ")" />
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  MaxLength="500"
+                                  Clearable="true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  T="string"
+                                  Value="@((string?)TryGetNewContainerField("CONSIDERATIONS"))"
+                                  ValueChanged="@((args) => TryModifyNewContainerField(args, "CONSIDERATIONS"))"
+                                  Variant="Variant.Outlined"
+                                  Label="@Localize.Get("label_considerations")"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_considerations")}")" />
+                </MudItem>
+
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  MaxLength="500"
+                                  Clearable="true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  T="string"
+                                  Value="@((string?)TryGetNewContainerField("SEAL"))"
+                                  ValueChanged="@((args) => TryModifyNewContainerField(args, "SEAL"))"
+                                  Variant="Variant.Outlined"
+                                  Label="@Localize.Get("label_seal")"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_seal")}")" />
+                </MudItem>
+
+                @* @if (New_Container_Data is not null && New_Container_Data.Type is not null && (New_Container_Data.Type.Value == "RF" || New_Container_Data.Type.Value == "RH"))
+            {
+            <MudItem md="6" sm="12" xs="12">
+            <MudNumericField Class="@($"numerical-input complex-element-required {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+            T="decimal?"
+            Variant="Variant.Outlined"
+            Value="@((decimal?)TryGetNewContainerField("TEMPCELSIUSMIN"))"
+            ValueChanged="@((args) => TryModifyNewContainerField(args, "TEMPCELSIUSMIN"))"
+            Disabled="@GetElementReadonly()"
+            ReadOnly="@GetElementReadonly()"
+            RequiredError="@Localize.Get("errmsg_required")"
+            Label="@Localize.Get("label_tempcelsiusmin")"
+            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_tempcelsiusmin")}")"
+            Min="-100"
+            Max="50" />
+            </MudItem>
+
+            <MudItem md="6" sm="12" xs="12">
+            <MudNumericField Class="@($"numerical-input complex-element-required {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+            T="decimal?"
+            Variant="Variant.Outlined"
+            Value="@((decimal?)TryGetNewContainerField("TEMPFAHRENMIN"))"
+            ValueChanged="@((args) => TryModifyNewContainerField(args, "TEMPFAHRENMIN"))"
+            Disabled="@GetElementReadonly()"
+            ReadOnly="@GetElementReadonly()"
+            RequiredError="@Localize.Get("errmsg_required")"
+            Label="@Localize.Get("label_tempfahrenheitmin")"
+            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_tempfahrenheitmin")}")"
+            Min="-150"
+            Max="150" />
+            </MudItem>
+            <MudItem md="6" sm="12" xs="12">
+            <MudNumericField Class="@($"numerical-input complex-element-required {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+            T="decimal?"
+            Variant="Variant.Outlined"
+            Value="@((decimal?)TryGetNewContainerField("TEMPCELSIUSMAX"))"
+            ValueChanged="@((args) => TryModifyNewContainerField(args, "TEMPCELSIUSMAX"))"
+            Disabled="@GetElementReadonly()"
+            ReadOnly="@GetElementReadonly()"
+            RequiredError="@Localize.Get("errmsg_required")"
+            Label="@Localize.Get("label_tempcelsiusmax")"
+            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_tempcelsiusmax")}")"
+            Min="-100"
+            Max="50" />
+            </MudItem>
+
+            <MudItem md="6" sm="12" xs="12">
+            <MudNumericField Class="@($"numerical-input {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+            T="decimal?"
+            Variant="Variant.Outlined"
+            Value="@((decimal?)TryGetNewContainerField("TEMPFAHRENMAX"))"
+            ValueChanged="@((args) => TryModifyNewContainerField(args, "TEMPFAHRENMAX"))"
+            Disabled="@GetElementReadonly()"
+            ReadOnly="@GetElementReadonly()"
+            RequiredError="@Localize.Get("errmsg_required")"
+            Label="@Localize.Get("label_tempfahrenheitmax")"
+            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_tempfahrenheitmax")}")"
+            Min="-150"
+            Max="150" />
+            </MudItem>
+            } *@
+
+            </MudGrid>
+            <MudDivider Class="my-2"></MudDivider>
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="CancelAddContainer">
+                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_cancel")</MudText>
+                            <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Outlined.Cancel"></MudIcon>
+                        </MudStack>
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(async () => await TryAddContainer())">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_accept")</MudText>
+                            <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Check"></MudIcon>
+                        </MudStack>
+                    </MudButton>
+                </MudStack>
+        }
+        else
+        {
+            @if (Selected_Container is not null && ValidateContainerNoMessage(Selected_Container))
+            {
+                <MudStack>
+                    @*ACTIONS HEADER*@
+                    <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@AddMerchDisabled()" OnClick="@SwitchAddMerchState">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_addmerch")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Add"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" Disabled="@DeleteMerchDisabled()" OnClick="@TryEditMerch">
+                                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_editmerch")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Edit"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="@DeleteMerchDisabled()" OnClick="@(async () => await TryRemoveMerch())">
+                                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_deletemerch")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.DeleteForever"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                        </MudStack>
+                        <MudTable SelectedItem="@Selected_Merch" @ref="@Merch_Table" SelectedItemChanged="@SetSelectedMerch" RowClassFunc="@MerchSelectedRowClassFunc" OnRowClick="MerchRowClickEvent" Items="@GetContents()" T="ContainerContentsFull" Hover="true" Breakpoint="Breakpoint.Sm" MultiSelection="false">
+                            <HeaderContent>
+                                <MudTh>@Localize.Get("label_amount")</MudTh>
+                                <MudTh>@Localize.Get("label_packaging")</MudTh>
+                                <MudTh>@ElementData.Element_Name</MudTh>
+                                <MudTh>@Localize.Get("label_netweight")</MudTh>
+                                <MudTh>@Localize.Get("label_brand")</MudTh>
+                                <MudTh>Serial</MudTh>
+                                <MudTh>@Localize.Get("label_measurement")</MudTh>
+                                <MudTh>Ral</MudTh>
+                                <MudTh>@Localize.Get("label_brweight")</MudTh>
+                                <MudTh>@Localize.Get("label_linesbyroll")</MudTh>
+                                <MudTh>@Localize.Get("label_invoice")</MudTh>
+                                <MudTh>@Localize.Get("label_merchprice")</MudTh>
+                                <MudTh>Trip</MudTh>
+                                @*<MudTh>@Localize.Get("label_actions")</MudTh>*@
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="@Localize.Get("label_amount")">@context.Amount</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_packaging")">@CustomConverterSAT.Invoke(context.Packaging)</MudTd>
+                                <MudTd DataLabel="@ElementData.Element_Name">@CustomConverterSAT.Invoke(context.Contents)</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_netweight")">@context.Net_Weight</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_brand")">@context.Brand</MudTd>
+                                <MudTd DataLabel="Serial">@context.Serial</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_measurement")">@CustomConverterSAT.Invoke(context.Measurement)</MudTd>
+                                <MudTd DataLabel="Ral">@context.Ral</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_brweight")">@context.Gross_Weight</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_linesbyroll")">@context.Lines_By_Roll</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_invoice")">@context.Invoice</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_merchprice")">@context.Price</MudTd>
+                                <MudTd DataLabel="Trip">@context.Trip</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudStack>
+                @if (Adding_Merch)
+                {
+                    <MudGrid>
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudNumericField Class="@($"numerical-input complex-element-required {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                                             T="int?"
+                                             Variant="Variant.Outlined"
+                                             Value="@((int?)TryGetContentsField("AMOUNT"))"
+                                             ValueChanged="@((args) => TryModifyField("AMOUNT", args))"
+                                             Disabled="@GetElementReadonly()"
+                                             ReadOnly="@GetElementReadonly()"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@Localize.Get("label_amount")"
+                                             Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_amount")}")"
+                                             Min="1"
+                                             Max="1000000" />
+                        </MudItem>
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudAutocomplete T="SATTableTriplet"
+                                             Class="@($"booking-searchbar complex-element-required {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             ToStringFunc="@CustomConverterSAT"
+                                             ResetValueOnEmptyText="false"
+                                             MaxItems="null"
+                                             CoerceText="true"
+                                             CoerceValue="false"
+                                             AdornmentIcon="@Icons.Material.Filled.Search"
+                                             AdornmentColor="Color.Primary"
+                                             Clearable="false"
+                                             Value="@((SATTableTriplet?)TryGetContentsField("PACKAGING"))"
+                                             ValueChanged="@((args) => TryModifyField("PACKAGING", args))"
+                                             SearchFunc="@(async (args) => await SearchSATTable(args, "PACKAGING"))"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@Localize.Get("label_packaging")"
+                                             Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_packaging")}")" />
+                        </MudItem>
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudAutocomplete T="SATTableTriplet"
+                                             Class="@($"booking-searchbar complex-element-required {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             ToStringFunc="@CustomConverterSAT"
+                                             ResetValueOnEmptyText="false"
+                                             CoerceText="true"
+                                             MaxItems="null"
+                                             CoerceValue="false"
+                                             AdornmentIcon="@Icons.Material.Filled.Search"
+                                             AdornmentColor="Color.Primary"
+                                             Clearable="false"
+                                             Value="@((SATTableTriplet?)TryGetContentsField("CONTENTS"))"
+                                             ValueChanged="@((args) => TryModifyField("CONTENTS", args))"
+                                             SearchFunc="@(async (args) => await SearchSATTable(args, "CONTENTS"))"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@ElementData.Element_Name"
+                                             Placeholder="@($"{Localize.Get("placeholder_select")} {ElementData.Element_Name}")" />
+                        </MudItem>
+                        @*TODO: PESO NETO*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudNumericField Class="@($"numerical-input complex-element-required {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                                             T="decimal?"
+                                             Variant="Variant.Outlined"
+                                             Value="@((decimal?)TryGetContentsField("NETWEIGHT"))"
+                                             ValueChanged="@((args) => TryModifyField("NETWEIGHT", args))"
+                                             Disabled="@GetElementReadonly()"
+                                             ReadOnly="@GetElementReadonly()"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@Localize.Get("label_netweight")"
+                                             Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_netweight")}")"
+                                             Min="1"
+                                             Max="1000000" />
+                        </MudItem>
+                        @*TODO: PESO BRUTO*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudNumericField Class="@($"numerical-input complex-element-required {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                                             T="decimal?"
+                                             Variant="Variant.Outlined"
+                                             Value="@((decimal?)TryGetContentsField("GROSSWEIGHT"))"
+                                             ValueChanged="@((args) => TryModifyField("GROSSWEIGHT", args))"
+                                             Disabled="@GetElementReadonly()"
+                                             ReadOnly="@GetElementReadonly()"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@Localize.Get("label_brweight")"
+                                             Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_brweight")}")"
+                                             Min="1"
+                                             Max="1000000" />
+                        </MudItem>
+                        @*TODO: MARCA*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                          MaxLength="500"
+                                          Clearable="false"
+                                          RequiredError="@Localize.Get("errmsg_required")"
+                                          Disabled="@GetElementReadonly()"
+                                          ReadOnly="@GetElementReadonly()"
+                                          DebounceInterval="1500"
+                                          T="string"
+                                          Value="@((string?)TryGetContentsField("BRAND"))"
+                                          ValueChanged="@((args) => TryModifyField("BRAND", args))"
+                                          Variant="Variant.Outlined"
+                                          Label="@Localize.Get("label_brand")"
+                                          Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_brand")}")" />
+                        </MudItem>
+                        @*TODO: SERIAL*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                          MaxLength="500"
+                                          Clearable="false"
+                                          RequiredError="@Localize.Get("errmsg_required")"
+                                          Disabled="@GetElementReadonly()"
+                                          ReadOnly="@GetElementReadonly()"
+                                          DebounceInterval="1500"
+                                          T="string"
+                                          Value="@((string?)TryGetContentsField("SERIAL"))"
+                                          ValueChanged="@((args) => TryModifyField("SERIAL", args))"
+                                          Variant="Variant.Outlined"
+                                          Label="Serial"
+                                          Placeholder="@($"{Localize.Get("placeholder_input")} Serial")" />
+                        </MudItem>
+                        @*MEASUREMENT*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudAutocomplete T="SATTableTriplet"
+                                             Class="@($"booking-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             ToStringFunc="@CustomConverterSAT"
+                                             ResetValueOnEmptyText="false"
+                                             CoerceText="true"
+                                             CoerceValue="false"
+                                             MaxItems="null"
+                                             AdornmentIcon="@Icons.Material.Filled.Search"
+                                             AdornmentColor="Color.Primary"
+                                             Clearable="false"
+                                             Value="@((SATTableTriplet?)TryGetContentsField("MEASUREMENT"))"
+                                             ValueChanged="@((args) => TryModifyField("MEASUREMENT", args))"
+                                             SearchFunc="@(async (args) => await SearchSATTable(args, "MEASUREMENT"))"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_measurement")}")" />
+                        </MudItem>
+                        @*TODO: RAL*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                          MaxLength="500"
+                                          Clearable="true"
+                                          RequiredError="@Localize.Get("errmsg_required")"
+                                          Disabled="@GetElementReadonly()"
+                                          ReadOnly="@GetElementReadonly()"
+                                          DebounceInterval="1500"
+                                          T="string"
+                                          Value="@((string?)TryGetContentsField("RAL"))"
+                                          ValueChanged="@((args) => TryModifyField("RAL", args))"
+                                          Variant="Variant.Outlined"
+                                          Label="Ral"
+                                          Placeholder="@($"{Localize.Get("placeholder_input")} Ral")" />
+                        </MudItem>
+                        @*TODO: LINEAS POR ROLLO*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudNumericField Class="@($"numerical-input {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                                             T="int?"
+                                             Variant="Variant.Outlined"
+                                             Value="@((int?)TryGetContentsField("LINESROLL"))"
+                                             ValueChanged="@((args) => TryModifyField("LINESROLL", args))"
+                                             Disabled="@GetElementReadonly()"
+                                             ReadOnly="@GetElementReadonly()"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@Localize.Get("label_linesbyroll")"
+                                             Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_linesbyroll")}")"
+                                             Min="1"
+                                             Max="1000000" />
+                        </MudItem>
+                        @*PRICE*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudNumericField Class="@($"numerical-input {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                                             T="decimal?"
+                                             Clearable="true"
+                                             Variant="Variant.Outlined"
+                                             Value="@((decimal?)TryGetContentsField("MERCHPRICE"))"
+                                             ValueChanged="@((args) => TryModifyField("MERCHPRICE", args))"
+                                             Disabled="@GetElementReadonly()"
+                                             ReadOnly="@GetElementReadonly()"
+                                             RequiredError="@Localize.Get("errmsg_required")"
+                                             Label="@Localize.Get("label_merchprice")"
+                                             Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_merchprice")}")"
+                                             Min="0"
+                                             Max="999999999999" />
+                        </MudItem>
+                        @*TODO: FACTURA*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                          MaxLength="500"
+                                          Clearable="true"
+                                          RequiredError="@Localize.Get("errmsg_required")"
+                                          Disabled="@GetElementReadonly()"
+                                          ReadOnly="@GetElementReadonly()"
+                                          DebounceInterval="1500"
+                                          T="string"
+                                          Value="@((string?)TryGetContentsField("FACTURA"))"
+                                          ValueChanged="@((args) => TryModifyField("FACTURA", args))"
+                                          Variant="Variant.Outlined"
+                                          Label="@Localize.Get("label_invoice")"
+                                          Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_invoice")}")" />
+                        </MudItem>
+                        @*TODO: TRIP*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                          MaxLength="500"
+                                          Clearable="true"
+                                          RequiredError="@Localize.Get("errmsg_required")"
+                                          Disabled="@GetElementReadonly()"
+                                          ReadOnly="@GetElementReadonly()"
+                                          DebounceInterval="1500"
+                                          T="string"
+                                          Value="@((string?)TryGetContentsField("TRIP"))"
+                                          ValueChanged="@((args) => TryModifyField("TRIP", args))"
+                                          Variant="Variant.Outlined"
+                                          Label="Trip"
+                                          Placeholder="@($"{Localize.Get("placeholder_input")} Trip")" />
+                        </MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-2"></MudDivider>
+                    <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@CancelAddMerch">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_cancel")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Outlined.Cancel"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(async () => await TryAddMerch())">
+                                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_accept")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Check"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                        </MudStack>
+                }
+            }
+        }
+    </MudStack>
+</div>
+
+@code {
+    private Func<SATTableTriplet, string> CustomConverterSAT = kvp => kvp?.Value!;
+    private Func<ContainerInfoTriplet, string> ContainerTripletConverter = trplt => trplt?.Size!;
+    private Func<KeyValue, string> CustomConverterKVP = kvp => kvp?.Value!;
+    private ContainerGroupLocal ContainersInfo { get; set; }
+    private ContainerContentsFull? Single_Contents_Item { get; set; }
+    private ContainerDataLocal? New_Container_Data { get; set; }
+    private MudTable<ContainerDataLocal> Containers_Table { get; set; }
+    private ContainerDataLocal? Selected_Container { get; set; }
+    private int Selected_Container_Row { get; set; }
+    private MudTable<ContainerContentsFull> Merch_Table { get; set; }
+    private ContainerContentsFull? Selected_Merch { get; set; }
+    private int Selected_Merch_Row { get; set; } = -1;
+
+    private bool Adding_Container { get; set; } = false;
+    private bool Adding_Merch { get; set; } = false;
+    private bool Editing { get; set; } = false;
+    private bool Download_In_Progress { get; set; } = false;
+    private bool Form_In_Progress { get; set; } = false;
+
+    private ContainerSizesTypes Available_Containers { get; set; }
+
+    private IJSObjectReference? module_download;
+
+    protected async override Task OnInitializedAsync()
+    {
+        ContainersInfo = (ContainerGroupLocal)ElementData.Complex_Data["INITIALIZER"].Preloaded_Value;
+        Available_Containers = (ContainerSizesTypes)ElementData.Complex_Data["CONTAINERSIZESTYPES"].Preloaded_Value;
+
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteUnsharedElementValue(ContainersInfo, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            else
+            {
+                ContainersInfo = BookingData.GetUnsharedElementValueAs<ContainerGroupLocal>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID)!;
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+        else
+        {
+            if (BookingData.GetSharedStorage()[ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteSharedElementValue(ContainersInfo, ElementData.Element_ID);
+            }
+            else
+            {
+                ContainersInfo = BookingData.GetSharedElementValueAs<ContainerGroupLocal>(ElementData.Element_ID);
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+
+        await SectionForm.Validate();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private bool GetPartitionRequired()
+    {
+        if (ContainersInfo.Containers is not null && ContainersInfo.Containers.Any())
+        {
+            if (ContainersInfo.Containers.Values.Any(c => c.Partition.HasValue))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private async Task DownloadForm()
+    {
+        try
+        {
+            if (!Download_In_Progress)
+            {
+                Download_In_Progress = true;
+                var FILESTREAM = await DATA_ACCESS.PostDownloadExcelForm(ElementData.Data_Type_ID);
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"{ElementData.Element_Name}.xlsx";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            Download_In_Progress = false;
+        }
+    }
+
+    private bool DisableDownload()
+    {
+        return Download_In_Progress || GetElementReadonly();
+    }
+
+    private bool DisableForm()
+    {
+        return Form_In_Progress || GetElementReadonly();
+    }
+
+    private async Task OnFileChanged(IBrowserFile file)
+    {
+        try
+        {
+            if (!Form_In_Progress)
+            {
+                Form_In_Progress = true;
+                var upload_result = await DATA_ACCESS.PostUploadExcel<ContainerGroupLocal?>(file, ElementData.Data_Type_ID, ContainersInfo.Quantity);
+
+                if (upload_result is null)
+                {
+                    ShowError("error_not_implemented");
+                }
+                else
+                {
+                    if (upload_result.Operation_Succeeded)
+                    {
+                        Selected_Merch = null;
+                        Selected_Merch_Row = -1;
+                        Selected_Container = null;
+                        Selected_Container_Row = -1;
+                        ContainersInfo = upload_result.Result!.Result!;
+                        await TryWriteStorageValue();
+                    }
+                    else
+                    {
+                        if (upload_result.Error_Message == "err_format_invalid")
+                        {
+                            ShowError("err_format_invalid");
+                        }
+                        else
+                        {
+                            if (upload_result.Errors is not null && upload_result.Errors.Any())
+                            {
+                                ShowError("err_non_controlled");
+                            }
+                            else
+                            {
+                                var parameters = new DialogParameters();
+                                parameters.Add("Error_Message", upload_result.Error_Message);
+                                parameters.Add("Additional_Data", upload_result?.Result?.Additional_Error_Data);
+                                parameters.Add("Additional_Value", upload_result?.Result?.Error_Value);
+                                var dialog = await DialogService.ShowAsync<ErrorDialog>("Error", parameters);
+                                var result = await dialog.Result;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            Form_In_Progress = false;
+        }
+    }
+
+    private IEnumerable<ContainerInfoTriplet> GetSizes()
+    {
+        if (Selected_Container is null)
+        {
+            return Enumerable.Empty<ContainerInfoTriplet>();
+        }
+        return Available_Containers.Sizes.Values;
+    }
+
+    private IEnumerable<KeyValue> GetTypes()
+    {
+        if (New_Container_Data is null || New_Container_Data.Size is null)
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+        return Available_Containers.Types[New_Container_Data.Size.ID];
+    }
+
+    private void CancelAddMerch()
+    {
+        Adding_Merch = false;
+        Editing = false;
+        Single_Contents_Item = null;
+    }
+
+    private void SwitchAddMerchState()
+    {
+        Single_Contents_Item = new ContainerContentsFull()
+            {
+                Contents_UUID = Guid.NewGuid()
+            };
+        Adding_Merch = true;
+    }
+
+    private bool DeleteMerchDisabled()
+    {
+        if (GetElementReadonly() || Selected_Merch is null || Selected_Container is null || Adding_Container || Adding_Merch || Editing || !CanChange())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool AddMerchDisabled()
+    {
+        if (GetElementReadonly())
+        {
+            return true;
+        }
+        if (Selected_Container is null)
+        {
+            return true;
+        }
+        if (!CanChange())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool DeleteContainerDisabled()
+    {
+        if (GetElementReadonly() || Selected_Container is null || Adding_Container || Adding_Merch || Editing || !CanChange())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private async Task TryRemoveMerch()
+    {
+        if (Selected_Container is not null && Selected_Merch is not null && !GetElementReadonly())
+        {
+            ContainersInfo.Containers[Selected_Container.Container_UUID].Container_Contents.Remove(Selected_Merch.Contents_UUID);
+            Selected_Merch = null;
+            if (IsCollection)
+            {
+                await BookingData.WriteUnsharedElementValue(ContainersInfo, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            else
+            {
+                await BookingData.WriteSharedElementValue(ContainersInfo, ElementData.Element_ID);
+            }
+        }
+    }
+
+    private void TryEditMerch()
+    {
+        if (Selected_Container is not null && Selected_Merch is not null && !GetElementReadonly() && !Adding_Merch)
+        {
+            Single_Contents_Item = new ContainerContentsFull(ContainersInfo.Containers[Selected_Container.Container_UUID].Container_Contents[Selected_Merch.Contents_UUID]);
+            Editing = true;
+            Adding_Merch = true;
+        }
+    }
+
+    private void ContainersRowClickEvent(TableRowClickEventArgs<ContainerDataLocal> tableRowClickEventArgs)
+    {
+    }
+
+    private string ContainersSelectedRowClassFunc(ContainerDataLocal element, int rowNumber)
+    {
+        if (CanChange())
+        {
+            if (Selected_Container_Row == rowNumber)
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else if (Containers_Table.SelectedItem != null && Containers_Table.SelectedItem.Equals(element))
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else
+            {
+                Selected_Container_Row = -1;
+                return string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private void SetSelectedContainer(ContainerDataLocal? data)
+    {
+        if (CanChange())
+        {
+            Selected_Container = data;
+            Selected_Merch = null;
+        }
+    }
+
+    private void MerchRowClickEvent(TableRowClickEventArgs<ContainerContentsFull> tableRowClickEventArgs)
+    {
+    }
+
+    private string MerchSelectedRowClassFunc(ContainerContentsFull element, int rowNumber)
+    {
+        if (!Adding_Merch)
+        {
+            if (Selected_Merch_Row == rowNumber)
+            {
+                Selected_Merch_Row = rowNumber;
+                return "selected";
+            }
+            else if (Merch_Table.SelectedItem != null && Merch_Table.SelectedItem.Equals(element))
+            {
+                Selected_Merch_Row = rowNumber;
+                return "selected";
+            }
+            else
+            {
+                Selected_Merch_Row = -1;
+                return string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private void SetSelectedMerch(ContainerContentsFull? data)
+    {
+        if (!Adding_Merch)
+        {
+            Selected_Merch = data;
+        }
+    }
+
+    private bool CanChange()
+    {
+        return !(Editing || Adding_Container || Adding_Merch);
+    }
+
+    private ContainerGroupLocal? GetSource()
+    {
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<ContainerGroupLocal>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            return BookingData.GetSharedElementValueAs<ContainerGroupLocal>(ElementData.Element_ID);
+        }
+    }
+
+    private async Task TryAddMerch()
+    {
+        if (GetValidationStatus())
+        {
+            ContainersInfo.Containers[Selected_Container.Container_UUID].Container_Contents[Single_Contents_Item.Contents_UUID] = Single_Contents_Item;
+            await TryWriteStorageValue();
+            Single_Contents_Item = null;
+            Adding_Merch = false;
+            Editing = false;
+        }
+    }
+
+    private bool GetValidationStatus()
+    {
+        if (Single_Contents_Item.Amount <= 0)
+        {
+            ShowError("error_merch_quantity_missing");
+            return false;
+        }
+
+        if (Single_Contents_Item.Net_Weight <= 0)
+        {
+            ShowError("error_merch_nweight_missing");
+            return false;
+        }
+
+        if (Single_Contents_Item.Gross_Weight <= 0)
+        {
+            ShowError("error_merch_gweight_missing");
+            return false;
+        }
+
+        if (Single_Contents_Item.Packaging is null)
+        {
+            ShowError("error_merch_packaging_missing");
+            return false;
+        }
+
+        if (Single_Contents_Item.Contents is null)
+        {
+            ShowError("error_merch_missing");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void CancelAddContainer()
+    {
+        Editing = false;
+        Adding_Container = false;
+        New_Container_Data = null;
+    }
+
+    private async Task TryAddContainer()
+    {
+        if (ValidateContainer(New_Container_Data))
+        {
+            ContainersInfo.Containers[New_Container_Data.Container_UUID] = new ContainerDataLocal(New_Container_Data);
+            New_Container_Data = null;
+            Adding_Container = false;
+            Editing = false;
+            await TryWriteStorageValue();
+        }
+    }
+
+    private bool ValidateContainer(ContainerDataLocal? Container)
+    {
+        if (GetElementReadonly())
+        {
+            return false;
+        }
+        if (Container is null)
+        {
+            return false;
+        }
+        if (Container.Size is null)
+        {
+            ShowError("error_container_size_missing");
+            return false;
+        }
+        if (Container.Type is null)
+        {
+            ShowError("error_container_type_missing");
+            return false;
+        }
+        if (string.IsNullOrEmpty(Container.Container_Serial))
+        {
+            ShowError("error_container_serial_invalid");
+            return false;
+        }
+        if (!Validations.IsValidContainerSerial(Container.Container_Serial))
+        {
+            ShowError("error_container_serial_invalid");
+            return false;
+        }
+        if (GetPartitionRequired() && !Container.Partition.HasValue)
+        {
+            ShowError("error_container_partition_missing");
+            return false;
+        }
+        if (Container.Shipping_Company is null)
+        {
+            ShowError("error_container_shippingc_missing");
+            return false;
+        }
+        if (ContainersInfo.Containers.Values.Any(container => container.Container_Serial == Container.Container_Serial))
+        {
+            var repeated = ContainersInfo.Containers.Values.First(container => container.Container_Serial == Container.Container_Serial);
+            if (repeated.Container_UUID != Container.Container_UUID)
+            {
+                ShowError("error_container_serial_repeated");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private bool ValidateContainerNoMessage(ContainerDataLocal? Container)
+    {
+        if (Container is null)
+        {
+            return false;
+        }
+        if (Container.Size is null)
+        {
+            return false;
+        }
+        if (Container.Type is null)
+        {
+            return false;
+        }
+        if (string.IsNullOrEmpty(Container.Container_Serial))
+        {
+            return false;
+        }
+        if (!Validations.IsValidContainerSerial(Container.Container_Serial))
+        {
+            return false;
+        }
+        if (GetPartitionRequired() && !Container.Partition.HasValue)
+        {
+            return false;
+        }
+        if (Container.Shipping_Company is null)
+        {
+            return false;
+        }
+        if (ContainersInfo.Containers.Values.Any(container => container.Container_Serial == Container.Container_Serial))
+        {
+            var repeated = ContainersInfo.Containers.Values.First(container => container.Container_Serial == Container.Container_Serial);
+            if (repeated.Container_UUID != Container.Container_UUID)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private async Task TryWriteStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteUnsharedElementValue(ContainersInfo, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteSharedElementValue(ContainersInfo, ElementData.Element_ID);
+        }
+    }
+
+    private bool ValidateElement()
+    {
+        if (ContainersInfo.Containers.Values.Any(container => string.IsNullOrEmpty(container.Container_Serial)))
+        {
+            return false;
+        }
+
+        if (ContainersInfo.Containers.Values.Any(container => !container.Container_Contents.Any()))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void TryEditContainer()
+    {
+        if (Selected_Container is not null && !GetElementReadonly() && !Adding_Merch)
+        {
+            New_Container_Data = new ContainerDataLocal(ContainersInfo.Containers[Selected_Container.Container_UUID]);
+            Adding_Container = true;
+            Editing = true;
+        }
+    }
+
+    private IEnumerable<KeyValue>
+    GetPreloadedList(string field_name)
+    {
+        if (ElementData.Complex_Data[field_name].Contains_List && !ElementData.Complex_Data[field_name].Is_Autocomplete_List)
+        {
+            return GetComplexPreloadedListAs<KeyValue>
+                (field_name);
+        }
+        return Enumerable.Empty<KeyValue>
+            ();
+    }
+
+    private IEnumerable<ContainerContentsFull>
+        GetContents()
+    {
+        if (Selected_Container is null)
+        {
+            return Enumerable.Empty<ContainerContentsFull>();
+        }
+        return ContainersInfo.Containers[Selected_Container.Container_UUID].Container_Contents.Values;
+    }
+
+    private IEnumerable<ContainerDataLocal> GetContainers()
+    {
+        return ContainersInfo.Containers.Values;
+    }
+
+    private async Task<IEnumerable<SATTableTriplet>> SearchSATTable(string value, string fieldname)
+    {
+        var query_request = new DynamicQueryRequestBooking()
+            {
+                Booking_UUID = BookingData.UUID,
+                Client_ID = BookingData.Client_ID,
+                User_ID = BookingData.User_ID,
+                Query_ID = ElementData.Complex_Data[fieldname].Query_ID,
+                Language = BookingData.GetBookingLanguage(),
+                Query = value
+            };
+        var result = await DATA_ACCESS.PostLeerQuerySAT(query_request);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<SATTableTriplet>();
+        }
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchContents(string value, string fieldname)
+    {
+        var query_request = new DynamicQueryRequestBooking()
+            {
+                Booking_UUID = BookingData.UUID,
+                Client_ID = BookingData.Client_ID,
+                User_ID = BookingData.User_ID,
+                Query_ID = ElementData.Complex_Data[fieldname].Query_ID,
+                Language = BookingData.GetBookingLanguage(),
+                Query = value
+            };
+        var result = await DATA_ACCESS.PostLeerQuery(query_request);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    private object? TryGetNewContainerField(string field_name)
+    {
+        if (New_Container_Data is null)
+        {
+            return null;
+        }
+
+        switch (field_name)
+        {
+            case "CONTAINERTYPE":
+                {
+                    return New_Container_Data.Type;
+                }
+            case "CONTAINERSIZE":
+                {
+                    return New_Container_Data.Size;
+                }
+            case "CONTAINERSERIAL":
+                {
+                    return New_Container_Data.Container_Serial;
+                }
+            case "PARTITION":
+                {
+                    return New_Container_Data.Partition;
+                }
+            case "REFERENCE":
+                {
+                    return New_Container_Data.Reference;
+                }
+            case "SHIPPINGC":
+                {
+                    return New_Container_Data.Shipping_Company;
+                }
+            case "REQUEST":
+                {
+                    return New_Container_Data.Request;
+                }
+            case "CONSIDERATIONS":
+                {
+                    return New_Container_Data.Considerations;
+                }
+            case "SEAL":
+                {
+                    return New_Container_Data.Seal;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private void TryModifyNewContainerField(object? value, string field_name)
+    {
+        if (New_Container_Data is not null)
+        {
+            switch (field_name)
+            {
+                case "CONTAINERTYPE":
+                    {
+                        New_Container_Data.Type = (KeyValue?)value;
+                        break;
+                    }
+                case "CONTAINERSIZE":
+                    {
+                        New_Container_Data.Size = (ContainerInfoTriplet?)value;
+                        break;
+                    }
+                case "CONTAINERSERIAL":
+                    {
+                        New_Container_Data.Container_Serial = (string?)value is null ? (string?)value : ((string)value).ToUpper();
+                        break;
+                    }
+                case "PARTITION":
+                    {
+                        New_Container_Data.Partition = (int?)value;
+                        break;
+                    }
+                case "REFERENCE":
+                    {
+                        New_Container_Data.Reference = (string?)value;
+                        break;
+                    }
+                case "SHIPPINGC":
+                    {
+                        New_Container_Data.Shipping_Company = (KeyValue?)value;
+                        break;
+                    }
+                case "REQUEST":
+                    {
+                        New_Container_Data.Request = (string?)value;
+                        break;
+                    }
+                case "CONSIDERATIONS":
+                    {
+                        New_Container_Data.Considerations = (string?)value;
+                        break;
+                    }
+                case "SEAL":
+                    {
+                        New_Container_Data.Seal = (string?)value;
+                        break;
+                    }
+            }
+        }
+    }
+
+    private object? TryGetContentsField(string field_name)
+    {
+        switch (field_name)
+        {
+            case "AMOUNT":
+                {
+                    return Single_Contents_Item.Amount;
+                }
+            case "GROSSWEIGHT":
+                {
+                    return Single_Contents_Item.Gross_Weight;
+                }
+            case "MEASUREMENT":
+                {
+                    return Single_Contents_Item.Measurement;
+                }
+            case "LINESROLL":
+                {
+                    return Single_Contents_Item.Lines_By_Roll;
+                }
+            case "PACKAGING":
+                {
+                    return Single_Contents_Item.Packaging;
+                }
+            case "MERCHPRICE":
+                {
+                    return Single_Contents_Item.Price;
+                }
+            case "BRAND":
+                {
+                    return Single_Contents_Item.Brand;
+                }
+            case "RAL":
+                {
+                    return Single_Contents_Item.Ral;
+                }
+            case "FACTURA":
+                {
+                    return Single_Contents_Item.Invoice;
+                }
+            case "CONTENTS":
+                {
+                    return Single_Contents_Item.Contents;
+                }
+            case "SERIAL":
+                {
+                    return Single_Contents_Item.Serial;
+                }
+            case "NETWEIGHT":
+                {
+                    return Single_Contents_Item.Net_Weight;
+                }
+            case "TRIP":
+                {
+                    return Single_Contents_Item.Trip;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private void TryModifyField(string field_name, object? value)
+    {
+        switch (field_name)
+        {
+            case "AMOUNT":
+                {
+                    Single_Contents_Item.Amount = value is null ? 1 : (int)value;
+                    break;
+                }
+            case "NETWEIGHT":
+                {
+                    Single_Contents_Item.Net_Weight = value is null ? 1 : (decimal)value;
+                    break;
+                }
+            case "MEASUREMENT":
+                {
+                    Single_Contents_Item.Measurement = (SATTableTriplet?)value;
+                    break;
+                }
+            case "LINESROLL":
+                {
+                    Single_Contents_Item.Lines_By_Roll = (int?)value;
+                    break;
+                }
+            case "PACKAGING":
+                {
+                    Single_Contents_Item.Packaging = (SATTableTriplet?)value;
+                    break;
+                }
+            case "BRAND":
+                {
+                    Single_Contents_Item.Brand = (string?)value;
+                    break;
+                }
+            case "RAL":
+                {
+                    Single_Contents_Item.Ral = (string?)value;
+                    break;
+                }
+            case "MERCHPRICE":
+                {
+                    Single_Contents_Item.Price = (decimal?)value;
+                    break;
+                }
+            case "FACTURA":
+                {
+                    Single_Contents_Item.Invoice = (string?)value;
+                    break;
+                }
+            case "CONTENTS":
+                {
+                    Single_Contents_Item.Contents = (SATTableTriplet?)value;
+                    break;
+                }
+            case "SERIAL":
+                {
+                    Single_Contents_Item.Serial = (string?)value;
+                    break;
+                }
+            case "GROSSWEIGHT":
+                {
+                    Single_Contents_Item.Gross_Weight = value is null ? 1 : (decimal)value;
+                    break;
+                }
+            case "TRIP":
+                {
+                    Single_Contents_Item.Trip = (string?)value;
+                    break;
+                }
+        }
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

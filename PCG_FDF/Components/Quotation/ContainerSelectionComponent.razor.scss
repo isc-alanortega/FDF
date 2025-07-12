@@ -1,0 +1,36 @@
+﻿::deep .chip-set-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+    &.increase-it {
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    }
+}
+
+::deep .container-amount {
+    max-width: 20%;
+
+    &.increase-it {
+        max-width: 100%;
+
+        .mud-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-label {
+            font-size: 2rem;
+        }
+
+        .mud-input-numeric-spin {
+            flex-direction: row;
+
+            .mud-icon-root {
+                font-size: 6rem;
+            }
+        }
+    }
+}
+
+.chipset-wrapper {
+    width: 100%;
+}

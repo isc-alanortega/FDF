@@ -1,0 +1,251 @@
+﻿@typeparam DisplayItem
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.ComponentDI
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+
+<div class="pager-wrapper gridlistpaper">
+    <MudStack Class="main-stack">
+        <MudStack Row="!BreakpointService.GetIsXsSmScreen()" Class="controls-row" Justify="@Justify.SpaceBetween" AlignItems="@AlignItems.Center">
+            @ControlsDisplay
+            <MudStack Row="true" Class="controls-items" AlignItems="@AlignItems.Center">
+                @{
+                    string class_is_small_screen = BreakpointService.GetIsXsSmScreen() ? "mobil" : "";
+                    string class_btn_grid = $"controldisplay-btn-grid {(_mode == ViewMode.Grid ? "controldisplay-btn-active" : "")} {class_is_small_screen}";
+                    string class_btn_list = $"controldisplay-btn-list {(_mode == ViewMode.List ? "controldisplay-btn-active" : "")} {class_is_small_screen}";
+                }
+
+                @if (!NotShowGridItem)
+                {
+                    <MudIconButton Class="@class_btn_grid" Color="Color.Primary" Icon="@Icons.Material.Rounded.GridView" OnClick="@(() => _mode = ViewMode.Grid)"></MudIconButton>
+                }
+                <MudIconButton Class="@class_btn_list" Color="Color.Primary" Icon="@Icons.Material.Rounded.ViewList" OnClick="@(() => _mode = ViewMode.List)"></MudIconButton>
+
+                <div class="selector-wrapper">
+                    @{
+                        string class_select_item = $" controldisplay-select-item {class_is_small_screen}";
+                    }
+                    <MudSelect T="int"
+                               Class="@($"controldisplay-select {class_is_small_screen}")"
+                               Variant="Variant.Outlined"
+                               Value="@GetItemsPerPege()"
+                               ValueChanged="@ItemsPerPageChanged">
+
+                        <MudSelectItem Class="@class_select_item" Value="5" />
+                        <MudSelectItem Class="@class_select_item" Value="10" />
+                        <MudSelectItem Class="@class_select_item" Value="25" />
+                        <MudSelectItem Class="@class_select_item" Value="40" />
+                        <MudSelectItem Class="@class_select_item" Value="50" />
+                        <MudSelectItem Class="@class_select_item" Value="60" />
+                        <MudSelectItem Class="@class_select_item" Value="100" />
+                    </MudSelect>
+                </div>
+            </MudStack>
+        </MudStack>
+        @InvoiceTotal
+
+        @if (_mode == ViewMode.List)
+        {
+            @HeaderDisplay
+        }
+
+        <MudStack Class="item-stack">
+            @if (_mode == ViewMode.Grid)
+            {
+                @if (CurrentDisplay is not null)
+                {
+                    if (CurrentDisplay.Any())
+                    {
+                        <MudGrid Class="grid-pager" Spacing="6" Justify="BreakpointService.GetIsExtraSmall() ? Justify.Center : Justify.FlexStart">
+                            @foreach (var item in CurrentDisplay)
+                            {
+                                @GridItemDisplay(item)
+                            }
+                        </MudGrid>
+                    }
+                    else
+                    {
+                        <MudGrid Class="grid-pager" Spacing="6" Justify="Justify.FlexStart">
+                            <MudItem xs="12">
+                                @NoItemsDisplay
+                            </MudItem>
+                        </MudGrid>
+                    }
+                }
+                else
+                {
+                    <MudGrid Class="grid-pager" Spacing="6" Justify="Justify.FlexStart">
+                        @for (int i = 0; i < ItemsPerPage; i++)
+                        {
+                            <MudItem>
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" />
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+            }
+            else if (_mode == ViewMode.List)
+            {
+                @if (CurrentDisplay is not null)
+                {
+                    if (CurrentDisplay.Any())
+                    {
+                        <MudStack>
+                            @foreach (var item in CurrentDisplay)
+                            {
+                                @ListItemDisplay(item)
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudGrid Class="grid-pager" Spacing="6" Justify="Justify.FlexStart">
+                            <MudItem xs="12">
+                                @NoItemsDisplay
+                            </MudItem>
+                        </MudGrid>
+                    }
+                }
+                else
+                {
+                    <MudStack>
+                        @for (int i = 0; i < ItemsPerPage; i++)
+                        {
+                            <MudItem>
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" />
+                            </MudItem>
+                        }
+                    </MudStack>
+                }
+            }
+        </MudStack>
+
+        @*Btns Pagination*@
+        @if (TotalPages > 1)
+        {
+            <MudPagination Class="@($"pager gridlistpage {(BreakpointService.GetIsExtraSmall() ? "mobil" : "")}")" BoundaryCount="2" MiddleCount="5" SelectedChanged="@PageChanged" Selected="@CurrentPage" Color="Color.Primary" Count="@TotalPages" Variant="Variant.Filled" />
+        }
+    </MudStack>
+</div>
+
+<style>
+    .controldisplay-btn-list.mobil svg {
+        font-size: 2.3em !important;
+    }
+
+    .controldisplay-select.mobil svg,
+    .controldisplay-btn-grid.mobil svg,
+    .controldisplay-select.mobil input,
+    .controldisplay-select-item.mobil p {
+        font-size: 1.9em !important;
+    }
+
+    .controldisplay-btn-active {
+        border-radius: 50%;
+        background-color: darkgrey;
+    }
+
+    .gridlistpage.mobil span {
+        font-size: 1.5em !important;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<DisplayItem> ItemQueryResult { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment<DisplayItem> GridItemDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment<DisplayItem> ListItemDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment HeaderDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment ControlsDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment InvoiceTotal { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment NoItemsDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public int TotalCount { get; set; }
+    [Parameter, EditorRequired]
+    public EventCallback UpdatePage { get; set; }
+    [Parameter]
+    public bool NotShowGridItem { get; set; } = false;
+    [Parameter]
+    public int? InitialItemsPerPage { get; set; }
+
+    public int ItemsPerPage { get; set; }
+
+
+    private IEnumerable<DisplayItem> CurrentDisplay;
+    private enum ViewMode { Grid, List }
+    private ViewMode _mode = ViewMode.List;
+    public int CurrentPage = 1;
+    private int TotalPages;
+
+    protected async override Task OnInitializedAsync()
+    {
+        ItemsPerPage = InitialItemsPerPage ?? 5;
+
+        await base.OnInitializedAsync();
+    }
+
+    // only use this method when you want to force change the CurrentDisplay value
+    public void CheckAgainParameterSet(IEnumerable<DisplayItem>? itemQueryResult)
+    {
+        ItemQueryResult = itemQueryResult;
+        OnParametersSet();
+    }
+
+    public int GetItemsPerPege() => ItemsPerPage;
+
+    protected override void OnParametersSet()
+    {
+        CurrentDisplay = ItemQueryResult;
+
+        if (ItemQueryResult is not null)
+        {
+            TotalPages = GetTotalPages();
+        }
+        StateHasChanged();
+    }
+
+    private async void ItemsPerPageChanged(int value)
+    {
+        ItemsPerPage = value;
+        await UpdatePage.InvokeAsync();
+    }
+
+    private async void PageChanged(int page)
+    {
+        CurrentPage = page;
+        await UpdatePage.InvokeAsync();
+    }
+
+    private bool AtFirstPage()
+    {
+        return CurrentPage == 1;
+    }
+
+    private bool AtLastPage()
+    {
+        return CurrentPage >= GetTotalPages();
+    }
+
+    private int GetTotalPages()
+    {
+        return Convert.ToInt32(Math.Ceiling(TotalCount / Convert.ToDecimal(ItemsPerPage)));
+    }
+
+    private async void MoveBack()
+    {
+        CurrentPage--;
+        await UpdatePage.InvokeAsync();
+    }
+
+    private async void MoveNext()
+    {
+        CurrentPage++;
+        await UpdatePage.InvokeAsync();
+    }
+}

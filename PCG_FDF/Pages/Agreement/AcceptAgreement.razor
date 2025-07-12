@@ -1,0 +1,201 @@
+﻿@page "/Agreements/Accept/{AgreementUUID:guid}"
+
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.Enums
+@using PCG_FDF.Utility;
+@layout ReadOnlyLayout
+@inject LayoutController LayoutControl
+@inject GlobalLocalizer localize
+@inject NavigationManager NavigationManager
+@inject PCG_FDF_DB DATA_ACCESS
+@inject WhiteLabelManager WhiteLabel
+@inject GlobalBreakpointService BreakpointService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+@implements IDisposable
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="agreement-wrapper">
+    <div class="waves-header">
+        <!--Waves Container -->
+        <MudPaper Width="@(BreakpointService.GetIsMobile() ? "90%" : "50%")" Height="@(BreakpointService.GetIsMobile() ? "70%" : "50%")" Elevation="5" Class="data-card">
+            <MudStack Class="card-header" Row="true">
+                <div class="icon-wrapper">
+                    <MudIcon Class="@(WhiteLabel.GetIconCSSClass() + " " + WhiteLabel.GetIconAgreementSizeModifier())" Size="Size.Large" Icon="@WhiteLabel.GetPageIcon().GetIcon()" ViewBox="@WhiteLabel.GetPageIcon().GetViewBox()"></MudIcon>
+                </div>
+                <MudText Class="agreement-header-text" Typo="@Typo.h3"><strong>@(WhiteLabel.GetPageName())</strong></MudText>
+                <MudText Class="agreement-supporting-text" Color="Color.Tertiary" Typo="Typo.h3"><strong>Acuerdo Comercial</strong></MudText>
+            </MudStack>
+            <MudStack Class="inner-card">
+                <MudStack Class="card-info-container" Row="true">
+                    @if (success.HasValue)
+                    {
+                        // Success
+                        if (success.Value)
+                        {
+                            if (result is not null && result.Operation_Result)
+                            {
+                                <div class="indicator indicator-ok"></div>
+                                <div class="text-container">
+                                    <MudText Typo="Typo.h4">@localize.Get("agreement-accept-1") @result.Invoice</MudText>
+                                    <MudText Typo="@Typo.h4">@localize.Get("agreement-accept-2") @result.Signed_DateTime!.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+                                    @if (LanguageUtil.getCurrentCulture() == "EN")
+                                    {
+                                        <MudText Typo="@Typo.h4">@localize.Get("agreement-accept-3")</MudText>
+                                    }
+                                </div>
+                            }
+                            // BAD SIGNING
+                            else
+                            {
+                                <div class="indicator indicator-error"></div>
+                                <div class="text-container">
+                                    <MudText Typo="@Typo.h4">@localize.Get("agreement-fail")</MudText>
+                                </div>
+                            }
+                        }
+                        // ERROR
+                        else
+                        {
+                            <div class="indicator indicator-error"></div>
+                            <div class="text-container">
+                                <MudText Typo="@Typo.h4">@localize.Get("agreement-fail")</MudText>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" Width="300px"></MudSkeleton>
+                    }
+                </MudStack>
+                @if (success.HasValue)
+                {
+                    // Success
+                    if (success.Value)
+                    {
+                        if (result is not null && result.Operation_Result)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="download-button" OnClick="@(async () => await DownloadPDF())">
+                                <MudStack Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_get_pdf")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Rounded.SaveAlt"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                        }
+                    }
+                }
+            </MudStack>
+        </MudPaper>
+        <div class="waves-container">
+            <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+                <defs>
+                    <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+                </defs>
+                <g class="parallax">
+                    <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.7" />
+                    <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.5)" />
+                    <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.3)" />
+                    <use xlink:href="#gentle-wave" x="48" y="7" fill="#fff" />
+                </g>
+            </svg>
+        </div>
+        <!--Waves end-->
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public Guid? AgreementUUID { get; set; }
+    private IJSObjectReference? module_agent;
+    private string? User_Agent;
+    private bool? success { get; set; } = null;
+    private AgreementSigningResult? result { get; set; } = null;
+    private IJSObjectReference? module_download;
+
+    protected async override Task OnInitializedAsync()
+    {
+        LayoutControl.SetControl(true);
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AgreementUUID is null)
+        {
+            navigateToStart();
+        }
+        await base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_agent = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/read_user_agent.js");
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+            if (module_agent is not null)
+            {
+                User_Agent = await module_agent.InvokeAsync<string>("GetUseragent");
+                AgreementSigning data = new AgreementSigning()
+                    {
+                        Agreement_UUID = AgreementUUID!.Value,
+                        User_Agent = User_Agent,
+                        User_Timezone = TimeZoneInfo.Local
+                    };
+                var SigningResult = await DATA_ACCESS.SignAgreement(data);
+                success = SigningResult.Success;
+                result = SigningResult.Result;
+            }
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task DownloadPDF()
+    {
+        if (success.HasValue && result is not null && success.Value && result.Operation_Result)
+        {
+            var FILESTREAM = await DATA_ACCESS.PostDownloadAgreementPDF(AgreementUUID!.Value, LanguageUtil.getCurrentCulture());
+            if (FILESTREAM is not null && module_download is not null)
+            {
+                var fileName = LanguageUtil.getCurrentCulture() == "EN" ? $"Commercial-Agreement-{result.Invoice}.pdf" : $"Acuerdo-Comercial-{result.Invoice}.pdf";
+                using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+            }
+        }
+    }
+
+    private void navigateToStart()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    /*
+    * Eliminar los modulos JS cargados al terminar de usar el componente actual
+    */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_agent is not null)
+        {
+            await module_agent.DisposeAsync();
+        }
+
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+
+        Dispose();
+    }
+}

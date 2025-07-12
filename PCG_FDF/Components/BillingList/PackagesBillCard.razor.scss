@@ -1,0 +1,111 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+
+::deep .card-active {
+    background: css-color-var(complex-chip) !important;
+    animation: none;
+}
+
+::deep .service-active {
+    background: css-color-var(primary-lighten-2) !important;
+    animation: none;
+}
+
+::deep .title-row {
+    align-items: center;
+}
+
+::deep .internal-icon {
+    fill: css-color-var(primary) !important;
+    stroke: css-color-var(primary);
+
+    &.resize-it {
+        font-size: 2.4rem !important;
+    }
+}
+
+::deep .stack-card {
+    background: css-color-var(complex-chip);
+
+    &:hover {
+        @include animation('card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both', 'card-color-change 0.3s linear alternate both');
+
+        .package-panel {
+            @include animation('card-color-change 0.3s linear alternate both');
+        }
+    }
+
+    .package-panel {
+        .mud-icon-root {
+            &.resize-it {
+                font-size: 3.5rem !important;
+            }
+        }
+    }
+}
+
+::deep .package-panel {
+    background: css-color-var(complex-chip) !important;
+
+    .mud-expand-panel-header {
+        padding: 8px 10px !important;
+    }
+}
+
+::deep .package-item-text {
+    color: css-color-var(primary-darken);
+}
+
+::deep .service-checkbox {
+    .mud-typography.mud-typography-body1 {
+        color: css-color-var(primary-darken);
+    }
+
+    .mud-checkbox .mud-readonly {
+        color: css-color-var(tertiary-disable) !important;
+    }
+
+    &.resize-it {
+        .mud-icon-root {
+            font-size: 2rem;
+        }
+
+        .mud-typography {
+            font-size: 1.5rem;
+        }
+    }
+}
+
+::deep .service-package-card {
+    padding: 4px 8px;
+    background: css-color-var(primary);
+    grid-template-columns: 4fr 1fr;
+    grid-column-gap: 10px;
+    display: grid;
+    justify-content: space-between;
+    align-items: center;
+}
+
+::deep .title-row {
+    grid-template-columns: 0fr 0fr 4fr 1fr;
+    grid-column-gap: 10px !important;
+    display: grid !important;
+}
+
+::deep .package-panel {
+    .mud-expand-panel-content {
+        padding-right: 0px !important;
+    }
+}
+
+@include keyframes(card-popup) {
+    @include anim-popup-center-frames();
+}
+
+@include keyframes(card-color-change) {
+    @include anim-color-change-2x-frames(css-color-var(primary), css-color-var(primary-lighten));
+}
+
+::deep .service-package-card:hover {
+    @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+}

@@ -1,0 +1,239 @@
+﻿@using Newtonsoft.Json
+@using PCG_ENTITIES.Requests
+@using PCG_ENTITIES.Resultsets
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.AuthManagement
+@using PCG_FDF.Data.ComponentDI.Quotation
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using System.Security.Claims
+@using PCG_FDF.Utility
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject PCG_FDF_DB DATA_ACCESS
+@inject QuotationDataCollection quotationService
+@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbar Snackbar
+@implements IDisposable
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_warehousecontainerized")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <div class="dialog-stack">
+            <MudStack>
+                <MudStack Row="@(!BreakpointService.GetIsMobile())" Style="width: 100%" AlignItems="@AlignItems.Center">
+                    <MudDatePicker Editable="true"
+                                   Mask="@(new DateMask("dd/MM/yyyy"))"
+                                   DateFormat="dd/MM/yyyy"
+                                   Class="@ResponsiveUtil.GetMobileClass("dialog-datefield", BreakpointService.GetIsMobile())"
+                                   ReadOnly="@Loading"
+                                   @bind-Date="@DateFrom"
+                                   Clearable="@true"
+                                   MaxDate="@DateTime.Now.Date"
+                                   Label="@Localize.Get("label_from")" />
+                    <MudDatePicker Editable="true"
+                                   Mask="@(new DateMask("dd/MM/yyyy"))"
+                                   DateFormat="dd/MM/yyyy"
+                                   Class="@ResponsiveUtil.GetMobileClass("dialog-datefield", BreakpointService.GetIsMobile())"
+                                   ReadOnly="@Loading"
+                                   @bind-Date="@DateTo"
+                                   Clearable="@true"
+                                   MaxDate="@DateTime.Now.Date"
+                                   Label="@Localize.Get("label_to")" />
+                </MudStack>
+                <MudSelect Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                           T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           PopoverClass="@ResponsiveUtil.GetMobileClass("dialog-popover", BreakpointService.GetIsMobile())"
+                           @bind-Value="@Location"
+                           ReadOnly="@Loading"
+                           Required="@true"
+                           Clearable="@false"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_location")}")">
+
+                    @foreach (var option in AppState.GetCurrentClientLocations())
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+                </MudSelect>
+                <MudSelect Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                           T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           PopoverClass="@ResponsiveUtil.GetMobileClass("dialog-popover", BreakpointService.GetIsMobile())"
+                           @bind-Value="@Business_Unit"
+                           ReadOnly="@Loading"
+                           Required="@true"
+                           Clearable="@false"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_businessunit")}")">
+
+                    @foreach (var option in Business_Units)
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+                </MudSelect>
+                <MudStack Row="@(!BreakpointService.GetIsMobile())" Style="width: 100%" AlignItems="@AlignItems.Center">
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  Required="@false"
+                                  MaxLength="17"
+                                  Clearable="@true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  DebounceInterval="1500"
+                                  @bind-Value="@Booking"
+                                  T="string"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} Booking")" />
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  Required="@false"
+                                  MaxLength="13"
+                                  Clearable="@true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  DebounceInterval="1500"
+                                  @bind-Value="@Container"
+                                  T="string"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_container")}")" />
+                </MudStack>
+            </MudStack>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@Localize.Get("btn_cancel")</MudButton>
+            @if (!Loading)
+            {
+                <MudIconButton Class="@ResponsiveUtil.GetMobileClass("download-button", BreakpointService.GetIsMobile())" Color="@Color.Tertiary" OnClick="@Submit" Icon="@Icons.Material.Rounded.Download" Size="@Size.Large" />
+            }
+            else
+            {
+                <MudProgressCircular Class="@ResponsiveUtil.GetMobileClass("download-spinner", BreakpointService.GetIsMobile())" Color="Color.Tertiary" Size="Size.Medium" Indeterminate="true" />
+            }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private IEnumerable<KeyValue> Business_Units = new List<KeyValue>() { new KeyValue() { Key = 2, Value = "DEPOSITO" }, new KeyValue() { Key = 3, Value = "CIMA LOGISTIC" } };
+
+    private KeyValue? Location { get; set; } = null;
+    private KeyValue? Business_Unit { get; set; } = null;
+    private DateTime? DateFrom { get; set; } = DateTime.Now.AddMonths(-1).Date;
+    private DateTime? DateTo { get; set; } = DateTime.Now.Date.AddDays(1).AddTicks(-1);
+    private string? Booking { get; set; } = null;
+    private string? Container { get; set; } = null;
+
+    private bool Loading { get; set; } = false;
+
+    private IJSObjectReference? module_download;
+
+    async void Submit()
+    {
+        if (!Loading)
+        {
+            Loading = true;
+            try
+            {
+                if (Location is not null && Business_Unit is not null)
+                {
+                    var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+                    var FILESTREAM = await DATA_ACCESS.DownloadAuthAsync("/PCG_FDFTracking/PostGetClientWarehouseStock", HttpMethod.Post, null, JsonConvert.SerializeObject(new WarehouseStockFilter()
+                        {
+                            IdCliente = AppState.GetCurrentClientID(),
+                            RfcCliente = AppState.ReturnCurrentClientRFC(),
+                            FechaEntradaDesde = DateFrom,
+                            FechaEntradaHasta = DateTo,
+                            IdLocalidad = Location!.Key,
+                            EsCargaSuelta = false,
+                            Booking = string.IsNullOrWhiteSpace(Booking) ? null : Booking.Trim(),
+                            Origen = string.IsNullOrWhiteSpace(Container) ? null : Container.Trim(),
+                            IdUnidadNegocio = Business_Unit!.Key,
+                            Author = user_context.User.Claims.FirstOrDefault(claims => claims.Type == ClaimTypes.GivenName)!.Value
+                        })
+                    , null);
+                    if (FILESTREAM is not null && module_download is not null)
+                    {
+                        var fileName = $"{Localize.Get("reports_warehousecontainerized")} - {DateTime.Now.ToString("dd/MM/yyyy - HH:mm")}.xlsx";
+                        using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                        await module_download!.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                    }
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(Localize.Get("snackbar_err_selectlocationbusiness"), Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                Loading = false;
+            }
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    protected async override Task OnInitializedAsync()
+    {
+        Location = AppState.GetCurrentClientLocations().FirstOrDefault(location => location.Key == AppState.GetCurrentLocation());
+
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchBusinessUnit(string? value)
+    {
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<IEnumerable<KeyValue>?>>("/PCGParametros/GetUnidadesNegocio", HttpMethod.Get, new Dictionary<string, string?> { { "search", value } }, null);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    /*
+    * Eliminar los modulos JS cargados al terminar de usar el componente actual
+       */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,31 @@
+﻿.element-boundary {
+    margin: 8px 0px;
+}
+
+::deep .numerical-input {
+    &.increase-it {
+        max-width: 100%;
+
+        .mud-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-label {
+            font-size: 2rem;
+        }
+
+        .mud-input-numeric-spin {
+            flex-direction: row;
+
+            .mud-icon-root {
+                font-size: 6rem;
+            }
+        }
+    }
+}
+
+@media(max-width: 960px) {
+    ::deep .quotation-elements-mudnumericfield p {
+        font-size: 1.8em !important;
+    }
+}

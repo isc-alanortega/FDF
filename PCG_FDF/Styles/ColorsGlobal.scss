@@ -1,0 +1,14 @@
+﻿// setup your colors in a map
+$css-color-vars: ( primary: #0045AC, primary-darken: #1E2637, primary-lighten: #384051, primary-lighten-2: #334756, primary-text-blue: #143377, secondary: #D03631, secondary-darken: #BB302C, secondary-lighten: #D44A45, secondary-text-red: #E31E25, tertiary: #DA291C, tertiary-darken: #E54424, tertiary-lighten: #FF5D3E, tertiary-disable: #FF8169, global-fullwhite: #FFFFFF, global-midwhite: #FAFAFA, global-lowwhite: #F0F0F0, global-fullblack: #000000, global-theme-grey: #E9E9E9, global-grey: #8F8F8F, global-grey-2: #E1E4E4, global-green-success: #40C240, global-red-error: #DB3632, global-notepad-yellow: #FFFEE0, CIMA-blue: #384A9C, CIMA-red: #CE3439, badge-ok: #C4DAFF, badge-needinfo: #EBA8A6, global-RGBA-black-50: #00000080, global-RGBA-black-40: #00000066, global-RGBA-black-16: #00000029, global-RGBA-transparent: #FFFFFF00, global-RGBA-grey-2-31: #8B8B8B50, global-RGBA-grey-31: #50505050, global-RGBA-grey-25: #8F8F8F40, RGBA-primary-80: #222B3ECC, RGBA-primary-50: #222B3E80, RGBA-primary-25: #222B3E40, RGBA-tertiary-50: #FF4C2980, RGBA-tertiary-25: #FF4C2940, nav-menu: #112f5c, nav-info: #112f5c, package-subtitle: #A1B5D3, complex-chip: #EDF4FA, booking-panel: #869AAC );
+
+// automatic write colors of map to css variables using a SASS loop
+:root {
+    @each $color_name, $color in $css-color-vars {
+        --color-#{$color_name}: #{$color};
+    }
+}
+
+// create function to easy access to css variables
+@function css-color-var($color) {
+    @return var(--color-#{$color});
+}

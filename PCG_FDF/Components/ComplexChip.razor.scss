@@ -1,0 +1,382 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+@import '../Styles/Core/_app_fx.scss';
+
+
+@include keyframes(color-change-2x-select) {
+    @include anim-color-change-2x-frames(css-color-var(global-RGBA-transparent), css-color-var(primary-lighten-2));
+}
+
+@include keyframes(scale-up-hor-center-x6) {
+    @include anim-scale-up-hor-center-frames(1, 6);
+}
+
+@include keyframes(scale-up-center-x1-2) {
+    @include anim-scale-up-center-frames(0.9, 1.2);
+}
+
+@include keyframes(scale-up-center-x1-05) {
+    @include anim-scale-up-center-frames(0.9, 1.05);
+}
+
+@include keyframes(slide-in-fwd-center) {
+    @include anim-slide-in-fwd-center-frames();
+}
+
+::deep .mobile-chip-icon {
+    font-size: 4rem;
+}
+
+.complex-chip-wrapper {
+    flex: 1;
+}
+
+::deep .complex-chip {
+    height: fit-content !important;
+    width: 100%;
+    padding-right: 14px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    border-right: 1px solid css-color-var(global-RGBA-grey-31);
+    border-radius: 0 !important;
+    color: css-color-var(primary);
+
+    &:last-child {
+        border-right: none;
+    }
+
+    &.is-mobile {
+        height: max-content !important;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    &.mud-chip-selected {
+        background: css-color-var(primary) !important;
+        color: css-color-var(global-fullwhite)
+    }
+}
+
+.add-label {
+    opacity: 0;
+    transition: all ease-in-out .3s;
+}
+
+.actionable-chip {
+    flex: auto !important;
+    background-color: css-color-var(complex-chip);
+    border-radius: 20px;
+    width: 300px; 
+    display: flex;
+    flex-direction: column;
+}
+
+::deep .actionable-complex-chip {
+    height: fit-content !important;
+    width: 100%;
+    padding-inline: 25px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    flex: 1;
+
+    &:hover {
+        .internal-chip-wrapper .chip-header .chip-icon-container {
+            background-color: css-color-var(global-fullwhite);
+
+            div .mud-icon-root.mud-svg-icon {
+                stroke: css-color-var(primary)
+            }
+        }
+
+        .mud-icon-root.mud-svg-icon {
+            fill: css-color-var(global-fullwhite) !important;
+        }
+
+        .add-label {
+            opacity: 1
+        }
+    }
+
+    &.is-mobile {
+        height: max-content !important;
+        padding: 20px;
+
+        .internal-chip-wrapper {
+            flex-direction: column !important;
+            align-items: center;
+            gap: 2rem;
+        }
+    }
+
+    &.mud-chip-text.mud-chip-color-primary {
+        color: css-color-var(primary);
+
+        &:hover {
+            background-color: css-color-var(primary);
+            color: css-color-var(global-fullwhite);
+        }
+    }
+
+    &.mud-chip-filled.mud-chip-color-primary {
+        color: css-color-var(global-fullwhite);
+        background-color: css-color-var(primary);
+
+        .internal-chip-wrapper .chip-header .chip-icon-container {
+            background-color: css-color-var(global-fullwhite);
+
+            div .mud-icon-root.mud-svg-icon {
+                stroke: css-color-var(primary)
+            }
+        }
+
+        .mud-icon-root.mud-svg-icon {
+            fill: css-color-var(global-fullwhite) !important;
+        }
+
+        &:hover {
+            background-color: css-color-var(primary);
+            color: css-color-var(global-fullwhite);
+        }
+    }
+
+    &.internal-chip-wrapper {
+        flex-direction: column !important;
+    }
+}
+
+::deep .mobile-chip-actions {
+    height: 100%;
+}
+
+::deep .mud-chip-text.mud-chip-color-primary {
+    background-color: css-color-var(complex-chip);
+}
+
+::deep .internal-button-icon {
+    stroke: currentColor;
+}
+
+::deep .internal-chip-text {
+    &.is-mobile {
+        display: flex;
+        flex-wrap: wrap;
+        white-space: break-spaces;
+        text-align: center;
+    }
+}
+
+::deep .complex-chip:hover {
+    .button-footer {
+        @include animation('scale-up-hor-center-x6 0.3s cubic-bezier(0.390, 0.575, 0.565, 1.000) both');
+    }
+
+    .internal-button-icon {
+        @include animation('scale-up-center-x1-2 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+    }
+
+    .internal-chip-text {
+        @include animation('scale-up-center-x1-05 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+    }
+
+    .chip-action-button {
+        @include animation('slide-in-fwd-center 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both');
+        visibility: visible;
+    }
+
+    .mobile-chip-action-button {
+        @include animation('slide-in-fwd-center 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both');
+        visibility: visible;
+    }
+}
+
+::deep .complex-chip.mud-chip-selected {
+
+    .button-footer {
+        @include animation('scale-up-hor-center-x6 0.3s cubic-bezier(0.390, 0.575, 0.565, 1.000) both');
+    }
+
+    .chip-action-button {
+        visibility: visible;
+    }
+
+    .mobile-chip-action-button {
+        .mud-icon-root {
+            fill: css-color-var(tertiary) !important;
+        }
+
+        visibility: visible;
+    }
+}
+
+.internal-chip-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    height: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+::deep .actionable-complex-chip .internal-chip-wrapper {
+    flex-direction: column !important;
+    align-items: start;
+}
+
+.chip-icon-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.chip-actions-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+::deep .chip-action-button {
+    padding: 0px !important;
+    min-width: 24px !important;
+    visibility: hidden;
+    margin-left: 16px;
+
+    &.is-active {
+        visibility: visible;
+    }
+}
+
+::deep .mobile-chip-action-button {
+    justify-self: center;
+    border-radius: 50px;
+    background-color: css-color-var(tertiary);
+    padding: 14px 35px;
+    border-radius: 50px;
+    color: css-color-var(global-fullwhite);
+    font-size: 1.8rem;
+
+    .mud-icon-root {
+        fill: css-color-var(global-fullwhite) !important;
+        font-size: 4rem;
+    }
+
+    &.is-active {
+        visibility: visible;
+    }
+
+    svg {
+        fill: white !important;
+        margin-right: 12px;
+    }
+}
+
+::deep .internal-animation-icon {
+    position: absolute;
+    stroke: red;
+}
+
+::deep .chip-action-button:hover {
+    .internal-action-top-icon {
+        fill: css-color-var(tertiary) !important;
+    }
+
+    .internal-action-bottom-icon {
+        fill: css-color-var(global-fullwhite) !important;
+    }
+}
+
+::deep .internal-action-top-icon {
+    fill: css-color-var(RGBA-tertiary-50) !important;
+}
+
+::deep .internal-action-bottom-icon {
+    fill: css-color-var(RGBA-tertiary-50) !important;
+}
+
+.internal-horizontal-spacer {
+    width: 20px;
+}
+
+.internal-horizontal-spacer-small {
+    width: 15px;
+}
+
+.internal-vertical-spacer {
+    height: 8px;
+}
+
+.internal-vertical-spacer-small {
+    height: 6px;
+}
+
+.button-footer {
+    background-color: css-color-var(tertiary);
+}
+
+::deep .actionable-complex-chip.mud-chip-selected {
+
+    .mobile-chip-action-button {
+        .mud-icon-root {
+            fill: css-color-var(tertiary) !important;
+        }
+
+        visibility: visible;
+    }
+}
+
+.chip-actionable-container {
+    display: flex;
+    gap: .8rem;
+    margin-top: 30px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.chip-actionable-container .chip-action-button {
+    visibility: visible !important;
+}
+
+
+::deep .actionable-complex-chip .internal-chip-wrapper .chip-actionable-container .chip-actionable-button {
+    background-color: css-color-var(tertiary);
+    padding: 14px 35px;
+    border-radius: 50px;
+    color: css-color-var(global-fullwhite);
+
+    &:hover {
+        opacity: .8;
+    }
+}
+
+::deep .actionable-complex-chip .internal-chip-wrapper .chip-actionable-container .chip-action-button {
+    visibility: visible !important;
+    height: fit-content;
+}
+
+::deep .actionable-complex-chip .internal-chip-wrapper .chip-actionable-container .chip-actionable-button svg {
+    fill: white !important;
+    margin-right: 12px;
+}
+
+
+::deep .chip-header {
+    display: flex;
+    align-items: center;
+}
+
+::deep .actionable-complex-chip {
+    .chip-header {
+        .chip-icon-container {
+            padding: 12px;
+            background-color: css-color-var(primary);
+            color: white;
+            border-radius: 100px;
+        }
+
+        .internal-chip-text {
+            text-transform: uppercase;
+            text-wrap: wrap;
+        }
+    }
+}

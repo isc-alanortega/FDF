@@ -1,0 +1,87 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Entities
+@inject ShoppingCartContainer shoppingCart
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div>
+    <MudPaper Class="stack-card">
+        <MudStack Class="text-stack">
+            <MudExpansionPanels DisableBorders="true" Elevation="0">
+                <MudExpansionPanel @bind-IsExpanded="isOpen" Class="package-panel" HideIcon=true>
+                    <TitleContent>
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.body1)" Class="package-item-text"><strong>@Paquete.Value.Paquete.Nombre_Paquete</strong></MudText>
+                            <MudIcon Size="Size.Large" Color="Color.Tertiary" Icon="@(isOpen ? Icons.Material.Rounded.KeyboardArrowUp : Icons.Material.Rounded.KeyboardArrowDown)" Class="@($"ml-auto {(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")}")"></MudIcon>
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudStack Class="services-stack" Spacing="0">
+                            @foreach (var item in Paquete.Value.Servicios.Values)
+                            {
+                                <MudPaper Elevation="0" Outlined="false" Class="service-package-card">
+                                    @if (item.EsCore)
+                                    {
+                                        <MudCheckBox Class="@(BreakpointService.GetIsMobile() ? "checkbox-label" : "")" Disabled="true" @bind-Checked="@item.Active" Label="@item.FullName" Color="Color.Tertiary"></MudCheckBox>
+                                    }
+                                    else
+                                    {
+                                        <MudCheckBox Class="@(BreakpointService.GetIsMobile() ? "checkbox-label" : "")" Disabled="false" Checked="@item.Active" CheckedChanged="(bool args) => ActiveChanged(item, args)" Label="@item.FullName" Color="Color.Tertiary"></MudCheckBox>
+                                    }
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    </ChildContent>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudStack>
+        <MudIconButton Class="@($"btn-trash {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" OnClick="@(() => removePackageFromCart(Paquete.Key))" Icon="@CustomIcons.trashcan.GetIcon()" Color="Color.Secondary"></MudIconButton>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public KeyValuePair<int, PaquetesCompletosEditable> Paquete { get; set; }
+    [Parameter, EditorRequired]
+    public Action<int> RemoveAction { get; set; }
+    [Parameter, EditorRequired]
+    public Action<int> RemoveSubserviceAction { get; set; }
+
+    private void ActiveChanged(ServiciosPaqueteEditable item, bool value) {
+        item.Active = value;
+        if (!value) {
+            RemoveSubserviceAction.Invoke(item.Id);
+        }
+    }
+
+    private void removePackageFromCart(int key) {
+        RemoveAction.Invoke(key);
+    }
+
+    private bool isOpen { get; set; }
+
+    protected override void OnInitialized()
+    {
+        shoppingCart._onChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        await BreakpointService.ReCheckSize();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose() {
+        BreakpointService.OnChange -= StateHasChanged;
+        shoppingCart._onChange -= StateHasChanged;
+    }
+}

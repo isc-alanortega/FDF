@@ -1,0 +1,101 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+.info-badge {
+    height: 25px;
+    width: 25px;
+    border-radius: 50%;
+    display: flex;
+    justify-self: end;
+    align-items: center;
+    justify-content: center;
+    transition: width 1s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    position: relative;
+    overflow: hidden; // Para asegurar que el contenido no se desborde
+}
+
+.info-badge::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    transition: opacity 0.3s linear;
+    opacity: 0;
+}
+
+.info-badge:hover::before {
+    opacity: 1;
+}
+
+.info-badge:hover {
+    width: auto;
+    transform: scale(1);
+    border-radius: 50px;
+
+    .inner-badge {
+        margin-right: 3px;
+    }
+}
+
+.info-badge {
+    &.badge-need-info:hover span {
+        padding: 8px;
+        width: max-content;
+        opacity: 1;
+        transition: width 0.3s 0s linear, padding 0.3s 0s linear, opacity 0.3s 0s linear;
+    }
+
+    &.badge-ok:hover span {
+        padding: 8px;
+        width: max-content;
+        opacity: 1;
+        transition: width 0.3s 0s linear, padding 0.3s 0s linear, opacity 0.3s 0s linear;
+    }
+}
+
+.info-badge {
+    &.badge-need-info span {
+        width: 0px;
+        opacity: 0;
+        text-align: center;
+        color: css-color-var(CIMA-red) !important;
+    }
+
+    &.badge-need-info {
+        color: css-color-var(CIMA-red) !important;
+    }
+
+    &.badge-ok span {
+        width: 0px;
+        opacity: 0;
+        text-align: center;
+        color: css-color-var(CIMA-blue) !important;
+    }
+
+    &.badge-ok {
+        color: css-color-var(CIMA-blue) !important;
+    }
+}
+
+.inner-badge {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: css-color-var(global-fullwhite);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .badge-icon {
+    font-size: 16px;
+}
+
+.badge-ok {
+    background: css-color-var(badge-ok);
+}
+
+.badge-need-info {
+    background: css-color-var(badge-needinfo);
+}

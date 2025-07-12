@@ -1,0 +1,46 @@
+﻿@inherits BookingElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@GetLimitedLabel()</MudText>
+        </MudStack>
+    </MudStack>
+</div>
+
+@code {
+    private string label_display { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        if (ElementData.Preloaded_Value is not null)
+        {
+            label_display = GetPreloadedValueAs<string>();
+        }
+        base.OnInitialized();
+    }
+
+    private string GetLimitedLabel()
+    {
+        if (ElementData.Validations.TryGetValue("MAX", out var MaxLength))
+        {
+            if (label_display.Length <= Convert.ToInt32(MaxLength.Validation_Value))
+            {
+                return label_display;
+            }
+            else
+            {
+                return $"{label_display.Substring(0, Convert.ToInt32(MaxLength.Validation_Value) - 1)}...";
+            }
+        }
+        else
+        {
+            return label_display;
+        }
+    }
+}

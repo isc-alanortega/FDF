@@ -1,0 +1,176 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_ENTITIES.Extensions
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities.Tariffs;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization;
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalLocalizer localize
+@inject QuotationDataCollection quotationService
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div>
+    <MudPaper Class="paper-transparent" Elevation="0">
+        <MudExpansionPanels DisableBorders="true" Elevation="0">
+            <MudExpansionPanel @bind-IsExpanded="isOpen" Class="ticket-service-panel paper-blue" HideIcon=true>
+                <TitleContent>
+                    <MudStack Class="title-row" Row="true">
+                        <MudIcon Size="Size.Large" Icon="@(isOpen ? Icons.Material.Rounded.KeyboardArrowUp : Icons.Material.Rounded.KeyboardArrowDown)" Class="@($"ticket-panels-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"></MudIcon>
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@TryGetServiceName(ServiceTariff.ID_Servicio)</MudText>
+                        @if (ServiceTariff.Service_Tariff.Tarifa_Comercial is not null )
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">$@(string.Format("{0:N2}", ServiceTariff.Service_Tariff.Tarifa_Comercial.Tarifa_Total) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                        }
+                        else
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">$@(string.Format("{0:N2}", ServiceTariff.Service_Tariff.Tarifa_Total) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                        }
+                    </MudStack>
+                </TitleContent>
+                <ChildContent>
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@Convert.ToInt32(ServiceTariff.Service_Tariff.Cantidad_Calculada)</MudText>
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@TryGetServiceName(ServiceTariff.ID_Servicio)</MudText>
+                        @if (ServiceTariff.Service_Tariff.Tarifa_Comercial is not null)
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", ServiceTariff.Service_Tariff.Tarifa_Comercial.Tarifa_Calculada) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                        }
+                        else
+                        {
+                            <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", ServiceTariff.Service_Tariff.Tarifa_Calculada) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                        }
+                    </MudStack>
+                    @if (ServiceTariff.Tax_Total.HasValue)
+                    {
+                        <MudStack Spacing="1">
+                            @foreach (var tax_item in ServiceTariff.Service_Taxes)
+                            {
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@($"{tax_item.Nombre_Impuesto} ({tax_item.Cuota * 100}%)")</MudText>
+                                    <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", tax_item.Monto_Impuesto) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                                    </MudStack>
+                            }
+                        </MudStack>
+                    }
+                    <div class="subtotal-divider"></div>
+                    @if (ServiceTariff.Service_Tariff.Tarifas_Subservicios is not null && ServiceTariff.Service_Tariff.Tarifas_Subservicios.Any())
+                    {
+                        @foreach (var item in ServiceTariff.Service_Tariff.Tarifas_Subservicios)
+                        {
+                            @if (item.Value is null || !ServiceTariff.Valid_Tariff)
+                            {
+                                <MudStack Class="ticket-row" Row="true">
+                                    <MudText Typo="Typo.h5">@quotationService.GetQuotationCart().GetServices()[ServiceTariff.ID_Servicio].Subservicios[item.Key].Nombre</MudText>
+                                    <MudStack Row="true">
+                                        <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Secondary" Size="Size.Large"></MudIcon>
+                                        <MudText Typo="Typo.h5">@localize.Get("com_ticket_tariffnotfound")</MudText>
+                                    </MudStack>
+                                </MudStack>
+                            }
+                            else
+                            {
+                                if (item.Value.Tarifa_Comercial is not null)
+                                {
+                                    <MudStack Row="true">
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@Convert.ToInt32(item.Value.Cantidad_Calculada)</MudText>
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@TryGetSubserviceName(ServiceTariff.ID_Servicio, item.Key)</MudText>
+                                        <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", item.Value.Tarifa_Comercial.Tarifa_Calculada) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                                        </MudStack>
+                                    @if (ServiceTariff.Subservices_Tax_Totals[item.Key].HasValue)
+                                    {
+                                        @foreach (var tax_item in ServiceTariff.Subservices_Taxes[item.Key])
+                                        {
+                                            <MudStack Row="true">
+                                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@($"{tax_item.Nombre_Impuesto} ({tax_item.Cuota * 100}%)")</MudText>
+                                                <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", tax_item.Monto_Impuesto) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                                                </MudStack>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <MudStack Row="true">
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@Convert.ToInt32(item.Value.Cantidad_Calculada)</MudText>
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@TryGetSubserviceName(ServiceTariff.ID_Servicio, item.Key)</MudText>
+                                        <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", item.Value.Tarifa_Calculada) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                                        </MudStack>
+                                    @if (ServiceTariff.Subservices_Tax_Totals[item.Key].HasValue)
+                                    {
+                                        @foreach (var tax_item in ServiceTariff.Subservices_Taxes[item.Key])
+                                        {
+                                            <MudStack Row="true">
+                                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@($"{tax_item.Nombre_Impuesto} ({tax_item.Cuota * 100}%)")</MudText>
+                                                <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">$@(string.Format("{0:N2}", tax_item.Monto_Impuesto) + " " + quotationService.Money_Kind.GetStringValue())</MudText>
+                                                </MudStack>
+                                        }
+                                    }
+                                }
+                            }
+                            <div class="subtotal-divider"></div>
+                        }
+                    }
+                </ChildContent>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ServiceTariff ServiceTariff { get; set; }
+    [Parameter]
+    public bool IsPackage { get; set; } = false;
+    [Parameter]
+    public int PackageID { get; set; }
+
+    private bool isOpen { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private string TryGetServiceName(int serviceId)
+    {
+        if (IsPackage)
+        {
+            return quotationService.GetQuotationCart().GetPackages()[PackageID].Servicios[serviceId].Name;
+        }
+        else
+        {
+            return quotationService.GetQuotationCart().GetServices()[serviceId].Name;
+        }
+    }
+
+    private string TryGetSubserviceName(int serviceId, int subserviceId)
+    {
+        if (IsPackage)
+        {
+            return quotationService.GetQuotationCart().GetPackages()[PackageID].Servicios[serviceId].Subservicios[subserviceId].Nombre_corto;
+        }
+        else
+        {
+            return quotationService.GetQuotationCart().GetServices()[serviceId].Subservicios[subserviceId].Nombre_corto;
+        }
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

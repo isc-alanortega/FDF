@@ -1,0 +1,155 @@
+﻿@using PCG_FDF.Utility;
+@inherits BookingElementBase
+
+<div class="element-boundary section-eelementtype-textbox">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                      Required="@ElementData.Required"
+                      MaxLength="@MaxLength"
+                      Validation="@((string? args) => ValidateField(args))"
+                      Clearable="@(!ElementData.Required)"
+                      RequiredError="@Localize.Get("errmsg_required")"
+                      Disabled="@GetElementReadonly()" ReadOnly="@GetElementReadonly()"
+                      DebounceInterval="1500"
+                      T="string"
+                      Value="@TryGetStorageValue()"
+                      ValueChanged="@(async(args) => await TryWriteStorageValue(args))"
+                      Variant="Variant.Outlined"
+                      Placeholder="@($"{Localize.Get("placeholder_input")} {ElementData.Element_Name}")" />
+    </MudStack>
+</div>
+
+@code {
+    private int MaxLength = 524288;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (ElementData.Preloaded_Value is not null)
+        {
+            if (string.IsNullOrEmpty(TryGetStorageValue()))
+            {
+                var init_value = GetPreloadedValueAs<string?>();
+                if (ValidateField(init_value) is null)
+                {
+                    await TryWriteStorageValue(init_value ?? "");
+                }
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        if (ElementData.Validations is not null && ElementData.Validations.TryGetValue("MAX", out var MaxValidation))
+        {
+            MaxLength = Convert.ToInt32(MaxValidation.Validation_Value);
+        }
+        base.OnInitialized();
+    }
+
+    private string? ValidateField(string? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (ElementData.Validations is null || !ElementData.Validations.Any())
+        {
+            return null;
+        }
+
+        foreach (var validation in ElementData.Validations.OrderBy(kvp => kvp.Value.Sequence))
+        {
+            switch (validation.Key)
+            {
+                case "MAX":
+                    {
+                        if (value.Length > Convert.ToInt32(validation.Value.Validation_Value))
+                        {
+                            return validation.Value.Error_Message;
+                        }
+                        continue;
+                    }
+                case "REGEX":
+                    {
+                        if (!Validations.ValidateString(value, validation.Value.Validation_Value))
+                        {
+                            return validation.Value.Error_Message;
+                        }
+                        continue;
+                    }
+                case "VALIDATE_CONTAINER":
+                    {
+                        if (!Validations.IsValidContainerSerial(value))
+                        {
+                            return validation.Value.Error_Message;
+                        }
+                        continue;
+                    }
+            }
+        }
+
+        return null;
+    }
+
+    private string? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<string?>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedElementValueAs<string?>(ElementData.Element_ID);
+        }
+    }
+
+    private string TransformValidate(string value)
+    {
+        if (!string.IsNullOrEmpty(value) && !string.IsNullOrWhiteSpace(value))
+        {
+            foreach (var validation in ElementData.Validations.OrderBy(kvp => kvp.Value.Sequence))
+            {
+                switch (validation.Key)
+                {
+                    case "CAPITALIZE":
+                        {
+                            value = value.ToUpper();
+                            break;
+                        }
+                }
+            }
+        }
+
+        return value;
+    }
+
+    private async Task TryWriteStorageValue(string value)
+    {
+        var result = TransformValidate(value);
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedElementValue(result, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedElementValue(result, ElementData.Element_ID);
+        }
+    }
+}

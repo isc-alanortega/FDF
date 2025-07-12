@@ -1,0 +1,133 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+::deep .paper-grey {
+    border-radius: 7px;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 2.8rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+::deep .login-text {
+    &.title {
+        align-self: center;
+        color: css-color-var(primary-text-blue);
+    }
+
+    &.body {
+        align-self: flex-start;
+        color: css-color-var(primary-text-blue);
+    }
+
+    &.password-forget {
+        align-self: flex-start;
+        color: css-color-var(secondary);
+    }
+
+    &.styled {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+}
+
+::deep .nav-link {
+    padding: 0px;
+}
+
+::deep .divider {
+    width: 45%;
+    background-color: css-color-var(global-grey);
+}
+
+.no-account {
+    display: flex;
+    flex-direction: row;
+}
+
+::deep .email-field {
+    &.resize-it {
+        .mud-input {
+            font-size: 2rem;
+        }
+    }
+}
+
+::deep .password-field {
+    &.resize-it {
+        .mud-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-adornment {
+            .mud-icon-root {
+                font-size: 2rem;
+            }
+        }
+    }
+}
+
+::deep .login-button {
+    width: 40%;
+    padding: 0 !important;
+    height: 38px;
+    align-self: flex-end;
+
+    &.resize-it {
+        font-size: 1.6rem;
+    }
+
+    .mud-button-label {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .button-text {
+        margin-top: auto;
+    }
+
+    .progress {
+        width: 100%;
+        margin-top: auto;
+        visibility: hidden;
+        height: 4.5px;
+        background: linear-gradient(css-color-var(primary) 0 0), linear-gradient(css-color-var(primary) 0 0), css-color-var(secondary);
+        background-size: 60% 100%;
+        background-repeat: no-repeat;
+        animation: progress-7x9cg2 2.4000000000000004s infinite;
+
+        &.active {
+            visibility: visible !important;
+        }
+    }
+
+    @keyframes progress-7x9cg2 {
+        0% {
+            background-position: -150% 0,-150% 0;
+        }
+
+        66% {
+            background-position: 250% 0,-150% 0;
+        }
+
+        100% {
+            background-position: 250% 0, 250% 0;
+        }
+    }
+}
+
+.mini-style-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-text-button-mobil {
+    font-size: 1.2em !important;
+}
+
+.mud-input-adornment .mud-icon-button-label > svg {
+    font-size: 1.9em !important;
+}

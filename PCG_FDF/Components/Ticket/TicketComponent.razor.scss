@@ -1,0 +1,26 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+::deep .ticket-wrapper {
+    padding-inline: 12px;
+}
+
+::deep .ticket {
+
+}
+
+::deep .ticket-row {
+    justify-content: space-between;
+}
+
+::deep .download-button {
+    background-color: #0EB4F1 !important;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+::deep .download-button:hover {
+    background-color: #0CA2D8 !important;
+}
+
+::deep .download-button:active {
+    background-color: #0B90C0 !important;
+}

@@ -1,0 +1,135 @@
+:root {
+  --color-primary: #0045AC;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #DA291C;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #112f5c;
+  --color-nav-info: #112f5c;
+  --color-package-subtitle: #A1B5D3;
+  --color-complex-chip: #EDF4FA;
+  --color-booking-panel: #869AAC;
+}
+
+.icon-wrapper {
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+::deep .reg-button {
+  color: var(--color-global-fullwhite);
+  background: var(--color-secondary);
+  align-self: center;
+  height: 6rem;
+}
+
+::deep .internal-cima-icon {
+  font-size: 8rem;
+  width: 130px !important;
+  height: auto !important;
+}
+::deep .internal-cima-icon #cima-logo-outline {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-middle {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-triangle-left {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-triangle-right {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-triangle-top {
+  fill: var(--color-global-fullwhite);
+}
+
+::deep .internal-thesharks-icon #deepblue {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-thesharks-icon #lightblue {
+  fill: var(--color-global-fullwhite);
+}
+
+::deep .internal-shipping-icon #red-group {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-shipping-icon #blue-group {
+  fill: var(--color-global-fullwhite);
+}
+
+::deep .internal-bafar-icon #mane-gold {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-bafar-icon #face-blue {
+  fill: var(--color-global-RGBA-transparent);
+}
+
+.language-wrapper {
+  margin-left: 20px;
+}
+
+@font-face {
+  font-family: "FDF-Icons";
+  src: url("/fonts/FDF-Icons.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+::deep .e-dropdown-btn.e-custom {
+  height: 60px;
+  width: 40px;
+  padding: 0px;
+  background: none;
+  border: none;
+  box-shadow: none !important;
+}
+::deep .e-dropdown-btn.e-custom .icon {
+  font-family: "FDF-Icons" !important;
+  margin: 0px;
+  padding: 0px;
+  width: unset;
+  font-size: 22px;
+}
+
+::deep .search-button-icon .mud-icon-root {
+  font-size: 40px !important;
+  fill: white !important;
+}
+
+::deep .e-dropdown-btn.e-custom .sf-icon-user-wf::before {
+  content: "\e702";
+}

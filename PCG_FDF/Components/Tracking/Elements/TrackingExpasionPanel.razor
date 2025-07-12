@@ -1,0 +1,99 @@
+﻿@using Newtonsoft.Json
+@using PCG_ENTITIES.Enums
+@using PCG_ENTITIES.PCG_FDF.TrackingEntities
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Resultsets
+@using PCG_FDF.Components.Tracking.Elements
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement
+@using PCG_FDF.Data.ComponentDI.Tracking
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer Localize
+@inject WhiteLabelManager WhiteLabel
+@inject TrackingDataCollection TrackingData
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="trackig-expasion-panel stage-key">
+    <MudExpansionPanels MultiExpansion="true">
+        @foreach (TrackingStage stage in TrackingData.GetTrackingStageParameter().OrderBy(s => s.Stage_Sequence))
+        {
+            <MudExpansionPanel IsInitiallyExpanded="true"
+                               Class="@($"tracking-stage-panel{TrackingData.GetMessageTypeClass(stage.Global_Stage_Status)} panel-stage-key-{stage.Stage_ID}-service-{stage.Service_ID}")">
+
+                <TitleContent>
+                    <div>
+                        <MudStack Row="true" AlignItems="@AlignItems.Center">
+                            <MudText Class="titlecontent-element-text">@stage.Stage_Name</MudText>
+                        </MudStack>
+                    </div>
+                </TitleContent>
+
+                <ChildContent>
+                    <MudStack>
+                        @if (stage.Elements is not null && stage.Elements.Any())
+                        {
+                            int IDService = stage.Service_ID;
+                            int IDStage = stage.Stage_ID;
+                            @foreach (var element in stage.Elements.Values)
+                            {
+                                switch (element.Element_Type)
+                                {
+                                    case 1:
+                                        {
+                                            TrackingData.SetTrackingElementData(element);
+                                            <div>
+                                                <TrackingMapElement ElementData="@element" IDService="@IDService" IDStage="IDStage" />
+                                            </div>
+                                            break;
+                                        }
+                                }
+                            }
+                        }
+
+                        @if (stage.Messages is not null && stage.Messages.Any())
+                        {
+                            @foreach (var message in stage.Messages.Values)
+                            {
+                                <MudStack Row="true" Class="trackingpage-text-info-tracking">
+                                    <MudIcon Color="@TrackingData.GetMessageTypeColor(message.Message_Type)" Icon="@Icons.Material.Filled.LabelImportant"></MudIcon>
+                                    <MudText>@($"{TimeZoneInfo.ConvertTimeFromUtc(message.Message_Date, TimeZoneInfo.Local).ToString("dd/MM/yyyy hh:mm tt")} - {message.Message}")</MudText>
+                                </MudStack>
+                            }
+                        }
+                    </MudStack>
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+    </MudExpansionPanels>
+</div>
+
+@code
+{
+    private bool IsExpanded { get; set; } = false;
+    private TimeZoneInfo UserTimezone { get; set; } = TimeZoneInfo.Utc;
+    #region LIFE CYCLE
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        TrackingData.OnChange += StateHasChanged;
+
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        TrackingData.OnChange -= StateHasChanged;
+        TrackingData.ResetSelf();
+    }
+    #endregion
+}

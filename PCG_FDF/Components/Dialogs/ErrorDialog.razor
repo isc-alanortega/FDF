@@ -1,0 +1,62 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <div class="dialog-stack">
+            <MudStack>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">@Localize.Get(Error_Message)</MudText>
+                    @if (Additional_Data is not null)
+                {
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">@($"{Localize.Get("label_at_cell")} {Additional_Data}")</MudText>
+                    @if (Additional_Value is not null)
+                    {
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">@($"{Localize.Get("label_value")} {Additional_Value}")</MudText>
+                    }
+                }
+                else
+                {
+                    @if (Additional_Value is not null)
+                    {
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">@($"{Localize.Get("label_value")} {Additional_Value}")</MudText>
+                    }
+                }
+            </MudStack>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">@Localize.Get("btn_continue")</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string Error_Message { get; set; }
+    [Parameter]
+    public string? Additional_Data { get; set; }
+    [Parameter]
+    public string? Additional_Value { get; set; }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+}

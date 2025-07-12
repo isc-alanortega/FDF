@@ -1,0 +1,126 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+.footer {
+    bottom: 0;
+    width: 100%;
+    background: css-color-var(primary);
+    padding: 30px;
+}
+
+::deep .internal-bafar-icon {
+    #mane-gold {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #face-blue {
+        fill: css-color-var(global-RGBA-transparent);
+    }
+}
+
+::deep .internal-shipping-icon {
+    #red-group {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #blue-group {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-thesharks-icon {
+    #deepblue {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #lightblue {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-smargo-icon {
+    fill: white !important;
+}
+
+::deep .footer-version {
+    color: grey;
+}
+
+::deep .internal-cima-icon {
+    font-size: 4rem;
+    width: 4em;
+    height: 2em;
+
+    #cima-logo-outline {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-middle {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-left {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-right {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-top {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+.footer-top {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 80%;
+    width: 100%;
+    padding-bottom: 20px;
+    padding-inline: 55px;
+
+    @media (max-width: 950px) {
+        flex-direction: column;
+    }
+}
+
+.footer-info {
+    flex: 1;
+}
+
+.left-footer-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    row-gap: 10px;
+    width: 30%;
+}
+
+.right-footer-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    row-gap: 10px;
+    width: 70%;
+    padding-left: 30px;
+}
+
+::deep .footer-text {
+    color: css-color-var(global-fullwhite);
+}
+
+.footer-bottom {
+    padding-top: 25px;
+    text-align: center;
+}
+
+::deep .footer-copy {
+    color: css-color-var(global-lowwhite)
+}
+
+.foter-icon-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}

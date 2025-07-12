@@ -1,0 +1,119 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+
+$chip-size: 100px;
+
+@include keyframes(color-change-2x-select) {
+    @include anim-color-change-2x-frames(css-color-var(global-RGBA-transparent), css-color-var(primary));
+}
+
+@include keyframes(scale-up-hor-center-x6) {
+    @include anim-scale-up-hor-center-frames(1, 6);
+}
+
+@include keyframes(scale-up-center-x1-2) {
+    @include anim-scale-up-center-frames(0.9, 1.2);
+}
+
+@include keyframes(scale-up-center-x1-05) {
+    @include anim-scale-up-center-frames(0.9, 1.05);
+}
+
+::deep .simple-chip {
+    height: $chip-size !important;
+    width: 95% !important;
+    min-width: max-content;
+    background: css-color-var(global-RGBA-transparent);
+    border-radius: 8px !important;
+}
+
+.simple-chip-wrapper {
+    justify-content: center;
+    display: flex;
+}
+
+::deep .internal-button-icon {
+    stroke: currentColor;
+}
+
+::deep .simple-chip:hover {
+    .button-footer {
+        @include animation('scale-up-hor-center-x6 0.3s cubic-bezier(0.390, 0.575, 0.565, 1.000) both');
+    }
+
+    .internal-button-icon {
+        @include animation('scale-up-center-x1-2 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+    }
+
+    .internal-chip-text {
+        @include animation('scale-up-center-x1-05 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+    }
+}
+
+::deep .simple-chip.mud-chip-selected {
+
+    @include animation('color-change-2x-select 0.3s linear alternate both');
+
+    .button-footer {
+        @include animation('scale-up-hor-center-x6 0.3s cubic-bezier(0.390, 0.575, 0.565, 1.000) both');
+    }
+}
+
+.internal-chip-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.chip-footer-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.internal-vertical-spacer {
+    height: 8px;
+}
+
+.internal-footer-spacer {
+    height: 4px;
+}
+
+.button-footer {
+    background-color: css-color-var(tertiary);
+}
+
+::deep .unconstrain {
+    height: auto;
+}
+
+::deep .large-plus {
+    font-size: 3rem;
+}
+
+::deep .extra-large {
+    font-size: 4rem;
+}
+
+::deep .extra-large-plus {
+    font-size: 5rem;
+}
+
+::deep .extra-extra-large {
+    font-size: 6rem;
+}
+
+::deep .extra-extra-large-plus {
+    font-size: 7rem;
+}
+
+::deep .huge {
+    font-size: 8rem;
+}
+
+::deep .xxxh-11 {
+    font-size: 11rem;
+}

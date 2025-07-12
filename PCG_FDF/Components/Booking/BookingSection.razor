@@ -1,0 +1,507 @@
+﻿@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.BookingEntities;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Components.Booking.Elements;
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Data.Localization;
+@inject GlobalBreakpointService BreakpointService
+@inject BookingDataCollection BookingData
+@inject WhiteLabelManager WhiteLabel
+@inject GlobalLocalizer Localize
+@implements IDisposable
+
+<div class="card-wrapper">
+    @if (!SectionData.Value.Values.First().Multiply_By_Quantity || IsCollection)
+    {
+        <MudExpansionPanel Class="@($"booking-panel single-panel {WhiteLabel.GetTextColorFromBackgroundColor("Primary")}")" IsInitiallyExpanded="@(BookingData.GetElements().Keys.Any(element => element == 1092 || element == 1164))">
+            <TitleContent>
+                <MudStack Row="true">
+                    @{
+                        var SectionInfo = SectionData.Value.Values.First();
+                    }
+
+                    @if (SectionInfo.Section_Icon is not null)
+                    {
+                        <MudIcon Icon="@SectionInfo.Section_Icon" ViewBox="@SectionInfo.Icon_ViewBox"></MudIcon>
+                    }
+
+                    <MudStack Spacing="1" Class="bookingsection-title-stack">
+                        @if (UseFullTitle)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="bookingsection-title-section title-text">
+                                <strong>@SectionInfo.Section_Name</strong>
+                            </MudText>
+
+                            @if ((BookingData.GetElements().Keys.Any(element => element == 1092 || element == 1164)))
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="bookingsection-title-service title-text service" Style="@(BreakpointService.GetIsExtraSmall() ? "font-size: 1.8em;" : "")">
+                                    @Localize.Get("label_contractingdata")
+                                </MudText>
+                            }
+                            else
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="bookingsection-title-service title-text service" Style="@(BreakpointService.GetIsExtraSmall() ? "font-size: 1.8em;" : "")">
+                                    @BookingData.GetServiceName(SectionInfo.From_Service)
+                                </MudText>
+                            }
+                        }
+                        else
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">
+                                <strong>@(SectionInfo.Section_Name + " - " + Index.ToString())</strong>
+                            </MudText>
+                        }
+                    </MudStack>
+
+                    <div class="section-badge">
+                        <CompletionBadge Complete="@SectionData.Value.First().Value.GetSectionValidated()" />
+                    </div>
+                </MudStack>
+            </TitleContent>
+
+            <ChildContent>
+                <div class="inner-content-single t-black" style="margin: 10px 0px;">
+                    <MudForm @ref="@FormReference" IsValid="@SectionData.Value.Values.First().GetSectionValidated()" IsValidChanged="@((args) => SetValidSection(args))">
+                        <CascadingValue Name="SectionForm" Value="@FormReference">
+                            <MudGrid>
+                                <CascadingValue Value="@IsCollection" Name="IsCollection">
+                                    <CascadingValue Value="@SectionData" Name="SectionData">
+                                        @foreach (var element in BookingData.TryGetSectionElements(SectionData.Key).OrderBy(element => element.Element_Sequence))
+                                        {
+
+                                            @switch (element.Type_ID)
+                                            {
+                                                case EElementType.VALUES_LIST:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-valuelist">
+                                                            <ListElement ElementData="@element"></ListElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.TEXT_BOX:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-textbox">
+                                                            <TextFieldElement ElementData="@element"></TextFieldElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.TEXT_LABEL:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-textlabel">
+                                                            <LabelElement ElementData="@element"></LabelElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.INTEGER_NUMBER:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-integernumber">
+                                                            <IntegerInputElement ElementData="@element"></IntegerInputElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.DECIMAL_NUMBER:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-decimalnumber">
+                                                            <DecimalInputElement ElementData="@element"></DecimalInputElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.CHECK_BOX:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-checkbox">
+                                                            <CheckBoxElement ElementData="@element"></CheckBoxElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.OPTION_BOXES:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-optionboxes">
+                                                            <OptionBoxesElement ElementData="@element"></OptionBoxesElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.DATE:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-date">
+                                                            <DateElement ElementData="@element"></DateElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.TIME:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-time">
+                                                            <TimeElement ElementData="@element"></TimeElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.DATE_TIME:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-datetime">
+                                                            <DateTimeElement ElementData="@element"></DateTimeElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.CONTAINER_CONTENTS:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-containercontents">
+                                                            <ContainerContentsElement ElementData="@element"></ContainerContentsElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.CONTAINER_CONTENTS_PI:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-containercontentspi">
+                                                            <ContainerContentsElementPI ElementData="@element"></ContainerContentsElementPI>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.AUTOCOMPLETE_LIST:
+                                                    {
+                                                        <MudItem md="6" sm="12" xs="12" Class="section-eelementtype-autocompletelist">
+                                                            <AutocompleteElement ElementData="@element"></AutocompleteElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.ADDRESS:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-addres">
+                                                            <AddressElement ElementData="@element"></AddressElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                @*case EElementType.CONTAINER_TRIPS:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12">
+                                                            sElement ElementData="@element"></ContainerTripsElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }*@
+                                                case EElementType.LOOSE_TRIPS_SHIPPING:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-loosetripsshipping">
+                                                            <UnitTripsElement_SHIPPING ElementData="@element"></UnitTripsElement_SHIPPING>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.CONTAINER_TRIPS_SHIPPING:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-containertripsshipping">
+                                                            <ContainerTripsElement_SHIPPING ElementData="@element"></ContainerTripsElement_SHIPPING>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.IMO_SELECTION:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-imoselection">
+                                                            <IMOSelectionElement ElementData="@element"></IMOSelectionElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.INSURANCE_SELECTION:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-insuranceselection">
+                                                            <InsuranceSelectionElement ElementData="@element"></InsuranceSelectionElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.SADER_SELECTION:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-saderselection">
+                                                            <SADERSelection ElementData="@element"></SADERSelection>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.SINGLE_FULL_SELECTION:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-singlefulllselection">
+                                                            <SingleFullElement ElementData="@element"></SingleFullElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.CONTAINERS_FORM:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-containerform">
+                                                            <ContainersAssignmentElement ElementData="@element"></ContainersAssignmentElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.CONTAINERS_FORM_PI:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-containersformpi">
+                                                            <ContainersAssignmentPIElement ElementData="@element"></ContainersAssignmentPIElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.EMPTY_CONTAINERS_FORM:
+                                                case EElementType.EMPTY_CONTAINERS_LOAD_FORM:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-emptycontainersform">
+                                                            <EmptyContainersElement ElementData="@element"></EmptyContainersElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.UNITS_FORM:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-unitsform">
+                                                            <UnitTripsElement ElementData="@element"></UnitTripsElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.UNITS_FORM_PI:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12"Class="section-eelementtype-unitsformpi">
+                                                            <UnitTripsElementPI ElementData="@element"></UnitTripsElementPI>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.UNITS_FORM_PALLETS:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-unitsformpi">
+                                                            <UnitTripsPalletElement ElementData="@element"></UnitTripsPalletElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                                case EElementType.UNITS_FORM_VEHICLES:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12" Class="section-eelementtype-unitsformvehicles">
+                                                            <UnitTripsVehiclesElement ElementData="@element"></UnitTripsVehiclesElement>
+                                                        </MudItem>
+                                                        break;                                                        
+                                                    }
+                                                case EElementType.TRAVELS_IN_SELECTION:
+                                                    {
+                                                        <MudItem md="12" sm="12" xs="12">
+                                                            <TravelsInSelectionElement ElementData="@element"></TravelsInSelectionElement>
+                                                        </MudItem>
+                                                        break;
+                                                    }
+                                            }
+                                        }
+
+                                        @foreach (var document_element in BookingData.TryGetSectionDocuments(SectionData.Key))
+                                        {
+                                            // Don't create the documents elements in the empty containers complex element
+                                            if (!BookingData.GetElements().Keys.Any(key => key == 1092))
+                                            {
+                                                <MudItem md="6" sm="12" xs="12">
+                                                    <div class="@($"document-boundary section-document {GetDocumentClass(document_element.Document_Subtype_ID)} {document_element}")">
+                                                        <DocumentElement DocumentData="@document_element"></DocumentElement>
+                                                    </div>
+                                                </MudItem>
+                                            }
+                                        }
+                                    </CascadingValue>
+                                </CascadingValue>
+                            </MudGrid>
+                        </CascadingValue>
+                    </MudForm>
+                </div>
+            </ChildContent>
+        </MudExpansionPanel>
+    }
+    else
+    {
+        <MudExpansionPanel Class="@($"booking-panel multi-panel {WhiteLabel.GetTextColorFromBackgroundColor("Secondary")}")">
+            <TitleContent>
+                <MudStack Row="true">
+                    @{
+                        var SectionInfo = SectionData.Value.Values.First();
+                    }
+                    @if (SectionInfo.Section_Icon is not null)
+                    {
+                        <MudIcon Icon="@SectionInfo.Section_Icon" ViewBox="@SectionInfo.Icon_ViewBox"></MudIcon>
+                    }
+                    <MudStack Spacing="1">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">
+                            <strong>@SectionInfo.Section_Name</strong>
+                        </MudText>
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text service">
+                            @BookingData.GetServiceName(SectionInfo.From_Service)
+                        </MudText>
+                    </MudStack>
+                    <div class="section-badge">
+                        <CompletionBadge Complete="@BookingData.GetSectionGroupComplete(SectionData.Key)" />
+                    </div>
+                </MudStack>
+            </TitleContent>
+
+            <ChildContent>
+                <div class="inner-content-multiple t-black">
+                    @{
+                        var idx = 1;
+                    }
+
+                    @foreach (var inner_section in SectionData.Value)
+                    {
+                        var new_section = new KeyValuePair<int, IDictionary<Guid, StatefulSection>>(SectionData.Key,
+                        new Dictionary<Guid, StatefulSection>() { { inner_section.Key, inner_section.Value } });
+                        var local_idx = idx;
+
+                        <MudExpansionPanels Class="booking-inner-section" MultiExpansion="true">
+                            <BookingSection Index="@local_idx" UseFullTitle="false" IsCollection="true" SectionData="@new_section"></BookingSection>
+                        </MudExpansionPanels>
+                        idx++;
+                    }
+                </div>
+            </ChildContent>
+        </MudExpansionPanel>
+    }
+</div>
+
+@if (BreakpointService.GetIsXsSmScreen())
+{
+    <style>
+        .mud-checkbox-input {
+            font-size: 1.5em !important;
+        }
+
+        .mud-list-item-text p {
+            font-size: 1.8em;
+        }
+
+        
+
+        .mud-input-control-input-container .mud-checkbox svg {
+            font-size: 2em;
+        }
+    </style>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public KeyValuePair<int, IDictionary<Guid, StatefulSection>> SectionData { get; set; }
+    [Parameter]
+    public bool IsCollection { get; set; } = false;
+    [Parameter]
+    public bool UseFullTitle { get; set; } = true;
+    [Parameter]
+    public int Index { get; set; } = 0;
+
+    private MudForm? FormReference { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        BookingData.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (FormReference is not null)
+            {
+                await Task.Delay(1000);
+                await FormReference.Validate();
+            }
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private string GetDocumentClass(int Subtype)
+    {
+        if (IsCollection)
+        {
+            var status = BookingData.GetUnsharedDocument(SectionData.Key, SectionData.Value.Keys.First(), Subtype).Document_Status;
+            if (status.HasValue)
+            {
+                return status.Value == EDocumentStatus.REJECTED ? "rejected-document" : string.Empty;
+            }            
+        }
+        else
+        {
+            var status = BookingData.GetSharedDocument(Subtype).Document_Status;
+            if (status.HasValue)
+            {
+                return status.Value == EDocumentStatus.REJECTED ? "rejected-document" : string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private void SetValidSection(bool value)
+    {
+        bool validation_state = false;
+        if (SectionData.Value.Values.First().Has_Chips)
+        {
+            var chip_elements = BookingData.TryGetSectionElements(SectionData.Key).Where(element => element.Type_ID == EElementType.OPTION_BOXES);
+            // Unshared
+            if (IsCollection)
+            {
+                var validation = chip_elements.Select(element_data =>
+                {
+                    var chip_data = BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][element_data.Element_ID];
+                    if (element_data.Required)
+                    {
+                        return chip_data != null;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                });
+                validation_state = validation.All(valid => valid) && value;
+            }
+            // Shared
+            else
+            {
+                var validation = chip_elements.Select(element_data =>
+                {
+                    var chip_data = BookingData.GetSharedStorage()[element_data.Element_ID];
+                    if (element_data.Required)
+                    {
+                        return chip_data != null;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                });
+                validation_state = validation.All(valid => valid) && value;
+            }
+        }
+        else
+        {
+            validation_state = value;
+        }
+
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedComplexValid().TryGetValue(SectionData.Key, out var sections))
+            {
+                if (sections.TryGetValue(SectionData.Value.First().Key, out var elements))
+                {
+                    var result = elements.Values.All(value => value);
+                    validation_state = validation_state && value;
+                }
+            }
+        }
+        else
+        {
+            var elements = BookingData.TryGetSectionElements(SectionData.Key);
+            foreach (var element in elements)
+            {
+                if (BookingData.GetSharedComplexValid().TryGetValue(element.Element_ID, out var valid))
+                {
+                    validation_state = validation_state && valid;
+                }
+            }
+        }
+
+        SectionData.Value.First().Value.SetValidationState(validation_state);
+
+        BookingData.UpdateGlobalValidationStatus();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        BookingData.OnChange -= StateHasChanged;
+    }
+}

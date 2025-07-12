@@ -1,0 +1,9 @@
+::deep .location-searchbar.resize-it .mud-input.mud-input-text.mud-select-input {
+  font-size: 2rem;
+}
+::deep .location-searchbar.resize-it .mud-input-label {
+  font-size: 2rem;
+}
+::deep .location-searchbar.resize-it .mud-icon-root {
+  font-size: 3rem !important;
+}

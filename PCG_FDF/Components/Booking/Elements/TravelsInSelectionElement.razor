@@ -1,0 +1,538 @@
+﻿@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Entities;
+@inherits BookingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Style="padding-bottom: 10px">
+            @*TRAVELS IN*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Value="@((KeyValue?)TryGetContentsField("CONTAINER"))"
+                           ValueChanged="@(async(args) => await TryModifyField("CONTAINER", args))"
+                           Disabled="@GetElementReadonly()"
+                           ReadOnly="@GetElementReadonly()"
+                           Required="@ElementData.Required"
+                           RequiredError="@Localize.Get("errmsg_required")"
+                           Clearable="true"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_travelsin")}")">
+
+                    @foreach (var option in GetPreloadedList("TRAVELSIN"))
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+                </MudSelect>
+            </MudItem>
+            @*BOX NUMER*@
+            @if (((KeyValue?)TryGetContentsField("CONTAINER"))?.Key == 1 || ((KeyValue?)TryGetContentsField("CONTAINER"))?.Key == 2)
+            {
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField T="int?"
+                                  Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  Required="@ElementData.Required"
+                                  MaxLength="50"
+                                  Clearable="@true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  Value="@((int?)TryGetContentsField("BOXNUMBER"))"
+                                  ValueChanged="@(async(args) => await TryModifyField("BOXNUMBER", args))"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_boxnumber")}")" />
+                </MudItem>
+            }
+            @*OTHER*@
+            @if (((KeyValue?)TryGetContentsField("CONTAINER"))?.Key == 4)
+            {
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField T="string"
+                                  Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  Required="@ElementData.Required"
+                                  MaxLength="50"
+                                  Clearable="@true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  Value="@((string)TryGetContentsField("OTHER"))"
+                                  ValueChanged="@(async(args) => await TryModifyField("OTHER", args))"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_other")}")" />
+                </MudItem>
+            }
+        </MudStack>
+
+        @*CONTAINERS*@
+        @if (((KeyValue?)TryGetContentsField("CONTAINER"))?.Key == 3)
+        {
+            <MudItem md="12" sm="12" xs="12">
+                <MudStack>
+                    @*BUTTONS*@
+                    <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@AddContainerDisabled()" OnClick="@SwitchAddContainerState">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_addcontainer")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Add"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Disabled="@EditContainerDisabled()" OnClick="@TryEditContainer">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_editcontainer")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Edit"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="@DeleteContainerDisabled()" OnClick="@(async () => await TryRemoveContainer())">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_deletecontainer")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.DeleteForever"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                    </MudStack>
+
+                    <MudTable SelectedItem="@Selected_Container" @ref="@Containers_Table" SelectedItemChanged="@SetSelectedContainer" RowClassFunc="@ContainersSelectedRowClassFunc" Items="@GetContainers()" T="EmptyContainerData" Hover="true" Breakpoint="Breakpoint.Sm" MultiSelection="false">
+                        <HeaderContent>
+                            <MudTh>Serial</MudTh>
+                            <MudTh>@Localize.Get("label_containersizetype")</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Serial">@context.Container_Serial</MudTd>
+                            <MudTd DataLabel="@Localize.Get("label_containersizetype")">@ContainerTripletConverter.Invoke(context.Size_Type)</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
+                <MudDivider Class="my-2"></MudDivider>
+
+                @if (Adding_Container)
+                {
+                    <MudGrid>
+                        @*SERIAL*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudTextField T="string"
+                                          Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                          MaxLength="500"
+                                          Clearable="true"
+                                          RequiredError="@Localize.Get("errmsg_required")"
+                                          Disabled="@GetElementReadonly()"
+                                          ReadOnly="@GetElementReadonly()"
+                                          DebounceInterval="1500"
+                                          Value="@((string?)TryGetNewContainerField("CONTAINERSERIAL"))"
+                                          ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERSERIAL"))"
+                                          Variant="Variant.Outlined"
+                                          Label="@Localize.Get("label_containerserial")"
+                                          Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_containerserial")}")" />
+                        </MudItem>
+                        @*CONTAINER SIZE/TYPE*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudSelect T="EmptyContainerInfoTriplet"
+                                       Class="complex-element-required"
+                                       ToStringFunc="@ContainerTripletConverter"
+                                       AnchorOrigin="Origin.BottomCenter"
+                                       Variant="Variant.Outlined"
+                                       Value="@((EmptyContainerInfoTriplet?)TryGetNewContainerField("CONTAINERSIZETYPE"))"
+                                       ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERSIZETYPE"))"
+                                       Disabled="@GetElementReadonly()"
+                                       ReadOnly="@GetElementReadonly()"
+                                       RequiredError="@Localize.Get("errmsg_required")"
+                                       Label="@Localize.Get("label_containertype")"
+                                       Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_containertype")}")">
+
+                                @foreach (var option in Containers_Sizes_Types)
+                                {
+                                    <MudSelectItem Value="option" />
+                                }
+
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+                    <MudDivider Class="my-2"></MudDivider>
+
+                    <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="CancelAddContainer">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_cancel")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Outlined.Cancel"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(async () => await TryAddContainer())">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_accept")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Check"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                    </MudStack>
+                }
+            </MudItem>
+            <MudDivider Class="my-2"></MudDivider>
+        }
+    </MudStack>
+</div>
+
+@code {
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private Func<EmptyContainerInfoTriplet, string> ContainerTripletConverter = trplt => trplt?.Size_Type!;
+    private TravelsInData Element_Source { get; set; } = new TravelsInData();
+    private EmptyContainerData? New_Container_Data { get; set; }
+    private EmptyContainerData? Selected_Container { get; set; }
+    private MudTable<EmptyContainerData> Containers_Table { get; set; }
+    private IEnumerable<EmptyContainerInfoTriplet> Containers_Sizes_Types { get; set; }
+
+    private bool Adding_Container { get; set; } = false;
+    private bool Editing { get; set; } = false;
+    private int Selected_Container_Row { get; set; } = -1;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteUnsharedElementValue(Element_Source, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            else
+            {
+                var element_data = (TravelsInData)BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID]!;
+                Element_Source = element_data;
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+        else
+        {
+            if (BookingData.GetSharedStorage()[ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteSharedElementValue(Element_Source, ElementData.Element_ID);
+            }
+            else
+            {
+                var element_data = (TravelsInData)BookingData.GetSharedStorage()[ElementData.Element_ID]!;
+                Element_Source = element_data;
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+
+        Containers_Sizes_Types = (IEnumerable<EmptyContainerInfoTriplet>)await SearchContents("CONTAINERSIZESTYPES");
+
+        await base.OnInitializedAsync();
+    }
+
+    private bool ValidateElement()
+    {
+        if (Element_Source is null || Element_Source.Container is null)
+        {
+            return false;
+        }
+
+        // PENDIENTE VALIDACIONES
+
+        return true;
+    }
+
+    private bool ValidateContainer(EmptyContainerData? Container)
+    {
+        if (GetElementReadonly())
+        {
+            return false;
+        }
+        if (Container is null)
+        {
+            return false;
+        }
+        if (string.IsNullOrEmpty(Container.Container_Serial))
+        {
+            ShowError("error_container_serial_invalid");
+            return false;
+        }
+        if (Container.Size_Type is null)
+        {
+            ShowError("error_container_sizetype_missing");
+            return false;
+        }
+        return true;
+    }
+
+    private async Task SetSource()
+    {
+        if (IsCollection)
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteUnsharedElementValue(Element_Source, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteSharedElementValue(Element_Source, ElementData.Element_ID);
+        }
+    }
+
+    private object? TryGetContentsField(string field_name)
+    {
+        switch (field_name)
+        {
+            case "CONTAINER":
+                {
+                    return Element_Source.Container;
+                }
+            case "BOXNUMBER":
+                {
+                    return Element_Source.Box_Number;
+                }
+            case "OTHER":
+                {
+                    return string.IsNullOrEmpty(Element_Source.Other) ? "" : Element_Source.Other;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private object? TryGetNewContainerField(string field_name)
+    {
+        if (New_Container_Data is null)
+        {
+            return null;
+        }
+
+        if (field_name == "CONTAINERSERIAL")
+        {
+            return New_Container_Data.Container_Serial;
+        }
+
+        if (field_name == "CONTAINERSIZETYPE")
+        {
+            return New_Container_Data.Size_Type;
+        }
+        return null;
+    }
+
+    private void TryModifyNewContainerField(object? value, string field_name)
+    {
+        if (New_Container_Data is null)
+        {
+            return;
+        }
+
+        if (field_name == "CONTAINERSERIAL")
+        {
+            New_Container_Data.Container_Serial = (string?)value is null ? (string?)value : ((string)value).ToUpper().Trim();
+        }
+
+        if (field_name == "CONTAINERSIZETYPE")
+        {
+            New_Container_Data.Size_Type = (EmptyContainerInfoTriplet?)value;
+        }
+    }
+
+    private async Task<IEnumerable<object>> SearchContents(string field_name)
+    {
+        var query_request = new DynamicQueryRequestBooking()
+            {
+                Booking_UUID = BookingData.UUID,
+                Client_ID = BookingData.Client_ID,
+                User_ID = BookingData.User_ID,
+                Query_ID = ElementData.Complex_Data[field_name].Query_ID,
+                Language = BookingData.GetBookingLanguage(),
+                Query = ""
+            };
+        var result = await DATA_ACCESS.PostLeerQuery(query_request);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            if (field_name == "CONTAINERSIZESTYPES")
+            {
+                return result.Result.Select(kv => new EmptyContainerInfoTriplet
+                    {
+                        ID = kv.Key,
+                        Shipping_Company_ID = 0,
+                        Size_Type = kv.Value
+                    });
+            }
+            return result.Result;
+        }
+        else
+        {
+            return field_name == "CONTAINERSIZESTYPES" 
+                ? Enumerable.Empty<EmptyContainerInfoTriplet>()
+                : Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    private IEnumerable<KeyValue> GetPreloadedList(string field_name)
+    {
+        if (ElementData.Complex_Data[field_name].Contains_List && !ElementData.Complex_Data[field_name].Is_Autocomplete_List)
+        {
+            return GetComplexPreloadedListAs<KeyValue>(field_name);
+        }
+        return Enumerable.Empty<KeyValue>();
+    }
+
+    private async Task TryModifyField(string field_name, object? value)
+    {
+        switch (field_name)
+        {
+            case "CONTAINER":
+                {
+                    Element_Source.Container = (KeyValue?)value;
+                    break;
+                }
+            case "BOXNUMBER":
+                {
+                    Element_Source.Box_Number = (int?)value;
+                    break;
+                }
+            case "OTHER":
+                {
+                    Element_Source.Other = (string?)value;
+                    break;
+                }
+        }
+        await SetSource();
+    }
+
+    private IEnumerable<EmptyContainerData> GetContainers()
+    {
+        return Element_Source.Containers == null ? Enumerable.Empty<EmptyContainerData>() : Element_Source.Containers.Values;
+    }
+
+    private void SetSelectedContainer(EmptyContainerData? data)
+    {
+        if (CanChange())
+        {
+            Selected_Container = data;
+        }
+    }
+
+    private void TryEditContainer()
+    {
+        if (Selected_Container is not null && !GetElementReadonly())
+        {
+            New_Container_Data = new EmptyContainerData(Element_Source.Containers[Selected_Container.Container_UUID]);
+            Adding_Container = true;
+            Editing = true;
+        }
+    }
+
+    private async Task TryRemoveContainer()
+    {
+        if (Selected_Container is not null && !GetElementReadonly())
+        {
+            Element_Source.Containers.Remove(Selected_Container.Container_UUID);
+            Selected_Container = null;
+
+            await SetSource();
+        }
+    }
+
+    private void SwitchAddContainerState()
+    {
+        New_Container_Data = new EmptyContainerData() { Container_UUID = Guid.NewGuid() };
+        Adding_Container = true;
+    }
+
+    private string ContainersSelectedRowClassFunc(EmptyContainerData element, int rowNumber)
+    {
+        if (CanChange())
+        {
+            if (Selected_Container_Row == rowNumber)
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else if (Containers_Table.SelectedItem != null && Containers_Table.SelectedItem.Equals(element))
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else
+            {
+                Selected_Container_Row = -1;
+                return string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private bool AddContainerDisabled()
+    {
+        if (GetElementReadonly())
+        {
+            return true;
+        }
+        if (!CanChange())
+        {
+            return true;
+        }
+        if ((Element_Source.Containers != null && Element_Source.Containers.Count() == 2))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool EditContainerDisabled()
+    {
+        if (GetElementReadonly() || Selected_Container is null || Adding_Container || Editing || !CanChange())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool DeleteContainerDisabled()
+    {
+        if (GetElementReadonly() || Selected_Container is null || string.IsNullOrEmpty(Selected_Container.Container_Serial) || Adding_Container || Editing || !CanChange())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private void CancelAddContainer()
+    {
+        Editing = false;
+        Adding_Container = false;
+        New_Container_Data = null;
+    }
+
+    private async Task TryAddContainer()
+    {
+        if (!ValidateContainer(New_Container_Data))
+        {
+            return;
+        }
+
+        if (Element_Source.Containers == null)
+        {
+            Element_Source.Containers = new Dictionary<Guid, EmptyContainerData>();
+        }
+        
+        Element_Source.Containers[New_Container_Data.Container_UUID] = new EmptyContainerData(New_Container_Data);
+        New_Container_Data = null;
+        Adding_Container = false;
+        Editing = false;
+        await SetSource();
+    }
+
+    private bool CanChange()
+    {
+        return !(Editing || Adding_Container);
+    }
+}

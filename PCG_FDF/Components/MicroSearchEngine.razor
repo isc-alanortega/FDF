@@ -1,0 +1,55 @@
+﻿@typeparam TPackageItem
+@typeparam TServiceItem
+
+<div>
+    <MudStack Class="main-stack">
+        @if (PackageListQuery is null && ServiceListQuery is null)
+        {
+            <MudStack Class="packages-stack">
+                @for (var i = 0; i < 10; i++)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" />
+                }
+            </MudStack>
+            <MudStack Class="services-stack">
+                @for (var i = 0; i < 10; i++)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Text" />
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudStack Class="packages-stack">
+                @if (PackageListQuery is not null && PackageListQuery.Count != 0)
+                {
+                    @foreach (TPackageItem packageItem in PackageListQuery)
+                    {
+                        @PackageItemDisplay(packageItem)
+                    }
+                }
+            </MudStack>
+            <MudStack Class="services-stack">
+                @if (ServiceListQuery is not null && ServiceListQuery.Count != 0)
+                {
+                    @foreach (TServiceItem serviceItem in ServiceListQuery)
+                    {
+                        @ServiceItemDisplay(serviceItem)
+                    }
+                }
+            </MudStack>
+        }
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IList<TPackageItem> PackageListQuery { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment<TPackageItem> PackageItemDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public IList<TServiceItem> ServiceListQuery { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment<TServiceItem> ServiceItemDisplay { get; set; }
+
+}

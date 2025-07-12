@@ -1,0 +1,52 @@
+﻿@inherits MetadataElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@MetadataData.Metadata_Name</strong></MudText>
+            @if (MetadataData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudNumericField Disabled="@GetElementReadonly()"
+                         ReadOnly="@GetElementReadonly()"
+                         Value="@TryGetStorageValue()"
+                         ValueChanged="@(async(args) => await TryWriteStorageValue(args))"
+                         T="int?"
+                         Class="@($"numerical-input dbooking-document-mudnumericfield {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                         Variant="Variant.Outlined"
+                         Required="@MetadataData.Required"
+                         RequiredError="@Localize.Get("errmsg_required")" />
+    </MudStack>
+</div>
+
+@code {
+    private int? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedMetadataValueAs<int?>(SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedMetadataValueAs<int?>(DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+
+    private async Task TryWriteStorageValue(int? value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedMetadataValue(value, SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedMetadataValue(value, DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+}

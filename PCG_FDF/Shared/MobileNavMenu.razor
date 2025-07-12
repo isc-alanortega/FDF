@@ -1,0 +1,81 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using Syncfusion.Blazor.SplitButtons
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_ENTITIES.Enums
+@inject NavigationManager NavigationManager
+@inject ApplicationState AppState
+@inject GlobalLocalizer localize
+@inject WhiteLabelManager WhiteLabel
+
+<div class="icon-wrapper">
+    <MudIcon Class="@(WhiteLabel.GetIconCSSClass() + " " + WhiteLabel.GetIconSizeModifier())" Size="Size.Large" Icon="@WhiteLabel.GetPageIcon().GetIcon()" ViewBox="@WhiteLabel.GetPageIcon().GetViewBox()" onclick="@navigateToStart"></MudIcon>
+</div>
+@if (WhiteLabel.Current_Page != EPages.The_Sharks && WhiteLabel.Current_Page != EPages.SmarGo && WhiteLabel.Current_Page != EPages.Cima_Group)
+{
+    <MudText Typo="Typo.h4"><strong>@(WhiteLabel.GetPageName())</strong></MudText>
+}
+<MudSpacer />
+<div class="language-wrapper">
+    <MudStack Row="true">
+        <AuthorizeView>
+            <Authorized>
+                <MudStack Row="true" Spacing="1">
+                    <UserProfileFragment></UserProfileFragment>
+                    <LocationFragment></LocationFragment>
+                </MudStack>
+            </Authorized>
+            <NotAuthorized>
+                @if (AppState.GetInteconAuthenticated() is not null && AppState.GetInteconAuthenticated()!.Value)
+                {
+                    <MudButton Class="reg-button" Variant="Variant.Filled" OnClick="@InteconLogout">
+                        <MudText Typo="Typo.h4">@localize.Get("btn_logout")</MudText>
+                        </MudButton>
+                }
+                else
+                {
+                    <SfDropDownButton IconCss="sf-icon-user-wf icon" CssClass="e-caret-hide e-custom">
+                        <DropDownButtonEvents ItemSelected="@ItemSelected"></DropDownButtonEvents>
+                        <DropDownMenuItems>
+                            <DropDownMenuItem Url="/login" Text="@localize.Get("nav_login")"></DropDownMenuItem>
+                            @* <DropDownMenuItem Url="/register" Text="@localize.Get("nav_register")"></DropDownMenuItem>*@
+                        </DropDownMenuItems>
+                    </SfDropDownButton>
+                }
+            </NotAuthorized>
+        </AuthorizeView>
+        <div class="help-menu-wrapper">
+            <HelpMenu></HelpMenu>
+        </div>
+        <NotificationMenu></NotificationMenu>
+        <LanguageSelector></LanguageSelector>
+    </MudStack>
+</div>
+
+@code {
+    protected async override Task OnInitializedAsync()
+    {
+        AppState.OnChange += StateHasChanged;
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+
+    private void navigateToStart()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void InteconLogout()
+    {
+        NavigationManager.NavigateTo("/", true, true);
+    }
+
+    private void ItemSelected(MenuEventArgs args)
+    {
+        NavigationManager.NavigateTo(args.Item.Url);
+    }
+}

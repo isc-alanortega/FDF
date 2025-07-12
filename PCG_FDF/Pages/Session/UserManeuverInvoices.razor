@@ -1,0 +1,288 @@
+﻿@page "/user_maneuvers/invoices"
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.Constants.CimaSimplex;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Payments;
+@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Components.CimaSimplexPaymentsInvoices
+@using PCG_FDF.Data.ComponentDI.Tracking;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Localization;
+@using Newtonsoft.Json;
+@using PCG_FDF.Data.Comparers;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities;
+
+@inject GlobalBreakpointService breakpointService
+@inject PCG_FDF_DB dataAccessService
+@inject GlobalLocalizer localize
+@inject NavigationManager navigationManager
+@inject WhiteLabelManager whiteLabelServices
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject ApplicationState AppState
+@implements IAsyncDisposable
+
+<PageTitle>@(whiteLabelServices.GetPageName())</PageTitle>
+@if (ShowResumen)
+{
+	<PaymentInvoiceResumen Invoices="SelectedInvoices.Invoices.ToList()"
+						   NavigateResumenCallback="NavigateOpenPayResumen"
+						   Reset="(() => _ = ResetComponent())"
+						   DataRequest="Request" />
+}
+else
+{
+	<div style="@invoices_wrapper">
+		<MudPaper Height="90%" Width="90%" Elevation="5" Style="@paper_grey">
+			<MudText Typo="Typo.h4">@localize.Get("label_maneuvers_invoices")</MudText>
+			<GridListPager @ref="@Pager_Reference" DisplayItem="PaymentInvoceResponse" ItemQueryResult="@ManeuversInvoices" TotalCount="@TotalInvoices" UpdatePage="@UpdateSourceAsync" InitialItemsPerPage="50">
+				<ControlsDisplay>
+					<MudStack Row="true" Style="width: 100%" AlignItems="@AlignItems.Center">
+						@*SEARCH TEXT*@
+						<MudTextField T="string"
+									  Style="height: 4rem; margin-top: 5.5px; max-width: 400px"
+									  MaxLength="500"
+									  Clearable="true"
+									  DebounceInterval="1500"
+									  Variant="Variant.Outlined"
+									  Value="@(Request.Query ?? "")"
+									  ValueChanged="@((string arg) => OnValueChange(arg))"
+									  Placeholder="@localize.Get("placeholder_search")" />
+
+						@*BUTTON REFRESH*@
+						<MudButton Style="height: 4rem; margin-top: 5.5px"
+								   HtmlTag="label"
+								   Variant="Variant.Filled"
+								   Color="Color.Primary"
+								   StartIcon="@Icons.Material.Filled.Refresh"
+								   OnClick="OnClickButtonRefresh">
+							@localize.Get("lbl_update")
+						</MudButton>
+					</MudStack>
+				</ControlsDisplay>
+
+				@*HEADER INVOICE TOTAL*@
+				<InvoiceTotal>
+					<MudCard hidden="@(SelectedInvoices.Invoices is null || !SelectedInvoices.Invoices.Any())">
+						<MudCardContent>
+							<MudStack Row="true" AlignItems="AlignItems.Center">
+								<MudStack AlignItems="AlignItems.Center" Spacing="0" Style="padding-right: 15px">
+									<MudText Typo="Typo.h5" Style="color: dodgerblue">
+										@(SelectedInvoices.Invoices is null ? "0" : SelectedInvoices.Invoices.Count())
+									</MudText>
+									<MudText Typo="Typo.h6" Style="padding-bottom: 10px">
+										@localize.Get("label_invoices")
+									</MudText>
+								</MudStack>
+								<MudStack AlignItems="AlignItems.Center" Spacing="0" Style="padding-right: 20px">
+									<MudText Typo="Typo.h5" Style="color: dodgerblue">
+										@* $@SelectedInvoices.Amount *@
+										@(
+																				decimal.TryParse(SelectedInvoices.Amount, out var monto)
+																				? monto.ToString("C")
+																				: "$0.00"
+																				)
+									</MudText>
+									<MudText Typo="Typo.h6" Style="padding-bottom: 10px">
+										@localize.Get("label_amount_due")
+									</MudText>
+								</MudStack>
+								<MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="@OnClickOpenPay" EndIcon="@Icons.Material.Outlined.ArrowForward" Style="width: 100%; height: fit-content; max-width: 300px">
+									Generar Referencia Bancaria SPEI
+								</MudButton>
+							</MudStack>
+						</MudCardContent>
+					</MudCard>
+					@*NOTES*@
+					<MudStack Spacing="0">
+						<MudStack Row="true" AlignItems="AlignItems.Center">
+							<MudPaper Style="width: 50px; height: 15px; background-color: #F1F6FF; border-radius: 15%; box-shadow: 0 0 8px rgba(0, 0, 0, 0.2)" />
+							<MudText Typo="Typo.subtitle1">
+								@localize.Get("col_color_attachedpayment").
+							</MudText>
+						</MudStack>
+						@* <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Outlined.Info" Color="Color.Primary" />
+                            <MudText Typo="Typo.subtitle2">
+                            @localize.Get("label_info_userinvoicesmaneuver")
+                            </MudText>
+                            </MudStack> *@
+					</MudStack>
+				</InvoiceTotal>
+
+				<NoItemsDisplay>
+					<MudText>@localize.Get("umaneuverinvoices_noitems")</MudText>
+				</NoItemsDisplay>
+
+				<HeaderDisplay>
+					<MudStack Style="@pager_header_wrapper">
+						<div style="@pager_header">
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_invoice")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_statusreference")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_reference")s</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("uquot_quotation_create")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_business_name")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_coin")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">Total</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_balance")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_antiquity")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.subtitle1">@localize.Get("label_actions")</MudText>
+							</MudItem>
+						</div>
+					</MudStack>
+				</HeaderDisplay>
+				<ListItemDisplay>
+					<MudPaper Class="list-row" Style="@GetColorsByStatus(context.ReferenceStatus)">
+						<div style="@inner_row">
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@context.InvoiceSerie @context.InvoiceFolio</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@(string.IsNullOrEmpty(context.ReferenceLabel) ? "" : context.ReferenceLabel.ToUpper())</MudText>
+							<MudText Style="word-break: break-word;">@context.ReferenceId</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@context.StampDate</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@context.ClientName</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@context.Currency</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@GetTotals(Convert.ToDecimal(context.InvoiceAmount))</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@GetTotals(Convert.ToDecimal(context.InvoiceBalance))</MudText>
+							<MudText Color="Color.Primary" Typo="Typo.subtitle2">@context.OverdueDays</MudText>
+							<MudStack Row="true" Style="flex-wrap: wrap; gap: 8px">
+								<MudTooltip Text="@localize.Get("label_totalpayment")" Arrow="true" Placement="Placement.Top" Color="@GetButtonColor(context, true)">
+									<MudIconButton Variant="Variant.Filled"
+												   OnClick="@(() => OnClickTotalPayment(context))"
+												   Color="@GetButtonColor(context, true)"
+												   Icon="@Icons.Material.Filled.Circle"
+												   Disabled="@DisabledPaymentButton(context, true)">
+									</MudIconButton>
+									@* <MudButton Variant="Variant.Filled"
+                                Color="@GetButtonColor(context, true)"
+                                OnClick="@(() => OnClickTotalPayment(context))"
+                                StartIcon="@Icons.Material.Filled.Circle"
+                                Disabled="@DisabledPaymentButton(context, true)">
+                                Total
+                                </MudButton>*@
+								</MudTooltip>
+								<MudTooltip Text="@localize.Get("label_partialpayment")" Arrow="true" Placement="Placement.Top" Color="@GetButtonColor(context, false)">
+									<MudIconButton Variant="Variant.Filled"
+												   OnClick="@(() => OnClickParcialPayment(context))"
+												   Color="@GetButtonColor(context, false)"
+												   Icon="@Icons.Material.Outlined.IncompleteCircle"
+												   Disabled="@DisabledPaymentButton(context, false)">
+									</MudIconButton>
+									@* <MudButton Variant="Variant.Filled"
+                                OnClick="@(() => OnClickParcialPayment(context))"
+                                Color="@GetButtonColor(context, false)"
+                                StartIcon="@Icons.Material.Outlined.IncompleteCircle"
+                                Disabled="@DisabledPaymentButton(context, false)">
+                                @localize.Get("label_partial")
+                                </MudButton> *@
+								</MudTooltip>
+								<MudTooltip Text="@localize.Get("btn_get_invoice")" Arrow="true" Placement="Placement.Top" Color="Color.Warning">
+									<MudIconButton Variant="Variant.Filled"
+												   Color="Color.Warning"
+												   OnClick="@(() => DownloadZip(context))">
+										<MudIcon Icon="@Icons.Material.Filled.FilePresent"></MudIcon>
+									</MudIconButton>
+								</MudTooltip>
+								<MudTooltip Text="@localize.Get("label_deletereference")" Arrow="true" Placement="Placement.Top" Color="Color.Error">
+									<MudIconButton Variant="Variant.Filled"
+												   OnClick="@(() => OnClickDeleteReference(context))"
+												   Color="Color.Error"
+												   Icon="@Icons.Material.Outlined.Delete"
+												   hidden="@(context.ReferenceStatus != "2")">
+									</MudIconButton>
+								</MudTooltip>
+								<MudTooltip Text="Descargar Complemento de Pago" Arrow="true" Placement="Placement.Top" Color="Color.Warning">
+									<MudIconButton Variant="Variant.Filled"
+												   Color="Color.Warning"
+												   Icon="@Icons.Material.Filled.Newspaper"
+												   OnClick="@(() => DownloadZipInvoice(context))">
+									</MudIconButton>
+								</MudTooltip>
+							</MudStack>
+						</div>
+					</MudPaper>
+				</ListItemDisplay>
+
+				<GridItemDisplay>
+					<MudItem Style="@usermaneuverinvoices_griditemdisplay">
+						<MudCard Class="grid-item" Style="@GetColorsByStatus(context.ReferenceStatus)">
+							<MudCardHeader>
+								<CardHeaderContent>
+									<MudText Style="font-size: 2.3em !important" Typo="Typo.h5">
+										@localize.Get("label_invoice") @context.InvoiceSerie @context.InvoiceFolio
+									</MudText>
+								</CardHeaderContent>
+							</MudCardHeader>
+
+							<MudCardContent>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_reference")s:</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_statusreference"): @(string.IsNullOrEmpty(context.ReferenceLabel) ? "" : context.ReferenceLabel.ToUpper())</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_create"): @context.StampDate</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_business_name"): @context.ClientName</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_coin"): @context.Currency</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">Total: $@context.InvoiceAmount</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_balance"): $@context.InvoiceBalance</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_antiquity"): @context.OverdueDays</MudText>
+							</MudCardContent>
+
+							<MudCardActions>
+								<MudStack Style="margin-left: auto" Row="true">
+									@* <MudTooltip Text="@localize.Get("btn_get_pdf")" Arrow="true" Placement="Placement.Top">
+                                <MudIconButton Variant="Variant.Filled" Color="Color.Error">
+                                <MudIcon Icon="@CustomIcons.PDF.GetIcon()" ViewBox="@CustomIcons.PDF.GetViewBox()"></MudIcon>
+                                </MudIconButton>
+                                </MudTooltip>
+                                <MudTooltip Text="@localize.Get("btn_get_xml")" Arrow="true" Placement="Placement.Top">
+                                <MudIconButton Variant="Variant.Filled" Color="Color.Success">
+                                <MudIcon Icon="@CustomIcons.XML.GetIcon()" ViewBox="@CustomIcons.XML.GetViewBox()"></MudIcon>
+                                </MudIconButton>
+                                </MudTooltip> *@
+									<MudTooltip Text="@localize.Get("label_totalpayment")" Arrow="true" Placement="Placement.Top">
+										<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Circle">
+											Total
+										</MudButton>
+									</MudTooltip>
+									<MudTooltip Text="@localize.Get("label_partialpayment")" Arrow="true" Placement="Placement.Top">
+										<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.IncompleteCircle">
+											@localize.Get("label_partial")
+										</MudButton>
+									</MudTooltip>
+									<MudTooltip Text="@localize.Get("label_deletereference")" Arrow="true" Placement="Placement.Top" Color="Color.Error">
+										<MudIconButton Variant="Variant.Filled"
+													   OnClick="@(() => OnClickDeleteReference(context))"
+													   Color="Color.Error"
+													   Icon="@Icons.Material.Filled.Delete">
+										</MudIconButton>
+									</MudTooltip>
+								</MudStack>
+							</MudCardActions>
+						</MudCard>
+					</MudItem>
+				</GridItemDisplay>
+			</GridListPager>
+		</MudPaper>
+	</div>
+}

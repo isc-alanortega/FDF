@@ -1,0 +1,202 @@
+:root {
+  --color-primary: #0045AC;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #DA291C;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #112f5c;
+  --color-nav-info: #112f5c;
+  --color-package-subtitle: #A1B5D3;
+  --color-complex-chip: #EDF4FA;
+  --color-booking-panel: #869AAC;
+}
+
+::deep .internal-cima-icon {
+  font-size: 4rem;
+}
+::deep .internal-cima-icon #cima-logo-outline {
+  fill: white;
+}
+::deep .internal-cima-icon #cima-logo-middle {
+  fill: white;
+}
+::deep .internal-cima-icon #cima-logo-triangle-left {
+  fill: white;
+}
+::deep .internal-cima-icon #cima-logo-triangle-right {
+  fill: white;
+}
+::deep .internal-cima-icon #cima-logo-triangle-top {
+  fill: white;
+}
+
+::deep .internal-bafar-icon #mane-gold {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-bafar-icon #face-blue {
+  fill: var(--color-global-RGBA-transparent);
+}
+
+::deep .card-header {
+  background-color: var(--color-primary);
+  align-items: center;
+  box-shadow: 0 8px 10px 3px var(--color-global-RGBA-black-16);
+}
+
+::deep .agreement-supporting-text {
+  margin-left: auto;
+  text-align: right;
+}
+
+::deep .internal-shipping-icon #red-group {
+  fill: white;
+}
+::deep .internal-shipping-icon #blue-group {
+  fill: white;
+}
+
+::deep .inner-card {
+  align-items: center;
+  height: 100%;
+  justify-content: center;
+  padding: 40px;
+}
+
+::deep .card-info-container {
+  align-items: center;
+}
+
+.indicator {
+  width: 8px;
+  height: 130%;
+}
+.indicator.indicator-ok {
+  background-color: var(--color-global-green-success);
+}
+.indicator.indicator-error {
+  background-color: var(--color-global-red-error);
+}
+
+::deep .agreement-header-text {
+  color: var(--color-global-fullwhite);
+  text-align: left;
+}
+
+::deep .data-card {
+  flex-direction: column;
+  display: flex;
+  left: 0;
+  margin: auto;
+  top: 0;
+  right: 0;
+  position: absolute;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 10;
+}
+
+::deep .download-button {
+  font-size: 1.2rem;
+}
+
+::deep .button-inner-row {
+  align-items: center;
+}
+
+.waves-header {
+  display: grid;
+  height: 600px;
+  width: 100%;
+  z-index: 2;
+  background: linear-gradient(180deg, rgb(34, 43, 62) 0%, rgb(0, 172, 193) 100%);
+  /*animation: color-change-3x 10s linear infinite alternate both;*/
+}
+
+.waves-container {
+  align-self: flex-end;
+}
+
+.waves {
+  position: relative;
+  width: 100%;
+  height: 30vh;
+  margin-bottom: -7px;
+  /*Fix for safari gap*/
+  min-height: 100px;
+  max-height: 170px;
+}
+
+/* Animation */
+.parallax > use {
+  animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+
+.parallax > use:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 7s;
+}
+
+.parallax > use:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 10s;
+}
+
+.parallax > use:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 13s;
+}
+
+.parallax > use:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 20s;
+}
+
+@keyframes move-forever {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+/*Shrinking for mobile*/
+@media (max-width: 768px) {
+  .waves {
+    height: 40px;
+    min-height: 40px;
+  }
+}

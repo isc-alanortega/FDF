@@ -1,0 +1,104 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+.icon-wrapper {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.nav-items-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    column-gap: 10px;
+}
+
+::deep .internal-cima-icon {
+    font-size: 3rem;
+    width: 4em !important;
+    height: 1em;
+
+    #cima-logo-outline {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-middle {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-left {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-right {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #cima-logo-triangle-top {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-shipping-icon {
+    #red-group {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #blue-group {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-thesharks-icon {
+    #deepblue {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #lightblue {
+        fill: css-color-var(global-fullwhite);
+    }
+}
+
+::deep .internal-bafar-icon {
+    #mane-gold {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #face-blue {
+        fill: css-color-var(global-RGBA-transparent);
+    }
+}
+
+::deep .nav-button {
+    color: css-color-var(global-fullwhite);
+
+    .mud-button-label h6 {
+        font-weight: 300 !important;
+    }
+}
+
+::deep .nav-button:hover {
+    background-color: css-color-var(global-RGBA-transparent);
+    opacity: .8;
+}
+
+::deep .reg-button {
+    color: css-color-var(global-fullwhite);
+    background: css-color-var(tertiary);
+    padding: 10px 35px;
+    border-radius: 50px;
+    box-shadow: none;
+    margin-left: 1.2rem;
+
+    .mud-button-label h6 {
+        font-weight: 300 !important;
+    }
+}
+
+::deep .reg-button:hover {
+    background: css-color-var(tertiary);
+    opacity: .8;
+}
+
+.language-wrapper {
+    margin-left: 20px;
+}

@@ -1,0 +1,14 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+::deep .checkbox-icon {
+    fill: css-color-var(primary);
+    stroke: css-color-var(primary);
+}
+
+::deep .subservice-checkbox {
+    &.resize-it {
+        .mud-icon-root {
+            font-size: 2.5rem;
+        }
+    }
+}

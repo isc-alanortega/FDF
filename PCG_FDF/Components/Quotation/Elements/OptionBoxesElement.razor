@@ -1,0 +1,93 @@
+﻿@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.Comparers;
+@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <div class="chipset-wrapper">
+            <MudChipSet Class="chip-set-selector" MudChipEqualityComparer="@Comparer"
+                        ValueExpression="@(() => TryGetStorageChip())"
+                        SelectedChip="@TryGetStorageChip()"
+                        SelectedChipChanged="@(async (args) => await TryWriteStorageValue(args))"
+                        ReadOnly="@GetElementReadonly()"
+                        Mandatory="true">
+                @foreach (var chip_init_data in GetPreloadedListAs<OptionBox>())
+                {
+                    <SimpleChip IconCSS="extra-large-plus unconstrain"
+                                Default="ShouldPreselect(chip_init_data)"
+                                ChipIcon="@chip_init_data.Icon"
+                                IconViewBox="@chip_init_data.ViewBox"
+                                ChipTag="@chip_init_data.Value_UUID"
+                                ChipText="@chip_init_data.Value"></SimpleChip>
+                }
+            </MudChipSet>
+        </div>
+    </MudStack>
+</div>
+
+@code {
+    private ChipUUIDComparer Comparer { get; } = new();
+    private bool Initialized { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        Quotation_Data.SetOptionsValidation(TryGetStorageValue() is not null, Card.Card_ID, ElementData.Element_ID);
+        Quotation_Data.TryBindSharedChipset(Card.Card_ID, ElementData.Element_ID);
+        base.OnInitialized();
+        Initialized = true;
+    }
+
+    private bool ShouldPreselect(OptionBox data)
+    {
+        var guid = TryGetStorageValue();
+        if (guid.HasValue)
+        {
+            if (guid == data.Value_UUID)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private MudChip? TryGetStorageChip()
+    {
+        if (Initialized)
+        {
+            return Quotation_Data.GetSharedChip(Card.Card_ID, ElementData.Element_ID);
+        }
+        return null;
+    }
+
+    private Guid? TryGetStorageValue()
+    {
+        return Quotation_Data.GetElementValueAs<Guid?>(Card.Card_ID, ElementData.Element_ID);
+    }
+
+    private async Task TryWriteStorageValue(MudChip? value)
+    {
+        if (value is not null)
+        {
+            Quotation_Data.SetOptionsValidation(true, Card.Card_ID, ElementData.Element_ID);
+            await Quotation_Data.WriteSharedElementValue((Guid)value.Tag!, Card.Card_ID, ElementData.Element_ID);
+        }
+        else
+        {
+            Quotation_Data.SetOptionsValidation(false, Card.Card_ID, ElementData.Element_ID);
+            await Quotation_Data.WriteSharedElementValue(null, Card.Card_ID, ElementData.Element_ID);
+        }
+
+        Quotation_Data.WriteSharedChip(value, Card.Card_ID, ElementData.Element_ID);
+    }
+}

@@ -1,0 +1,16 @@
+﻿@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+
+<div class="mobile-nav-items-container">
+    <MudNavMenu Color="Color.Secondary">
+        <MudNavLink Class="nav-button" Href="/">@localize.Get("nav_start")</MudNavLink>
+        <MudNavLink Disabled="true" Class="nav-button" Href="#">@localize.Get("nav_about")</MudNavLink>
+        <MudNavLink Disabled="true" Class="nav-button" Href="#">@localize.Get("nav_services")</MudNavLink>
+        <MudNavLink Disabled="true" Class="nav-button" Href="#">@localize.Get("nav_gallery")</MudNavLink>
+        <MudNavLink Disabled="true" Class="nav-button" Href="#">@localize.Get("nav_news")</MudNavLink>
+        <MudNavLink Disabled="true" Class="nav-button" Href="#">@localize.Get("nav_contact")</MudNavLink>
+    </MudNavMenu>
+</div>
+
+@code {
+}

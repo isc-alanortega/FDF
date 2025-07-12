@@ -1,0 +1,68 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+
+.reports-wrapper {
+    padding-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.reports-grid {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    flex-direction: column;
+    margin-top: 2px;
+    align-items: center;
+    flex: 1
+}
+
+.grid-item {
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
+    padding: 16px;
+}
+
+.grid-item-auto-heigh {
+    min-height: 270px;
+}
+
+/*.reports-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.reports-grid .MudItem {
+    display: flex;
+    flex: 1;
+}*/
+
+::deep .paper-grey {
+    border-radius: 15px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .download-button {
+
+    &.resize-it {
+        svg {
+            font-size: 3.25rem !important;
+        }
+    }
+}
+
+::deep .grid-item {
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}

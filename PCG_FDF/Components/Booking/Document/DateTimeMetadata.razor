@@ -1,0 +1,79 @@
+﻿@inherits MetadataElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@MetadataData.Metadata_Name</strong></MudText>
+            @if (MetadataData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudDatePicker Disabled="@GetElementReadonly()"
+                       ReadOnly="@GetElementReadonly()"
+                       Date="@GetDate()"
+                       DateChanged="@(async(args) => await SetDate(args))"
+                       Editable="true"
+                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                       DateFormat="dd/MM/yyyy"
+                       Required="@MetadataData.Required"
+                       RequiredError="@Localize.Get("errmsg_required")" />
+
+        <MudTimePicker Disabled="@GetElementReadonly()"
+                       ReadOnly="@GetElementReadonly()"
+                       Time="@GetTime()"
+                       TimeChanged="@(async(args) => await SetTime(args))"
+                       AmPm="true"
+                       TimeFormat="hh:mm tt"
+                       Required="@MetadataData.Required"
+                       RequiredError="@Localize.Get("errmsg_required")" />
+    </MudStack>
+</div>
+
+@code {
+    private DateTime? bound_date { get; set; }
+    private TimeSpan? bound_time { get; set; }
+
+    private DateTime? GetDate()
+    {
+        return bound_date;
+    }
+
+    private TimeSpan? GetTime()
+    {
+        return bound_time;
+    }
+
+    private async Task SetDate(DateTime? value)
+    {
+        bound_date = value;
+        await TryWriteStorageValue();
+    }
+
+    private async Task SetTime(TimeSpan? value)
+    {
+        bound_time = value;
+        await TryWriteStorageValue();
+    }
+
+    private async Task TryWriteStorageValue()
+    {
+        DateTime? data = null;
+
+        if (bound_date.HasValue && bound_time.HasValue)
+        {
+            data = new DateTime(bound_date.Value.Year, bound_date.Value.Month, bound_date.Value.Day, bound_time.Value.Hours, bound_time.Value.Minutes, 0);
+        }
+
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedMetadataValue(data, SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedMetadataValue(data, DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+}

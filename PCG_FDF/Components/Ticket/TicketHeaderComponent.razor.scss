@@ -1,0 +1,147 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+.ticket-header-wrapper {
+    border: 1px solid css-color-var(badge-ok);
+    border-radius: 8px;
+    padding: 16px
+}
+
+::deep .btn_directly_contract {
+    background-color: #0EB4F1 !important;
+    font-size: 1.2rem;
+}
+
+::deep .money-item {
+    align-self: flex-end;
+    align-items: center;
+    margin-left: auto;
+}
+
+::deep .ticket-header-row {
+    width: 100%;
+    grid-template-columns: 1fr 2fr;
+    grid-column-gap: 10px !important;
+    display: grid !important;
+}
+
+::deep .ticket-header-row.coins-header {
+    grid-template-columns: 1fr 2fr 1fr !important;
+}
+
+::deep .ticket-header-row.subtotal {
+   h5 {
+       font-weight: 500 !important;
+   }
+
+   .money-item {
+       color: css-color-var(primary);
+       font-weight: 600 !important;
+   }
+}
+
+::deep .ticket-header-container {
+    gap: 0 !important;
+}
+
+::deep .to-win {
+    margin-left: -15px;
+}
+
+::deep .cima-coins-icon {
+    font-size: 8rem;
+    height: auto;
+    filter: drop-shadow(3px 3px 2px css-color-var(global-RGBA-black-50));
+}
+
+::deep .ticket-actions {
+    padding-top: 2rem;
+}
+
+::deep .save-button {
+    font-size: 1.2rem;
+    background-color: css-color-var(primary) !important;
+    color: css-color-var(global-fullwhite);
+    padding: 12px;
+    border-radius: 50px;
+    box-sizing: border-box;
+    transition: all ease-in-out .2s;
+
+    &:hover {
+        background-color: css-color-var(primary-darken) !important;
+    }
+}
+
+::deep .download-button {
+    font-size: 1.2rem;
+    background-color: css-color-var(global-fullwhite) !important;
+    color: css-color-var(primary) !important;
+    border: 1px solid css-color-var(primary) !important;
+    padding: 12px;
+    border-radius: 50px;
+    box-sizing: border-box;
+    transition: all ease-in-out .2s;
+
+    &:hover {
+        background-color: css-color-var(primary) !important;
+        color: css-color-var(global-fullwhite) !important;
+    }
+
+    .progress {
+        width: 1.8rem;
+        height: 1.8rem;
+        background: repeating-conic-gradient(#0000 0 90deg,css-color-var(global-fullwhite) 0 180deg), repeating-conic-gradient(css-color-var(global-fullwhite) 0 90deg,#0000 0 180deg);
+        background-size: 10.9px 10.9px;
+        background-position: 0 0;
+        animation: hypnotic-60mq8qmd 1.2s infinite;
+
+        &.resize-it {
+            width: 3rem !important;
+            height: 3rem !important;
+        }
+    }
+
+    @keyframes hypnotic-60mq8qmd {
+        100% {
+            background-position: 0px 28.8px,10.9px 0px;
+        }
+    }
+}
+
+::deep .button-inner-row {
+    align-items: center;
+}
+
+::deep .whatsapp-button {
+    &.half-size {
+        width: 50%;
+    }
+
+    &.full-size {
+        width: 100%;
+    }
+
+    background-color: #25D366;
+    color: white;
+
+    &:hover {
+        background-color: #075E54;
+    }
+}
+
+::deep .whatsapp-icon {
+    fill: white !important;
+}
+
+::deep .cima-coins-check {
+    &.resize-it {
+        .mud-icon-root {
+            font-size: 2.5rem;
+        }
+    }
+}
+
+@media(max-width: 600px) {
+    ::deep .ticket-header-row strong {
+        font-size: 1.5em !important;
+    }
+}

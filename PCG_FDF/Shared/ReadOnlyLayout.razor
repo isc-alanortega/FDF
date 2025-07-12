@@ -1,0 +1,97 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_ENTITIES.Enums
+@inherits LayoutComponentBase
+@inject DrawerBridge Bridge
+@inject LayoutController LayoutControl
+@inject WhiteLabelManager WhiteLabel
+
+<MudThemeProvider Theme="@_theme" />
+<MudSnackbarProvider />
+<MudBreakpointProvider OnBreakpointChanged="@breakpointToggle">
+    <div>
+        <MudLayout>
+            @if (!LayoutControl.Hide_Layout)
+            {
+                <div class="holder">
+                    <MudAppBar Class="bar-info d-lg-flex d-md-none d-none">
+                        <NavInfoItems></NavInfoItems>
+                    </MudAppBar>
+                    <MudAppBar Class="bar-nav" Color="Color.Primary" Elevation="5">
+                        <MudIconButton Class="d-md-flex d-lg-none hamburger-menu-icon" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+                        <NavMenuItems></NavMenuItems>
+                    </MudAppBar>
+                </div>
+                <MudDrawer Class="mobile-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+                    <MobileMenu></MobileMenu>
+                </MudDrawer>
+            }
+            <MudMainContent Class="@($"{(LayoutControl.Hide_Layout ? "hide no-padding" : GetClass())} main-content-layout")">
+                @Body
+            </MudMainContent>
+            @if (!LayoutControl.Hide_Layout)
+            {
+                <Footer></Footer>
+            }
+        </MudLayout>
+    </div>
+</MudBreakpointProvider>
+
+@code {
+    private Breakpoint CurrentBreakpoint { get; set; }
+    bool _drawerOpen = false;
+
+    private MudTheme _theme { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _theme = new MudTheme()
+            {
+                Palette = new Palette()
+                {
+                    Primary = WhiteLabel.Current_Theme_Data.MudBlazor_Theme_Data["Primary"],
+                    Secondary = WhiteLabel.Current_Theme_Data.MudBlazor_Theme_Data["Secondary"],
+                    Tertiary = WhiteLabel.Current_Theme_Data.MudBlazor_Theme_Data["Tertiary"],
+
+                },
+                PaletteDark = new Palette()
+                {
+                    Primary = Colors.Blue.Lighten1
+                },
+                Typography = new Typography()
+                {
+                    Default = new Default()
+                    {
+                        FontFamily = new[] { "Montserrat", "Roboto", "sans-serif" }
+                    }
+                }
+            };
+        base.OnInitialized();
+    }
+
+    void breakpointToggle(Breakpoint breakpoint)
+    {
+        CurrentBreakpoint = breakpoint;
+        if (breakpoint >= Breakpoint.Lg)
+        {
+            _drawerOpen = false;
+        }
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+        Bridge.SetNavBind(_drawerOpen);
+    }
+
+    private string GetClass()
+    {
+        if (CurrentBreakpoint == Breakpoint.MdAndDown)
+        {
+            return "minimal";
+        }
+        else
+        {
+            return "max";
+        }
+    }
+}

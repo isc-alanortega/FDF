@@ -1,0 +1,151 @@
+﻿@using PCG_ENTITIES.Requests
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.Quotation
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject PCG_FDF_DB DATA_ACCESS
+@inject QuotationDataCollection quotationService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <div class="dialog-stack">
+            @if (Loading)
+            {
+                <div class="progress"></div>
+            }
+            else
+            {
+                <MudStack>
+                    <MudSwitch @bind-Checked="@Append_Booking" Color="Color.Primary">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">@Localize.Get("label_append_to_booking")</MudText>
+                        </MudSwitch>
+                        <MudAutocomplete T="KeyValueUUID"
+                                         Class="@($"autocomplete-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         PopoverClass="@($"autocomplete-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         ToStringFunc="@CustomConverter"
+                                         ResetValueOnEmptyText="false"
+                                         Disabled="@(!Append_Booking)"
+                                         ReadOnly="@(!Append_Booking)"
+                                         CoerceText="true"
+                                         CoerceValue="false"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         AdornmentColor="Color.Primary"
+                                         Required="@Append_Booking"
+                                         Clearable="@true"
+                                         @bind-Value="@Selected_Booking"
+                                         SearchFunc="@SearchBookings"
+                                         RequiredError="@Localize.Get("errmsg_required")"
+                                         Placeholder="@($"{Localize.Get("placeholder_select")} Booking")" />
+                    </MudStack>
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        @if (!Loading)
+        {
+            <MudButton OnClick="Cancel">@Localize.Get("btn_cancel")</MudButton>
+            <MudButton Color="Color.Primary" Disabled="@GetOkDisabled()" OnClick="Submit">@Localize.Get("btn_continue")</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@if(BreakpointService.GetIsExtraSmall())
+{
+    <style>
+        .mud-dialog-title h6 {
+            font-size: 3.5em !important;
+        }
+
+        .mud-dialog-content svg,
+        .mud-dialog-content input {
+            font-size: 2.5em !important;
+        }
+
+        .mud-list-padding p,
+        .mud-dialog-content h5,
+        .mud-dialog-actions span {
+            font-size: 2.0em !important;
+        }
+    </style>
+}
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    private Func<KeyValueUUID, string> CustomConverter = kvp => kvp?.Value!;
+
+    private KeyValueUUID? Selected_Booking { get; set; }
+
+    private bool Append_Booking { get; set; } = false;
+
+    private bool Loading { get; set; } = false;
+
+    async void Submit()
+    {
+        Loading = true;
+        var success = await quotationService.TrySaveFullQuotation(Selected_Booking?.Key);
+        Loading = false;
+        if (success)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(Localize.Get("error_saving"), Severity.Error);
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    private bool GetOkDisabled()
+    {
+        if (Append_Booking && Selected_Booking is null)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task<IEnumerable<KeyValueUUID>> SearchBookings(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            value = "BK";
+        }
+        var result = await DATA_ACCESS.PostGetActiveBookings(new UserActiveBookings()
+            {
+                Client_ID = AppState.GetCurrentClientID()!.Value,
+                Query = value
+            });
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValueUUID>();
+        }
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

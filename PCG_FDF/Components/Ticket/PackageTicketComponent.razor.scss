@@ -1,0 +1,38 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+::deep .paper-transparent {
+    background: css-color-var(global-RGBA-transparent);
+}
+
+.subtotal-divider {
+    border: solid 1px css-color-var(global-grey);
+}
+
+::deep .money-item {
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+::deep .ticket-panels-icon {
+    fill: css-color-var(global-fullblack);
+
+    &.resize-it {
+        font-size: 3.5rem !important;
+    }
+}
+
+::deep .title-row {
+    grid-template-columns: 1fr 4fr 2fr;
+    grid-column-gap: 10px !important;
+    display: grid !important;
+}
+
+::deep .ticket-package-panel {
+    .mud-expand-panel-content {
+        padding-right: 0px !important;
+    }
+
+    .mud-expand-panel-header {
+        padding-right: 0px !important;
+    }
+}

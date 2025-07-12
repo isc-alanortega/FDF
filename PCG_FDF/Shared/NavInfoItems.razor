@@ -1,0 +1,20 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+@inject WhiteLabelManager WhiteLabel
+
+<div class="info-container first">
+    <MudIcon Class="nav-info-icon" Icon="@Icons.Material.Outlined.LocalPhone"></MudIcon>
+    <MudText Typo="Typo.body2" Class="nav-info-text"><strong>@localize.Get("footer_call")&nbsp;</strong>@WhiteLabel.GetContactPhone()</MudText>
+</div>
+<div style="height: 100%; display: flex; align-items: center;">
+    <MudDivider Class="vertical-divider" Vertical="true"></MudDivider>
+</div>
+<div class="info-container">
+    <MudIcon Class="nav-info-icon" Icon="@Icons.Material.Outlined.Email"></MudIcon>
+    <MudText Typo="Typo.body2" Class="nav-info-text"><strong>@localize.Get("footer_write")&nbsp;</strong>@WhiteLabel.GetContactEmail()</MudText>
+</div>
+
+@code {
+
+}

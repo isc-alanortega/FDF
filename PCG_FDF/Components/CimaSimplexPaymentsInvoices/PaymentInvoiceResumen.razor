@@ -1,0 +1,153 @@
+﻿@page "/pago-facturas"
+@using MudBlazor
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.CimaSimlexUserManeuvers
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Components.Dialogs
+@inject WhiteLabelManager whiteLabelServices
+@inject GlobalBreakpointService breakpointService
+@inject NavigationManager navigationManager
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB dataAccessService
+@inject IDialogService DialogService
+
+@inject CimaSimlexUserManeuverServices cimaSimlexUserManeuverServices
+
+<PageTitle>@(whiteLabelServices.GetPageName())</PageTitle>
+
+<div class="user-maneuver-simplex quotations_wrapper">
+    <MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+        <MudText Typo="Typo.h4">@localize.Get("label_maneuvers_invoices")</MudText>
+        <ProgresAlertDialog Title="@localize.Get("label_payment_reference_generation_in_progress")"
+                            Message="@localize.Get("label_the_process_may_takes_a_few_minutes")"
+              ShowProgressCircular="true"
+              @bind-IsVisible="@IsGeneratePaymentReferece" />
+
+        @if (ShowSkeletons)
+        {
+            <MudStack Style="width: 100%" AlignItems="@AlignItems.Center">
+                @for (int i = 0; i < 10; i++)
+                {
+                    <MudSkeleton Style="width: 100%" SkeletonType="SkeletonType.Text" />
+                }
+            </MudStack>
+        }
+        else
+        {
+            <!-- Contenedor principal con mejor estructura -->
+            <MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
+
+                <!-- Sección superior: Importe y botones en la misma línea -->
+                <MudPaper Elevation="1" Class="pa-4 mb-4" Style="border-radius: 8px;">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudStack AlignItems="AlignItems.Start" Justify="Justify.Center" Style="height: 100%;">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                                    Importe total
+                                </MudText>
+                                <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight: 700;">
+                                    @GetTotalAmount().ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-MX"))
+                                </MudText>
+                            </MudStack>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="3" Style="height: 100%;">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Secondary"
+                                           StartIcon="@Icons.Material.Filled.ArrowBack"
+                                           OnClick="() => NavigateResumenCallback.Invoke(false)"
+                                           Style="min-width: 120px;">
+                                    Regresar
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           EndIcon="@Icons.Material.Filled.ChevronRight"
+                                           OnClick="GeneretePaymentReference"
+                                           Style="min-width: 180px;">
+                                    Generar ficha de pago
+                                </MudButton>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                <!-- Alerta informativa centrada y más compacta -->
+                <MudAlert Severity="Severity.Info"
+                          Variant="Variant.Filled"
+                          Class="mb-4"
+                          Style="background-color: #0045AC; border-radius: 6px;">
+                    <MudText Typo="Typo.body2" Style="text-align: center;">
+                        Antes de continuar, asegúrate de que las facturas seleccionadas sean las correctas para el pago.
+                    </MudText>
+                </MudAlert>
+
+            </MudContainer>
+
+            <GridListPager @ref="@PagerReference" DisplayItem="OpenPayInvoiceData" InitialItemsPerPage="25" ItemQueryResult="@Invoices" TotalCount="@Invoices.Count()" NotShowGridItem="true" UpdatePage="EventCallback.Factory.Create(new object(), () => Task.CompletedTask)">
+                <ControlsDisplay>
+                    <MudStack Row="@true" Style="width: 100%" AlignItems="@AlignItems.Center">
+                       <MudStack Row="false" Style="width: 50%">
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_concept"):</MudText>
+                            <MudSelect Value="@SelectedConcept" ValueChanged="@PaymentConceptChanged" T="int" Variant="Variant.Outlined" ReadOnly="true">
+                                @foreach (var concept in PaymentConcepts)
+                                {
+                                    <MudSelectItem Value="@concept.Id">@concept.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                       </MudStack>
+                    </MudStack>
+                </ControlsDisplay>
+
+                <NoItemsDisplay>
+                    <MudText>@localize.Get("uinvoices_noitems")</MudText>
+                </NoItemsDisplay>
+
+                <HeaderDisplay>
+                    <MudStack Class="pager-header-wrapper">
+                        <div class="pager-header" style="align-items: flex-start; justify-content: space-between; gap: 16px; padding: 8px 12px;">
+                            <MudItem>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_invoice")</MudText>
+                            </MudItem>
+
+                            <MudItem>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_business_name")</MudText>
+                            </MudItem>
+
+                            <MudItem>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_balance")</MudText>
+                            </MudItem>
+                        </div>
+                    </MudStack>
+                </HeaderDisplay>
+
+                <GridItemDisplay>
+                    <MudItem>
+                        <MudCard Class="grid-item">
+                            <MudCardContent>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("No"): @context.Invoice </MudText>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("Booking"): @context.Company_Name </MudText>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("lbl_servicedata"): @context.Payment_Amount.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-MX")) </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </GridItemDisplay>
+
+                <ListItemDisplay>
+                    <MudPaper Class="list-row">
+                        <div class="inner-row" style="align-items: flex-start; justify-content: space-between; gap: 16px; padding: 8px 12px;">
+                            <MudText Color="Color.Primary" Typo="Typo.h6"> @context.Invoice </MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6"> @context.Company_Name </MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6"> @context.Payment_Amount.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-MX")) </MudText>
+                        </div>
+                    </MudPaper>
+                </ListItemDisplay>
+
+                <InvoiceTotal />
+            </GridListPager>            
+        }
+    </MudPaper>
+</div>

@@ -1,0 +1,93 @@
+﻿@using Azure.AI.OpenAI
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@inject CIMAChatService Chat
+@inject GlobalLocalizer Localize
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<div class="chat-wrapper">
+    <div class="chat-content">
+        @foreach (var message in Chat.GetMessages())
+        {
+            @if (message.Role == ChatRole.Assistant)
+            {
+                <MudStack Row="true" Class="assistant-chat-message">
+                    <MudAvatar Variant="Variant.Outlined">
+                        <MudIcon Icon="@CustomIcons.cimaLogoSimpleColored.GetIcon()" ViewBox="@CustomIcons.cimaLogoSimpleColored.GetViewBox()" Size="Size.Large" />
+                    </MudAvatar>
+                    <div class="assistant-chat-bubble">
+                        <MudText>@message.Message</MudText>
+                        </div>
+                    </MudStack>
+            }
+            else if (message.Role == ChatRole.User)
+            {
+                <MudStack Row="true" Class="user-chat-message">
+                <div class="user-chat-bubble">
+                    <MudText>@message.Message</MudText>
+                    </div>
+                    </MudStack>
+            }
+        }
+        @if (Chat.GetIsLoading())
+        {
+            <MudStack Row="true" Class="assistant-chat-message">
+                <MudAvatar Variant="Variant.Outlined">
+                    <MudIcon Icon="@CustomIcons.cimaLogoSimpleColored.GetIcon()" ViewBox="@CustomIcons.cimaLogoSimpleColored.GetViewBox()" Size="Size.Large" />
+                </MudAvatar>
+                <div class="assistant-chat-bubble-typing">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </MudStack>
+        }
+
+    </div>
+    <MudStack Row="true" Class="chat-bottom-bar">
+        <MudTextField Class="chat-text-field" @bind-Value="@User_Message" Variant="Variant.Text" AutoGrow="true" Lines="3"></MudTextField>
+        <MudIconButton Color="Color.Primary" OnClick="@(async() => await TrySendMessage())" Class="chat-send-message" Icon="@Icons.Material.Rounded.Send"></MudIconButton>
+    </MudStack>
+</div>
+
+@code {
+    private string? User_Message { get; set; }
+
+    private void InitServices()
+    {
+        Chat.OnChange += StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        InitServices();
+        base.OnInitialized();
+    }
+
+    private void ShowError(string Error)
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+        Snackbar.Add(Localize.Get(Error), Severity.Error);
+    }
+
+    private async Task TrySendMessage()
+    {
+        if (!string.IsNullOrEmpty(User_Message) && !string.IsNullOrWhiteSpace(User_Message))
+        {
+            var inner_message = User_Message;
+            User_Message = null;
+            await Chat.SendMessage(inner_message);
+        }
+        else
+        {
+            ShowError("error_chat_message_empty");
+        }
+    }
+
+    public void Dispose()
+    {
+        Chat.OnChange -= StateHasChanged;
+    }
+}

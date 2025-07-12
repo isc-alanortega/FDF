@@ -1,0 +1,13 @@
+﻿/*
+    Módulo global de efectos CSS
+*/
+
+@mixin shadow-divider($color) {
+    -webkit-filter: drop-shadow(0px 5px 5px $color);
+    filter: drop-shadow(0px 5px 5px $color);
+}
+
+@mixin shadow-card($color) {
+    -webkit-filter: drop-shadow(4px 4px 5px $color);
+    filter: drop-shadow(4px 4px 5px $color);
+}

@@ -1,0 +1,108 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+
+::deep .package-panel {
+    display: flex;
+    flex-direction: column;
+
+    div {
+        padding: 0 !important;
+    }
+}
+
+::deep .mobile-text-stack {
+    width: 100%;
+}
+
+::deep .stack-card {
+    display: flex;
+    justify-content: space-around;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+    height: 100%;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid css-color-var(global-RGBA-black-16);
+
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+.header-container {
+    align-items: center;
+}
+
+::deep .mobile-card-text {
+    &.title {
+        color: css-color-var(primary-lighten-2);
+    }
+
+    &.body {
+        padding-left: 4px;
+        color: black;
+    }
+}
+
+::deep .mobile-chip-text-icon {
+    stroke: css-color-var(tertiary);
+}
+
+.mobile-card-package-row {
+    display: flex;
+    align-items: center;
+}
+
+::deep .mobile-card-package-btn-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 3em;
+}
+
+::deep .mobile-card-package-button {
+    color: css-color-var(global-fullwhite);
+    background: css-color-var(tertiary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-inline: 35px;
+    padding-top: 11px;
+    padding-bottom: 11px;
+    border-radius: 50px;
+    font-size:1.6rem;
+
+    .mud-icon-root {
+        font-size: 4rem;
+    }
+
+    &:hover {
+        background: css-color-var(tertiary);
+        opacity: .8;
+    }
+}
+
+::deep .mobile-card-package-button-icon {
+    color: css-color-var(global-fullwhite);
+    margin-left: 0 !important;
+}
+
+::deep .mobile-package-arrow {
+    font-size: 4rem;
+}
+
+::deep .package-item-text {
+    color: css-color-var(global-fullblack);
+}
+
+::deep .service-package-card {
+    padding: 4px 8px;
+}
+
+@include keyframes(card-popup) {
+    @include anim-popup-center-frames();
+}
+
+::deep .service-package-card:hover {
+    @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+}

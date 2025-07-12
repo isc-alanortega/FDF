@@ -1,0 +1,271 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.Localization
+@inject IJSRuntime JS
+@implements IDisposable
+@inject GlobalLocalizer localize
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject GlobalBreakpointService BreakpointService
+
+<div class="@($"{(actionable ? "actionable-chip" : "complex-chip-wrapper")} {MobileClass}")">
+    <MudChip @onclick="@(() => OnChipClick(service))" Disabled="@Disabled" Class="@($"{(actionable ? "actionable-complex-chip" : "complex-chip")} {(BreakpointService.GetIsMobile() ? "is-mobile" : "")}")" Tag="@service" Variant="Variant.Text" Color="Color.Primary">
+         <div class="internal-chip-wrapper">
+            @if(actionable)
+            {
+                    <div class="chip-header">
+                        <div class="chip-icon-container">
+                            <div id="@service.Id">
+                                @if (IsMobile)
+                                {
+                                    <MudIcon ViewBox="@service.ViewBox" Class="internal-button-icon mobile-chip-icon" Icon="@service.Icon"></MudIcon>
+                                }
+                                else
+                                {
+                                    <MudIcon ViewBox="@service.ViewBox" Class="internal-button-icon" Icon="@service.Icon" Size="Size.Medium"></MudIcon>
+                                }
+                            </div>
+                        </div>
+                        <div class="internal-horizontal-spacer"></div>
+                        <MudText Typo="IsMobile ? Typo.h4 : Typo.h6" Class="@($"internal-chip-text {(BreakpointService.GetIsMobile() ? "is-mobile" : "")}")">
+                            @if (IsMobile)
+                            {
+                                <strong>@service.Name</strong>
+                            }
+                            else
+                            {
+                                @service.Name
+                            }
+                        </MudText>
+                    </div>
+            } 
+            else {
+                    <MudText Typo="IsMobile ? Typo.h4 : Typo.h6" Class="@($"internal-chip-text {(BreakpointService.GetIsMobile() ? "is-mobile" : "")}")">
+                        @if (IsMobile)
+                        {
+                            <strong>@service.Name</strong>
+                        }
+                        else
+                        {
+                            @service.Name
+                        }
+                    </MudText>
+                    <div class="internal-horizontal-spacer"></div>
+                    <div class="chip-icon-container">
+                        <div id="@service.Id">
+                            @if (IsMobile)
+                            {
+                                <MudIcon ViewBox="@service.ViewBox" Class="internal-button-icon mobile-chip-icon" Icon="@service.Icon"></MudIcon>
+                            }
+                            else
+                            {
+                                <MudIcon ViewBox="@service.ViewBox" Class="internal-button-icon" Icon="@service.Icon" Size="Size.Medium"></MudIcon>
+                            }
+                        </div>
+                        <div class="internal-vertical-spacer"></div>
+                        <div class="button-footer" style="height: 5px; width: 5px;"></div>
+                    </div>
+            }
+                        @* TODO: Implement help modal on mobile view *@
+                        @*@if (helpTooltip is not null)
+                {
+                <MudIconButton Icon="@Icons.Material.Filled.HelpOutline" Class=@($"mobile-chip-action-button {CSSHelper}") OnClick="@ToggleOpen">
+                <MudPopover Style="max-width: 350px;" Open="@_isOpen" Fixed="true" Class="px-4 pt-4 popover-custom">
+                <div class="d-flex flex-column">
+                <MudText>@helpTooltip</MudText>
+                <MudButton OnClick="@ToggleOpen" Class="ml-auto mr-n3 mb-1" Color="Color.Error">@localize.Get("btn_close")</MudButton>
+                </div>
+                </MudPopover>
+                </MudIconButton>
+                }*@
+                @if (actionable)
+                {
+                    <div class="internal-horizontal-spacer-small"></div>
+                    <div class="chip-actionable-container">
+                        @if (IsMobile)
+                        {
+                            <div class="mobile-add-label">
+                                <MudIcon Class="internal-action-bottom-icon" Icon="@Icons.Material.Filled.AddCircleOutline" Size="Size.Medium"></MudIcon>
+                                <span>Haz click para añadir</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="add-label">
+                                <MudIcon Class="internal-action-bottom-icon" Icon="@Icons.Material.Filled.AddCircleOutline" Size="Size.Medium"></MudIcon>
+                                <span>Haz click para añadir</span>
+                            </div>
+                        }
+                        @if (helpTooltip is not null)
+                        {
+                            <MudButton Class=@($"chip-action-button {CSSHelper}") OnClick="@ToggleOpen">
+                                <MudIcon Class="internal-action-top-icon" Icon="@Icons.Material.Filled.HelpOutline" Size="Size.Medium"></MudIcon>
+                                <MudPopover Style="max-width: 350px;" Open="@_isOpen" Fixed="true" Class="px-4 pt-4 popover-custom">
+                                    <div class="d-flex flex-column">
+                                        <MudText>@helpTooltip</MudText>
+                                        <MudButton OnClick="@ToggleOpen" Class="ml-auto mr-n3 mb-1" Color="Color.Error">@localize.Get("btn_close")</MudButton>
+                                    </div>
+                                </MudPopover>
+                            </MudButton>
+                        }
+                    </div>
+                }
+                else if (!actionable && helpTooltip is not null)
+                {
+                    <div class="chip-actions-container">
+                        <MudButton Class=@($"chip-action-button {CSSHelper}") OnClick="@ToggleOpen">
+                            <MudIcon Class="internal-action-top-icon" Icon="@Icons.Material.Filled.HelpOutline" Size="Size.Medium"></MudIcon>
+                            <MudPopover Style="max-width: 350px;" Open="@_isOpen" Fixed="true" Class="px-4 pt-4 popover-custom">
+                                <div class="d-flex flex-column">
+                                    <MudText>@helpTooltip</MudText>
+                                    <MudButton OnClick="@ToggleOpen" Class="ml-auto mr-n3 mb-1" Color="Color.Error">@localize.Get("btn_close")</MudButton>
+                                </div>
+                            </MudPopover>
+                        </MudButton>
+                    </div>
+                }
+            </div>
+    </MudChip>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ComplexService service { get; set; }
+
+    [Parameter, EditorRequired]
+    public bool actionable { get; set; }
+
+    [Parameter, EditorRequired]
+    public String? helpTooltip { get; set; }
+
+    [Parameter, EditorRequired]
+    public Action addService { get; set; }
+
+    [Parameter, EditorRequired]
+    public bool DisableAction { get; set; }
+
+    [Parameter, EditorRequired]
+    public bool IsMobile { get; set; }
+
+    [Parameter, EditorRequired]
+    public string MobileClass { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    private string CSSHelper = "not-active";
+
+    private IJSObjectReference? module_self, module_animation;
+
+    DotNetObjectReference<ComplexChip> ObjectReference;
+
+    public bool _isOpen;
+    [Parameter] public EventCallback<ComplexService> OnSelectService { get; set; }
+    [Parameter] public EventCallback<ComplexService> OnAddService { get; set; }
+
+    private Task OnChipClick(ComplexService service)
+    {
+        if (service.isActionable && (service.Children == null || service.Children.Count == 0))
+        {
+            // Verifica si tiene hijos, si no se agrega al carrito
+            return OnAddService.InvokeAsync(service);
+        }
+        else
+        {
+            // Notificar selección para cargar siguiente nivel Sin funcionalidad, debido a que ya carga los siguientes niveles
+            return OnSelectService.InvokeAsync(service);
+        }
+    }
+    private void actioned()
+    {
+        //if (module_animation is not null)
+        //{
+        //    module_animation.InvokeVoidAsync("animateAdd");
+        //}
+        if (service.Name == "Empty container download" || service.Name == "Descarga de contenedores vacíos" || service.Name == "Empty container upload" || service.Name == "Carga de contenedores vacíos")
+        {
+            if (AppState.GetInteconAuthenticated() is not null && AppState.GetInteconAuthenticated()!.Value)
+            {
+                NavigationManager.NavigateTo("/Embedding");
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/login/Embedding");
+            }
+        }
+        else
+        {
+            addService.Invoke();
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            ObjectReference = DotNetObjectReference.Create(this);
+            module_self = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/chip_popover_manager.js");
+            module_animation = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/chip_script.js");
+            if (module_self is not null)
+            {
+                await module_self.InvokeVoidAsync("addDotNet", ObjectReference);
+            }
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable("CustomClose")]
+    public void JStoggleClose()
+    {
+        if (module_self is not null)
+        {
+            module_self.InvokeVoidAsync("hideOverlay");
+        }
+        CSSHelper = "not-active";
+        _isOpen = false;
+        StateHasChanged();
+    }
+
+    public void ToggleOpen()
+    {
+        if (_isOpen)
+        {
+            if (module_self is not null)
+            {
+                module_self.InvokeVoidAsync("hideOverlay");
+            }
+            CSSHelper = "not-active";
+            _isOpen = false;
+        }
+        else
+        {
+            if (module_self is not null)
+            {
+                module_self.InvokeVoidAsync("displayOverlay");
+            }
+            CSSHelper = "is-active";
+            _isOpen = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        BreakpointService.OnChange -= StateHasChanged;
+
+        if (ObjectReference != null)
+        {
+            //Now dispose our object reference so our component can be garbage collected
+            ObjectReference.Dispose();
+        }
+    }
+}

@@ -1,0 +1,79 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog Class="@($"selectclientdialog-dialog-mobil")">
+    <DialogContent>
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsXsSmScreen() ? Typo.h5 : Typo.h6)" Class="@($"title-text {(BreakpointService.GetIsMobile() ? $"selectclientdialog-element-h5 resize-it" : "")}")">
+                <strong>@Localize.Get("msg_warning")</strong>
+            </MudText>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">
+                @Localize.Get("msg_save_voucherpayment")
+            </MudText>
+            <MudCheckBox Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")"
+                         T="bool"
+                         Label="@Localize.Get("label_show_message")"
+                         LabelPosition="LabelPosition.End"
+                         Color="Color.Primary"
+                         @bind-Value="@Show_Message">
+            </MudCheckBox>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit" Class="@($"{(BreakpointService.GetIsMobile() ? "selectclientdialog-btn-mobil" : "")}")">@Localize.Get("btn_continue")</MudButton>
+        <MudButton Color="Color.Error" OnClick="OnClickCancel" Class="@($"{(BreakpointService.GetIsMobile() ? "selectclientdialog-btn-mobil" : "")}")">@Localize.Get("btn_cancel")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public bool Show_Message { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async void Submit()
+    {
+        MudDialog.Close(Show_Message);
+    }
+
+    public void OnClickCancel()
+    {
+        MudDialog.Cancel();
+    }
+
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

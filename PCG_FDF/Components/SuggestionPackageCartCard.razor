@@ -1,0 +1,80 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@implements IDisposable
+@inject GlobalBreakpointService BreakpointService
+@inject GlobalLocalizer localize
+
+<div class="suggestion-wrapper">
+    <MudStack>
+        <MudCard Class="card-package" Outlined="true">
+            <MudCardHeader Class="card-package-header">
+                <CardHeaderContent>
+                    <MudStack Class="title-row" Row="true">
+                        <MudIcon Class="@($"bulb-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")}")" Size="Size.Large" Icon="@Icons.Material.Outlined.Lightbulb"></MudIcon>
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h5)" Color="Color.Primary" Class="card-text title"><strong>@localize.Get("com_packsuggest_tip")</strong></MudText>
+                    </MudStack>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent Class="card-package-content">
+                <div class="card-package-row-top">
+                    <MudText Class="@($"card-text body {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@localize.Get("com_packsuggest_0") <strong>@PackageName</strong> @localize.Get("com_packsuggest_1")</MudText>
+                </div>
+                @foreach (var service in Services)
+                {
+                    <div class="card-package-row">
+                        <MudIcon Class="card-bullet" Color="Color.Tertiary" Icon="@Icons.Material.Filled.ArrowForwardIos"></MudIcon>
+                        <MudText Class="@($"card-text body {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.subtitle1)">@service</MudText>
+                    </div>
+                }
+                <div class="card-package-row-bottom">
+                    <MudText Class="@($"card-text body {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@localize.Get("com_packsuggest_2")</MudText>
+                </div>
+                <MudButton Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@onPackageAdd">@localize.Get("btn_accept")</MudButton>
+                <MudButton Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")" Variant="Variant.Outlined" OnClick="@OnSuggestionReject">@localize.Get("btn_reject")</MudButton>
+            </MudCardContent>
+        </MudCard>
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string PackageName { get; set; }
+    [Parameter, EditorRequired]
+    public IEnumerable<string> Services { get; set; }
+    [Parameter, EditorRequired]
+    public Action AddPackage { get; set; }
+    [Parameter, EditorRequired]
+    public Action RejectSuggestion { get; set; }
+
+    private void onPackageAdd()
+    {
+        AddPackage.Invoke();
+    }
+
+    private void OnSuggestionReject() {
+        RejectSuggestion.Invoke();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

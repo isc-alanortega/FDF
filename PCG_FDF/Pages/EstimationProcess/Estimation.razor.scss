@@ -1,0 +1,113 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_fx.scss';
+
+::deep .floating-bill {
+    justify-content: flex-start;
+    z-index: 20;
+    position: absolute;
+    bottom: 50vh;
+    right: 35vw;
+    border-radius: 30px 0px 0px 30px;
+    width: 30px;
+}
+
+::deep .mobile-floating-bill {
+    z-index: 1302;
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+    padding: 0;
+    margin: 0;
+    min-height: 80px;
+    min-width: 80px;
+
+    .mud-icon-root {
+        font-size: 6rem;
+    }
+}
+
+::deep .need-info {
+    border: 1px solid css-color-var(global-red-error);
+}
+
+::deep .all-clear {
+    border: 1px solid css-color-var(global-green-success);
+}
+
+::deep .title-stack {
+    align-items: center;
+}
+
+::deep .title-icon {
+    stroke: css-color-var(secondary);
+    fill: css-color-var(secondary) !important;
+}
+
+.estimation-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .drawer-card {
+    position: absolute;
+    top: -100vh;
+}
+
+::deep .bill-drawer {
+    overflow: visible;
+}
+
+::deep .paper-grey {
+    border-radius: 15px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    background-image: linear-gradient(to bottom, #fff, css-color-var(global-theme-grey));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .service-trace {
+    align-self: flex-start;
+}
+
+::deep .group-data-card {
+    padding: 20px;
+    margin: 20px 0px;
+}
+
+::deep .container-input {
+    align-items: center;
+}
+
+::deep .subservices-divider {
+    opacity: 1;
+    align-self: center;
+    width: 100%;
+    background-color: css-color-var(global-grey);
+    height: 1px;
+    @include shadow-divider(css-color-var(global-RGBA-black-16));
+}
+
+::deep .grey-text {
+    color: css-color-var(global-grey);
+}
+
+::deep .grey-icon {
+    fill: css-color-var(global-grey) !important;
+}
+
+::deep .breadcrumb-icon {
+    fill: css-color-var(tertiary) !important;
+}
+
+::deep .mud-breadcrumb-item.mud-disabled > a {
+    color: black !important;
+}
+
+::deep .mud-breadcrumb-item.mud-disabled {
+    font-size: 1.8rem !important;
+}

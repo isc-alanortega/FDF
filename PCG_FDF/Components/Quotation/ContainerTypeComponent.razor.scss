@@ -1,0 +1,12 @@
+﻿::deep .chip-set-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+    &.increase-it {
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    }
+}
+
+.chipset-wrapper {
+    width: 100%;
+}

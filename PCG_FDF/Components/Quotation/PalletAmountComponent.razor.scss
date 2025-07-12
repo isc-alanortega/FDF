@@ -1,0 +1,39 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+::deep .pallet-amount-row {
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+::deep .pallet-amount-icon {
+    flex-grow: 1;
+    justify-self: center;
+    font-size: 6rem;
+    stroke: css-color-var(primary);
+}
+
+::deep .pallet-amount {
+    flex-grow: 2;
+
+    &.increase-it {
+        max-width: 100%;
+
+        .mud-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-label {
+            font-size: 2rem;
+        }
+
+        .mud-input-numeric-spin {
+            flex-direction: row;
+
+            .mud-icon-root {
+                font-size: 6rem;
+            }
+        }
+    }
+}

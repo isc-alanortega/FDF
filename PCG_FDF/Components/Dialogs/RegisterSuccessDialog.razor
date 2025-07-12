@@ -1,0 +1,63 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <div class="dialog-stack">
+            <MudStack>
+                <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center">
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">@Localize.Get("msg_register_success")</MudText>
+                    </MudStack>
+                </MudStack>
+            </div>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Color="Color.Primary" OnClick="Submit">@Localize.Get("btn_continue")</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public bool From_Login { get; set; } = false;
+
+    private ClienteVinculadoEntidad SelectedClient { get; set; }
+    private Func<ClienteVinculadoEntidad, string> CustomConverter = client => client?.Entity_Name!;
+
+    void Submit()
+    {
+        NavigationManager.NavigateTo("/", true);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

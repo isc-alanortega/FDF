@@ -1,0 +1,116 @@
+:root {
+  --color-primary: #0045AC;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #DA291C;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #112f5c;
+  --color-nav-info: #112f5c;
+  --color-package-subtitle: #A1B5D3;
+  --color-complex-chip: #EDF4FA;
+  --color-booking-panel: #869AAC;
+}
+
+::deep .booking-panel {
+  margin: 16px 0px !important;
+  border-radius: 8px !important;
+}
+::deep .booking-panel.single-panel .mud-expand-panel-header {
+  background-color: var(--color-booking-panel);
+  border-radius: inherit;
+}
+::deep .booking-panel.single-panel .mud-expand-panel-header .mud-expand-panel-text > div {
+  align-items: center !important;
+}
+::deep .booking-panel.multi-panel .mud-expand-panel-header {
+  background-color: var(--color-secondary);
+  border-radius: inherit;
+}
+::deep .booking-panel.multi-panel .single-panel .mud-expand-panel-header {
+  background-color: var(--color-primary);
+  border-radius: inherit;
+}
+
+.section-badge {
+  align-self: center;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+::deep .title-text.service {
+  font-size: 0.8rem;
+}
+
+.document-boundary {
+  padding: 8px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.0509803922);
+  border-radius: 8px;
+}
+.document-boundary.rejected-document {
+  background-color: #FBD9D3;
+}
+
+.t-white {
+  color: white;
+}
+
+.t-black {
+  color: #272c34;
+}
+
+::deep .t-white {
+  color: white;
+}
+
+::deep .t-black {
+  color: #272c34;
+}
+
+@media (max-width: 960px) {
+  ::deep .mud-input-error {
+    font-size: 1.4em;
+  }
+  ::deep .section-badge span,
+  ::deep .mud-select-input input,
+  ::deep .bookingsection-title-section strong {
+    font-size: 1.5em;
+  }
+  ::deep .document-boundary span {
+    font-size: 1.65em;
+  }
+}

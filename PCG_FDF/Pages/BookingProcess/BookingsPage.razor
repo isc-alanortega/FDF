@@ -1,0 +1,291 @@
+﻿@page "/book/{ObjectUUID:guid}"
+@using Newtonsoft.Json;
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.BookingEntities;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Components.BillingList;
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Components.Booking;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility;
+@implements IDisposable
+@implements IAsyncDisposable
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject DrawerBridge Bridge
+@inject NavigationManager NavigationManager
+@inject BookingDataCollection BookingData
+@inject GlobalLocalizer Localize
+@inject QuotationDataCollection quotationService
+@inject WhiteLabelManager WhiteLabel
+@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+    <div class="bookings-wrapper">
+
+
+    <ProgresAlertDialog Title="@Localize.Get("label_saving_booking_in_progress")"
+                        Message="@Localize.Get("label_the_process_may_takes_a _few_minutes")"
+                        ShowProgressCircular="true"
+                        IsVisible="@(BookingData.IsShowModal())" />
+
+        <MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+            <MudPaper Width="90%" Elevation="5" Class="drawer-card">
+            @if (BreakpointService.GetIsMobile())
+            {
+                <MudDrawer @bind-Open="@_billDrawerOpen" Class="bill-drawer" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="4" Width="100vw" Variant="@DrawerVariant.Responsive">
+                    @if (BookingData.GetFormInitialized())
+                    {
+                        <BillingList IsStatic="true" />
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                </MudDrawer>
+                <MudFab Color="Color.Secondary" OnClick="@OpenDrawer" StartIcon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" Class="mobile-floating-bill" />
+            }
+            else
+            {
+                <MudDrawer @bind-Open="@_billDrawerOpen" Class="bill-drawer" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="4" Width="35vw" Variant="@DrawerVariant.Responsive">
+                    @if (BookingData.GetFormInitialized())
+                    {
+                        <BillingList IsStatic="true" />
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                    <MudFab Color="Color.Secondary" OnClick="@OpenDrawer" StartIcon="@Icons.Material.Rounded.ArrowBackIos" Size="Size.Large" Class="floating-bill" />
+                </MudDrawer>
+            }
+        </MudPaper>
+
+        <MudStack Row="true">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>Booking: </strong></MudText>
+            @if (!BookingData.GetFormInitialized())
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Height="2rem" Width="50px"></MudSkeleton>
+            }
+            else
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@BookingData.Invoice</strong></MudText>
+            }
+        </MudStack>
+
+        @if (BookingData.GetFormInitialized())
+        {
+            <MudExpansionPanels Class="booking-section" MultiExpansion="true">
+                @foreach (var section in BookingData.GetFormSections().OrderBy(section => section.Value.Values.First().Section_Sequence))
+                {
+                    <BookingSection SectionData="section"></BookingSection>
+                }
+            </MudExpansionPanels>
+        }
+        else
+        {
+            for (var i = 0; i < 5; i++)
+            {
+                <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                    <MudStack>
+                        <MudSkeleton Height="100px" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                        <MudSkeleton Width="80%" />
+                        <MudSkeleton Width="80%" />
+                        <MudSkeleton Width="80%" />
+                    </MudStack>
+                </MudPaper>
+            }
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? ObjectUUID { get; set; }
+
+    private bool _billDrawerOpen = true;
+
+    private async Task InitServices()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        Bridge.CloseQuotation += OpenDrawer;
+        quotationService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (!AppState.HasPermission("FdF Alta Booking"))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(Localize.Get("snackbar_error_no_perms"), Severity.Error);
+            NavigationManager.NavigateTo("/");
+        }
+
+        AppState.SetCanChange(false);
+        await InitServices();
+
+        if (ObjectUUID is not null)
+        {
+            if (!BookingData.Contracting)
+            {
+                var status = BookingData.GetStatus();
+
+                if (status is null)
+                {
+                    NavigationManager.NavigateTo("/", true, true);
+                }
+
+                var userContext = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+                var clientId = AppState.GetCurrentClientID()!.Value;
+                var requestData = new BookingRequestModel()
+                    {
+                        Client_ID = clientId,
+                        Booking_UUID = ObjectUUID.Value,
+                        Language = LanguageUtil.getCurrentCulture(),
+                        Status = status!.Value,
+                        IsCimaCimplexEdit = BookingData.IsForceEdit,
+                    };
+
+                var formData = await DATA_ACCESS.PostBookingData(requestData);
+
+                if (formData is not null && formData.Operation_Succeeded)
+                {
+                    if (formData.Result.Status == EStatusContratacion.INITIAL_DATA)
+                    {
+                        var bookingInitializer = JsonConvert.DeserializeObject<BookingData>(formData.Result.Serialized_Data);
+
+                        if (bookingInitializer is not null)
+                        {
+                            quotationService.Initialize(bookingInitializer.QuotationData, bookingInitializer.CartData, EStatusCotizacion.CONTRACTED);
+                            BookingData.Initialize(bookingInitializer.Booking, Convert.ToInt32(userContext.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value), clientId, quotationService.ServicesSettings());
+                            await TryInitializePortCapital(WhiteLabel.GetUsePortCapital());
+                        }
+                    }
+                    else
+                    {
+                        var bookingInitializer = JsonConvert.DeserializeObject<CompleteBookingData>(formData.Result.Serialized_Data);
+
+                        if (bookingInitializer is not null)
+                        {
+                            quotationService.Initialize(bookingInitializer.QuotationData, bookingInitializer.CartData, EStatusCotizacion.CONTRACTED);
+                            BookingData.MiddlewareInitialize(bookingInitializer.FDF_Booking);
+                            await TryInitializePortCapital(WhiteLabel.GetUsePortCapital());
+                        }
+                    }
+                }
+            }
+            else
+            {
+                var userContext = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+                var userId = Convert.ToInt32(userContext.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value);
+                var clientID = AppState.GetCurrentClientID()!.Value;
+                var formRequestData = new RequestBookingForm()
+                    {
+                        Language = LanguageUtil.getCurrentCulture(),
+                        IDCliente = clientID,
+                        IDUsuario = userId,
+                        IDClientePrincipal = AppState.GetPrincipalClient()!.Value,
+                        QuotationUUID = ObjectUUID.Value
+                    };
+
+                var initialization_data = await DATA_ACCESS.PostGetBookingForm(formRequestData);
+
+                if (initialization_data.Operation_Succeeded)
+                {
+                    quotationService.Initialize(initialization_data.Result.QuotationData, initialization_data.Result.CartData, EStatusCotizacion.CONTRACTED);
+                    BookingData.Initialize(initialization_data.Result.Booking, userId, clientID, quotationService.ServicesSettings());
+                    await TryInitializePortCapital(WhiteLabel.GetUsePortCapital());
+                }
+                else
+                {
+                    // TODO: HANDLE ERRORS
+                }
+
+            }
+        }
+        else
+        {
+            navigateToStart();
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    /// <summary>
+    /// Trata de inicializar la contratacion port capital
+    /// </summary>
+    /// <param name="isPortCapital"></param>
+    /// <returns></returns>
+    private async Task TryInitializePortCapital(bool isPortCapital)
+    {
+        // Se comprueba que la contratacion sea port capital
+        if (!isPortCapital || quotationService.GetHasDataPortCapital())
+        {
+            return;
+        }
+
+        if (!BookingData.GetBookingDataComplete() && !BookingData.GetIsReadonly())
+        {
+            // Revisamos si ya fue guardado, revisamos si fue contratdo mediante port capital
+            await BookingData.TryFoundPCB();
+            if (BookingData.GetInstallmentSelected() is not null)
+            {
+                return;
+            }
+
+            // Inicializamos el componete de port capital para que se visualice 
+            await quotationService.InitializedPortCapital();
+            if (quotationService.GetHasDataPortCapital() && quotationService.GetPortCapitalCollection() is not null)
+            {
+                BookingData.IsPortCapital = true;
+                BookingData.QuotationPortCapital = quotationService.GetPortCapitalCollection()!.Data;
+            }
+        }        
+    }
+
+    void OpenDrawer()
+    {
+        _billDrawerOpen = !_billDrawerOpen;
+        Bridge.SetQuotationBind(_billDrawerOpen);
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        AppState.SetCanChange(false);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private void navigateToStart()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        AppState.SetCanChange(true);
+        Bridge.CloseQuotation -= OpenDrawer;
+        quotationService.OnChange -= StateHasChanged;
+        BreakpointService.OnChange -= StateHasChanged;
+        quotationService.ResetSelf();
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        await Task.Run(() => Dispose());
+    }
+}

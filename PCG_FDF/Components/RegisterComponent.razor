@@ -1,0 +1,378 @@
+﻿@using Newtonsoft.Json
+@using PCG_ENTITIES.PCG.Session;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_ENTITIES.Resultsets
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility;
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+<div class=@($"login-wrapper {Class}")>
+    <MudPaper Class="paper-grey">
+        <MudForm @bind-IsValid="@Is_Valid" @ref="@FormRef">
+            <MudStack>
+                @*Title: Registrarse*@
+                <MudText Typo="Typo.h4" Class="@($"login-text title {(isMobil ? "register-title-mobil" : "")}")"><strong>@localize.Get("com_reg_register")</strong></MudText>
+
+                @*Have Account?*@
+                <div class="yes-account">
+                    <MudText Typo="Typo.body1" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")"> @localize.Get("com_reg_haveacc")&nbsp;</MudText>
+                    <div>
+                        <NavLink class="nav-link login-text password-forget" href="login">
+                            <MudText Typo="Typo.body1" Class="@($"login-text password-forget {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("nav_login")</MudText>
+                        </NavLink>
+                    </div>
+                </div>
+
+                @*Registrar Email*@
+                <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_email")</MudText>
+                <MudTextField T="@string"
+                              Text="@Register_Model.Email"
+                              TextChanged="@EmailChanged"
+                              Validation="@Validate_Email"
+                              Required="true"
+                              MaxLength="254"
+                              RequiredError="@localize.Get("errmsg_required")"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              ReadOnly="@Registering"
+                              InputType="@InputType.Email"                              
+                              Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+
+                @*Nombre y Apellido*@
+                <MudStack Row="true">
+                    <div class="reg-form-row">
+                        <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_name")</MudText>
+                        <MudTextField @bind-Value="@Register_Model.Names"
+                                        Required="true"
+                                        RequiredError="@localize.Get("errmsg_required")"
+                                        MaxLength="@MaxLength"
+                                        Variant="Variant.Outlined"
+                                        Margin="Margin.Dense"
+                                        ReadOnly="@Registering"
+                                        InputType="@InputType.Text"                                       
+                                        Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+                    </div>
+                    <div class="reg-form-row">
+                        <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_lastname")</MudText>
+                        <MudTextField @bind-Value="@Register_Model.Last_Names"
+                                        Required="true"
+                                        MaxLength="@MaxLength"
+                                        RequiredError="@localize.Get("errmsg_required")"
+                                        Variant="Variant.Outlined"
+                                        Margin="Margin.Dense"
+                                        ReadOnly="@Registering"
+                                        InputType="@InputType.Text"                                       
+                                        Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+                    </div>
+                </MudStack>
+
+                @*Numero de telefono*@
+                <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_mobilephone")</MudText>
+                <MudTextField @bind-Value="@Register_Model.Mobile_Number"
+                                Required="true"
+                                RequiredError="@localize.Get("errmsg_required")"
+                                Variant="Variant.Outlined"
+                                Margin="Margin.Dense"
+                                ReadOnly="@Registering"
+                                InputType="@InputType.Telephone"
+                                Mask="@(new PatternMask("0000000000"))"
+                              Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+
+                @*Datos Persona Moral/ Fisica*@
+               <MudStack Row="!IsMoralPerson">
+                    <div class="@ClassRowIsPersonFisic">
+                        <MudStack Row="IsMoralPerson">
+                            <div class="reg-form-row">
+                                <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_businesstype") </MudText>
+                                <MudSelect T="@KeyValue"
+                                           ToStringFunc="@((args) => GetKVAsString(args))"
+                                           RequiredError="@localize.Get("errmsg_required")"
+                                           Required="true"
+                                           Variant="Variant.Outlined"
+                                           ReadOnly="@Registering"
+                                           Margin="Margin.Dense"
+                                           ValueChanged="HandleBusinessTypeChange"                                          
+                                           Class="@($"{(isMobil ? "register-select-mobil" : "")}")">
+                                    @foreach (var item in Business_Types)
+                                    {
+                                        <MudSelectItem Class="@($"bussines-type-select-item {(isMobil ? "register-select-item-mobil" : "")}")" Value="@item" />
+                                    }
+                                </MudSelect>
+                            </div>
+
+                            @if (IsMoralPerson)
+                            {
+                                <div class="reg-form-row">
+                                    <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_businessname") </MudText>
+                                    <MudTextField @bind-Value="@Register_Model.Business_Name"
+                                              Required="true"
+                                              RequiredError="@localize.Get("errmsg_required")"
+                                              Variant="Variant.Outlined"
+                                              MaxLength="@MaxLength"
+                                              Margin="Margin.Dense"
+                                              ReadOnly="@Registering"                                             
+                                              InputType="@InputType.Text"
+                                              Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+                                </div>
+                            }
+                        </MudStack>
+                    </div>
+
+                    <div class="@ClassRowIsPersonFisic">
+                        <MudStack Row="IsMoralPerson">
+                            <div class="reg-form-row">
+                                <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get(ResourcesTypeRFC)</MudText>
+                                <MudTextField @bind-Value="@Register_Model.RFC"
+                                              Required="true"
+                                              RequiredError="@localize.Get("errmsg_required")"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              MaxLength="13"
+                                              ReadOnly="@Registering"                                             
+                                              InputType="@InputType.Text" 
+                                              Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+                            </div>
+                            @if (IsMoralPerson)
+                            {
+                                <div class="reg-form-row">
+                                    <MudText Typo="Typo.body2" Class="@($"login-text body {(isMobil ? "register-element-mobil" : "")}")">@localize.Get("com_reg_businesszip") </MudText>
+                                    <MudTextField @bind-Value="@Register_Model.Zip_Code"
+                                              Required="true"
+                                              MaxLength="10"
+                                              RequiredError="@localize.Get("errmsg_required")"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              ReadOnly="@Registering"                                             
+                                              InputType="@InputType.Text" 
+                                              Class="@($"{(isMobil ? "register-element-mobil" : "")}")" />
+                                </div>
+                            }                
+                        </MudStack>
+                    </div>
+               </MudStack>                
+                
+                <MudText Typo="Typo.body2" Class="login-text small" Style="@(isMobil ? "font-size: 1.8em;" : "")">@localize.Get("com_reg_privacynotice")</MudText>
+
+                @if (!Registering)
+                {
+                    <MudButton Class="@($"login-button {(isMobil ? "register-element-mobil" : "")}")" OnClick="@(async () => await TryRegisterUser())" Variant="Variant.Filled" Color="Color.Secondary">@localize.Get("com_reg_register")</MudButton>
+                }
+                else
+                {
+                    <MudProgressCircular Class="@($"login-button {(isMobil ? "register-element-mobil" : "")}")" Color="Color.Tertiary" Size="Size.Medium" Indeterminate="true" />
+                }
+            </MudStack>
+        </MudForm>
+    </MudPaper>
+</div>
+
+<style>
+    .register-title-mobil {
+        font-size: 3.5em !important;
+    }
+
+    .register-element-mobil {
+        font-size: 2.0em !important;
+    }
+
+    .register-select-mobil {
+        font-size: 1.5em !important;
+    }
+
+    .register-select-item-mobil p {
+        font-size: 1.9em;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public bool isMobil { get; set; }
+
+    private MudForm? FormRef { get; set; }
+
+    private FDFRegisterModel Register_Model { get; set; } = new FDFRegisterModel();
+
+    private Func<string, Task<string?>> Validate_Email => EmailValid;
+
+    private readonly int MaxLength = 524288;
+
+    // Propietys Tipo de persona
+    private bool IsMoralPerson { get; set; } = false;
+    private string ResourcesTypeRFC { get; set; } = "com_reg_businessrfc_fisica";
+    private string ClassRowIsPersonFisic { get; set; } = "reg-form-row";
+
+    private IEnumerable<KeyValue> Business_Types = new List<KeyValue>()
+    {
+        new KeyValue()
+        {
+            Key = 1,
+            Value = "label_physicalperson"
+        },
+        new KeyValue()
+        {
+            Key = 2,
+            Value = "label_moralperson"
+        }
+    };
+
+    private bool Is_Valid { get; set; }
+    private bool Registering { get; set; } = false;
+
+    private void EmailChanged(string Email)
+    {
+        if (Email is null)
+        {
+            return;
+        }
+
+        Register_Model.Email = Email.Trim();
+    }
+
+    private string GetKVAsString(KeyValue selection)
+    {
+        if (selection is null)
+        {
+            return string.Empty;
+        }
+        else
+        {
+            return localize.Get(selection.Value);
+        }
+    }
+
+    private void HandleBusinessTypeChange(KeyValue Business_Type)
+    {
+        Register_Model.Business_Type = Business_Type;
+        IsMoralPerson = Business_Type.Key == 2;
+        if (IsMoralPerson)
+        {
+            ResourcesTypeRFC = "com_reg_businessrfc";
+            ClassRowIsPersonFisic = "";
+        }
+        else
+        {
+            ResourcesTypeRFC = "com_reg_businessrfc_fisica";
+            ClassRowIsPersonFisic = "reg-form-row";
+        }
+    }
+
+    private async Task TryRegisterUser()
+    {
+        if (!Registering)
+        {
+            await FormRef.Validate();
+            if (!FormRef.IsValid)
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(localize.Get(FormRef.Errors.FirstOrDefault() ?? "err_form_incomplete"), Severity.Error);
+                Registering = false;
+                return;
+            }
+
+            try
+            {
+                Registering = true;
+                await InvokeAsync(StateHasChanged);
+
+                Register_Model.Language = LanguageUtil.Language;
+                var result = await DATA_ACCESS.SendUnauthTAsync<APIResult<bool>>("/PCG_Accounts/PostFDFRegister", HttpMethod.Post, null, JsonConvert.SerializeObject(new FDFRegisterModel()
+                    {
+                        Language = Register_Model.Language,
+                        Email = Register_Model.Email,
+                        Names = Register_Model.Names,
+                        Last_Names = Register_Model.Last_Names,
+                        Mobile_Number = Register_Model.Mobile_Number,
+                        Business_Type = Register_Model.Business_Type,
+                        Business_Name = Register_Model.Business_Name,
+                        RFC = Register_Model.RFC,
+                        Zip_Code = Register_Model.Zip_Code
+                    }));
+
+                if (result is null)
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(localize.Get("err_non_controlled"), Severity.Error);
+                }
+                else if (!result.Operation_Succeeded)
+                {
+                    if (!string.IsNullOrEmpty(result.Error_Message))
+                    {
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(localize.Get(result.Error_Message), Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(localize.Get("err_non_controlled"), Severity.Error);
+                    }
+                }
+                else if (result.Operation_Succeeded && result.Result)
+                {
+                    // Success
+                    DialogOptions options = new DialogOptions() { DisableBackdropClick = true, CloseButton = false };
+                    var dialog = await DialogService.ShowAsync<RegisterSuccessDialog>(localize.Get("msg_information"), options);
+                    var dialog_result = await dialog.Result;
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(localize.Get("err_non_controlled"), Severity.Error);
+            }
+            finally
+            {
+                Registering = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private async Task<string?> EmailValid(string? args)
+    {
+        if (string.IsNullOrEmpty(args) || string.IsNullOrWhiteSpace(args))
+        {
+            return localize.Get("errmsg_required");
+        }
+
+        if (!Validations.ValidateString(args, Validations.Single_Email_REGEX))
+        {
+            return localize.Get("error_bademail");
+        }
+
+        var split = args.Split("@");
+
+        if (split.Length != 2)
+        {
+            return localize.Get("error_bademail");
+        }
+
+        var email_valid = await DATA_ACCESS.SendUnauthTAsync<APIResult<bool>>("/PCG_Accounts/PostFDFVerifyEmail", HttpMethod.Post, null, JsonConvert.SerializeObject(split[1]));
+
+        if (email_valid is null)
+        {
+            return localize.Get("error_bademail");
+        }
+
+        if (!email_valid.Operation_Succeeded)
+        {
+            return localize.Get("error_bademail");
+        }
+
+        if (email_valid.Operation_Succeeded && !email_valid.Result)
+        {
+            return localize.Get("err_email_nonbusiness");
+        }
+
+        return null;
+    }
+}

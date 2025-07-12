@@ -1,0 +1,503 @@
+﻿@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.DataAccess;
+@inherits BookingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudGrid>
+            @if (AddressType.HasValue)
+            {
+                <MudItem md="12" sm="12" xs="12">
+                    <MudSelect T="DireccionPrecargada"
+                               ToStringFunc="@AddressConverter"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined"
+                               Value="@SelectedAddress"
+                               ValueChanged="@TrySelectPreloadedAddress"
+                               Disabled="@GetElementReadonly()"
+                               ReadOnly="@GetElementReadonly()"
+                               RequiredError="@Localize.Get("errmsg_required")"
+                               Clearable="false"
+                               Label="@Localize.Get($"label_preloaded_address_{AddressType}")"
+                               Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get($"label_preloaded_address_{AddressType}")}")">
+
+                        @foreach (var option in GetPreloadedListAs<DireccionPrecargada>("ADDRESSESPRELOAD", true))
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+
+                    </MudSelect>
+                </MudItem>
+            }
+            @*TODO: POST CODE*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudStack Row="true">
+                    <MudTextField MaxLength="500"
+                                  Clearable="false"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  Disabled="@GetElementReadonly()"
+                                  ReadOnly="@GetElementReadonly()"
+                                  DebounceInterval="1500"
+                                  T="string"
+                                  Value="@((string?)TryGetContentsField("POSTCODE"))"
+                                  ValueChanged="@((args) => TryModifyField("POSTCODE", args))"
+                                  Variant="Variant.Outlined"
+                                  Label="@Localize.Get("label_postcode")"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_postcode")}")" />
+                    <MudButton OnClick="@(async() => await PopulateInfo())">
+                        <MudStack Row="true">
+                            <MudIcon Icon="@Icons.Material.Filled.Search"></MudIcon>
+                            <MudText>Buscar</MudText>
+                        </MudStack>
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+            @*TODO: NEIGHBORHOOD*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Value="@((KeyValue?)TryGetContentsField("NEIGHBORHOOD"))"
+                           ValueChanged="@((args) => TryModifyField("NEIGHBORHOOD", args))"
+                           Disabled="@GetElementReadonly()"
+                           ReadOnly="@GetElementReadonly()"
+                           RequiredError="@Localize.Get("errmsg_required")"
+                           Clearable="false"
+                           Label="@Localize.Get("label_neighborhood")"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_neighborhood")}")">
+
+                    @foreach (var option in GetPreloadedListAs<KeyValue>("NEIGHBORHOOD"))
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+
+                </MudSelect>
+            </MudItem>
+            @*TODO: STREET ADDRESS*@
+            <MudItem md="12" sm="12" xs="12">
+                <MudTextField MaxLength="500"
+                              Clearable="false"
+                              RequiredError="@Localize.Get("errmsg_required")"
+                              Disabled="@GetElementReadonly()"
+                              ReadOnly="@GetElementReadonly()"
+                              DebounceInterval="1500"
+                              T="string"
+                              Value="@((string?)TryGetContentsField("STREET"))"
+                              ValueChanged="@((args) => TryModifyField("STREET", args))"
+                              Variant="Variant.Outlined"
+                              Label="@Localize.Get("label_street")"
+                              Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_street")}")" />
+            </MudItem>
+            @*TODO: EXTERIOR NUMBER*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudTextField MaxLength="500"
+                              Clearable="false"
+                              RequiredError="@Localize.Get("errmsg_required")"
+                              Disabled="@GetElementReadonly()"
+                              ReadOnly="@GetElementReadonly()"
+                              DebounceInterval="1500"
+                              T="string"
+                              Value="@((string?)TryGetContentsField("EXTNUMBER"))"
+                              ValueChanged="@((args) => TryModifyField("EXTNUMBER", args))"
+                              Variant="Variant.Outlined"
+                              Label="@Localize.Get("label_extnumber")"
+                              Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_extnumber")}")" />
+            </MudItem>
+            @*TODO: INTERIOR NUMBER*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudTextField MaxLength="500"
+                              Clearable="true"
+                              RequiredError="@Localize.Get("errmsg_required")"
+                              Disabled="@GetElementReadonly()"
+                              ReadOnly="@GetElementReadonly()"
+                              DebounceInterval="1500"
+                              T="string"
+                              Value="@((string?)TryGetContentsField("INTNUMBER"))"
+                              ValueChanged="@((args) => TryModifyField("INTNUMBER", args))"
+                              Variant="Variant.Outlined"
+                              Label="@Localize.Get("label_intnumber")"
+                              Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_intnumber")}")" />
+            </MudItem>
+            @*TODO: CITY*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Value="@((KeyValue?)TryGetContentsField("CITY"))"
+                           ValueChanged="@((args) => TryModifyField("CITY", args))"
+                           Disabled="true"
+                           ReadOnly="@GetElementReadonly()"
+                           RequiredError="@Localize.Get("errmsg_required")"
+                           Clearable="false"
+                           Label="@Localize.Get("label_city")"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_city")}")">
+
+                    @foreach (var option in GetPreloadedListAs<KeyValue>("CITY"))
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+
+                </MudSelect>
+            </MudItem>
+            @*TODO: STATE*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Value="@((KeyValue?)TryGetContentsField("STATE"))"
+                           ValueChanged="@((args) => TryModifyField("STATE", args))"
+                           Disabled="true"
+                           ReadOnly="@GetElementReadonly()"
+                           RequiredError="@Localize.Get("errmsg_required")"
+                           Clearable="false"
+                           Label="@Localize.Get("label_state")"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_state")}")">
+
+                    @foreach (var option in GetPreloadedListAs<KeyValue>("STATE"))
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+
+                </MudSelect>
+            </MudItem>
+            @*TODO: COUNTRY*@
+            <MudItem md="6" sm="12" xs="12">
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Value="@((KeyValue?)TryGetContentsField("COUNTRY"))"
+                           ValueChanged="@((args) => TryModifyField("COUNTRY", args))"
+                           Disabled="true"
+                           ReadOnly="@GetElementReadonly()"
+                           RequiredError="@Localize.Get("errmsg_required")"
+                           Clearable="false"
+                           Label="@Localize.Get("label_country")"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_country")}")">
+
+                    @foreach (var option in GetPreloadedListAs<KeyValue>("COUNTRY"))
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</div>
+
+@code {
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private Func<DireccionPrecargada, string> AddressConverter = add => add?.Address_Name;
+    private bool CanGetList { get; set; } = false;
+    private int? AddressType { get; set; } = null;
+    private DireccionPrecargada? SelectedAddress { get; set; } = null;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (ElementData.Validations.TryGetValue("ADDRESSTYPE", out var type))
+        {
+            AddressType = Convert.ToInt32(type.Validation_Value);
+        }
+
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteUnsharedElementValue(new AddressData(), SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+        else
+        {
+            if (BookingData.GetSharedStorage()[ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteSharedElementValue(new AddressData(), ElementData.Element_ID);
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private async Task PopulateInfo()
+    {
+        var code = ((string?)TryGetContentsField("POSTCODE"));
+        var query_request = new DynamicQueryRequestBooking()
+            {
+                Booking_UUID = BookingData.UUID,
+                Client_ID = BookingData.Client_ID,
+                User_ID = BookingData.User_ID,
+                Query_ID = ElementData.Complex_Data["NEIGHBORHOOD"].Query_ID,
+                Language = BookingData.GetBookingLanguage(),
+                Splashed_Parameters = new Dictionary<string, object?>()
+                {
+                    {"PostCode", code }
+                },
+                Query = null
+            };
+        var neighborhood_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+        query_request.Query_ID = ElementData.Complex_Data["CITY"].Query_ID;
+        var city_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+        query_request.Query_ID = ElementData.Complex_Data["STATE"].Query_ID;
+        var state_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+        query_request.Query_ID = ElementData.Complex_Data["COUNTRY"].Query_ID;
+        var country_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+        if (neighborhood_result!.Operation_Succeeded && city_result!.Operation_Succeeded && state_result!.Operation_Succeeded && country_result!.Operation_Succeeded && neighborhood_result.Result.Any() && city_result.Result.Any() && state_result.Result.Any() && country_result.Result.Any())
+        {
+            ElementData.Complex_Data["NEIGHBORHOOD"].Preloaded_List = neighborhood_result.Result;
+            ElementData.Complex_Data["CITY"].Preloaded_List = city_result.Result;
+            ElementData.Complex_Data["STATE"].Preloaded_List = state_result.Result;
+            ElementData.Complex_Data["COUNTRY"].Preloaded_List = country_result.Result;
+
+            await TryModifyField("NEIGHBORHOOD", null);
+            await TryModifyField("CITY", city_result.Result.First());
+            await TryModifyField("STATE", state_result.Result.First());
+            await TryModifyField("COUNTRY", country_result.Result.First());
+
+            CanGetList = true;
+        }
+    }
+
+    private async Task TrySelectPreloadedAddress(DireccionPrecargada? value)
+    {
+        SelectedAddress = value;
+        if (SelectedAddress is not null)
+        {
+            var query_request = new DynamicQueryRequestBooking()
+                {
+                    Booking_UUID = BookingData.UUID,
+                    Client_ID = BookingData.Client_ID,
+                    User_ID = BookingData.User_ID,
+                    Query_ID = ElementData.Complex_Data["NEIGHBORHOOD"].Query_ID,
+                    Language = BookingData.GetBookingLanguage(),
+                    Splashed_Parameters = new Dictionary<string, object?>()
+                {
+                    {"PostCode", SelectedAddress.Zip_Code }
+                },
+                    Query = null
+                };
+
+            var neighborhood_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+            query_request.Query_ID = ElementData.Complex_Data["CITY"].Query_ID;
+            var city_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+            query_request.Query_ID = ElementData.Complex_Data["STATE"].Query_ID;
+            var state_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+            query_request.Query_ID = ElementData.Complex_Data["COUNTRY"].Query_ID;
+            var country_result = await DATA_ACCESS.PostLeerQuery(query_request);
+
+            if (neighborhood_result!.Operation_Succeeded && city_result!.Operation_Succeeded && state_result!.Operation_Succeeded && country_result!.Operation_Succeeded && neighborhood_result.Result.Any() && city_result.Result.Any() && state_result.Result.Any() && country_result.Result.Any())
+            {
+                ElementData.Complex_Data["NEIGHBORHOOD"].Preloaded_List = neighborhood_result.Result;
+                ElementData.Complex_Data["CITY"].Preloaded_List = city_result.Result;
+                ElementData.Complex_Data["STATE"].Preloaded_List = state_result.Result;
+                ElementData.Complex_Data["COUNTRY"].Preloaded_List = country_result.Result;
+
+                await TryModifyField("NEIGHBORHOOD", neighborhood_result.Result.FirstOrDefault(neighborhood => neighborhood.Key == SelectedAddress.Neighborhood_ID));
+                await TryModifyField("CITY", city_result.Result.First());
+                await TryModifyField("STATE", state_result.Result.First());
+                await TryModifyField("COUNTRY", country_result.Result.First());
+                await TryModifyField("POSTCODE", SelectedAddress.Zip_Code);
+                await TryModifyField("STREET", SelectedAddress.Street);
+                await TryModifyField("EXTNUMBER", SelectedAddress.Ext_Number);
+                await TryModifyField("INTNUMBER", SelectedAddress.Int_Number);
+
+                CanGetList = true;
+            }
+        }
+    }
+
+    private AddressData? GetSource()
+    {
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<AddressData>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            return BookingData.GetSharedElementValueAs<AddressData>(ElementData.Element_ID);
+        }
+    }
+
+    private async Task SetSource(AddressData source)
+    {
+        if (IsCollection)
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteUnsharedElementValue(source, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteSharedElementValue(source, ElementData.Element_ID);
+        }
+    }
+
+    private object? TryGetContentsField(string field_name)
+    {
+        var current_source = GetSource();
+        switch (field_name)
+        {
+            case "POSTCODE":
+                {
+                    return current_source!.Post_Code;
+                }
+            case "NEIGHBORHOOD":
+                {
+                    return current_source!.Neighborhood;
+                }
+            case "STREET":
+                {
+                    return current_source!.Address;
+                }
+            case "EXTNUMBER":
+                {
+                    return current_source!.Exterior_Number;
+                }
+            case "INTNUMBER":
+                {
+                    return current_source!.Interior_Number;
+                }
+            case "CITY":
+                {
+                    return current_source!.City;
+                }
+            case "STATE":
+                {
+                    return current_source!.State;
+                }
+            case "COUNTRY":
+                {
+                    return current_source!.Country;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private bool ValidateElement(AddressData? source = null)
+    {
+        if (ElementData.Required)
+        {
+            var current_source = source ?? GetSource();
+
+            if (current_source is null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(current_source.Post_Code) || string.IsNullOrWhiteSpace(current_source.Post_Code))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(current_source.Address) || string.IsNullOrWhiteSpace(current_source.Address))
+            {
+                return false;
+            }
+
+            if (current_source.Neighborhood is null)
+            {
+                return false;
+            }
+
+            if (current_source.City is null)
+            {
+                return false;
+            }
+
+            if (current_source.State is null)
+            {
+                return false;
+            }
+
+            if (current_source.Country is null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private IEnumerable<T> GetPreloadedListAs<T>(string field_name, bool override_check = false)
+    {
+        if (ElementData.Complex_Data[field_name].Contains_List && !ElementData.Complex_Data[field_name].Is_Autocomplete_List && (CanGetList || override_check) && ElementData.Complex_Data[field_name].Preloaded_List is not null)
+        {
+            return GetComplexPreloadedListAs<T>(field_name);
+        }
+        return Enumerable.Empty<T>();
+    }
+
+    private async Task TryModifyField(string field_name, object? value)
+    {
+        var current_source = GetSource();
+        switch (field_name)
+        {
+            case "POSTCODE":
+                {
+                    current_source!.Post_Code = (string?)value;
+                    break;
+                }
+            case "NEIGHBORHOOD":
+                {
+                    current_source!.Neighborhood = (KeyValue?)value;
+                    break;
+                }
+            case "STREET":
+                {
+                    current_source!.Address = (string?)value;
+                    break;
+                }
+            case "EXTNUMBER":
+                {
+                    current_source!.Exterior_Number = (string?)value;
+                    break;
+                }
+            case "INTNUMBER":
+                {
+                    current_source!.Interior_Number = (string?)value;
+                    break;
+                }
+            case "CITY":
+                {
+                    current_source!.City = (KeyValue?)value;
+                    break;
+                }
+            case "STATE":
+                {
+                    current_source!.State = (KeyValue?)value;
+                    break;
+                }
+            case "COUNTRY":
+                {
+                    current_source!.Country = (KeyValue?)value;
+                    break;
+                }
+        }
+        await SetSource(current_source!);
+    }
+}

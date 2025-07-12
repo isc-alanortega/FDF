@@ -1,0 +1,173 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+::deep .internal-cima-icon {
+    font-size: 4rem;
+
+    #cima-logo-outline {
+        fill: white;
+    }
+
+    #cima-logo-middle {
+        fill: white;
+    }
+
+    #cima-logo-triangle-left {
+        fill: white;
+    }
+
+    #cima-logo-triangle-right {
+        fill: white;
+    }
+
+    #cima-logo-triangle-top {
+        fill: white;
+    }
+}
+
+::deep .internal-bafar-icon {
+    #mane-gold {
+        fill: css-color-var(global-fullwhite);
+    }
+
+    #face-blue {
+        fill: css-color-var(global-RGBA-transparent);
+    }
+}
+
+::deep .card-header {
+    background-color: css-color-var(primary);
+    align-items: center;
+    box-shadow: 0 8px 10px 3px css-color-var(global-RGBA-black-16);
+}
+
+::deep .agreement-supporting-text {
+    margin-left: auto;
+    text-align: right;
+}
+
+::deep .internal-shipping-icon {
+    #red-group {
+        fill: white;
+    }
+
+    #blue-group {
+        fill: white;
+    }
+}
+
+::deep .inner-card {
+    align-items: center;
+    height: 100%;
+    justify-content: center;
+    padding: 40px;
+}
+
+::deep .card-info-container {
+    align-items: center;
+}
+
+.indicator {
+    width: 8px;
+    height: 130%;
+
+    &.indicator-ok {
+        background-color: css-color-var(global-green-success);
+    }
+
+    &.indicator-error {
+        background-color: css-color-var(global-red-error);
+    }
+}
+
+::deep .agreement-header-text {
+    color: css-color-var(global-fullwhite);
+    text-align: left;
+}
+
+::deep .data-card {
+    flex-direction: column;
+    display: flex;
+    left: 0;
+    margin: auto;
+    top: 0;
+    right: 0;
+    position: absolute;
+    bottom: 0;
+    overflow: hidden;
+    z-index: 10;
+}
+
+::deep .download-button {
+    font-size: 1.2rem;
+}
+
+::deep .button-inner-row {
+    align-items: center;
+}
+
+.waves-header {
+    display: grid;
+    height: 600px;
+    width: 100%;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(34,43,62,1) 0%, rgba(0,172,193,1) 100%);
+    /*animation: color-change-3x 10s linear infinite alternate both;*/
+}
+
+.waves-container {
+    align-self: flex-end;
+}
+
+.waves {
+    position: relative;
+    width: 100%;
+    height: 30vh;
+    margin-bottom: -7px;
+    /*Fix for safari gap*/
+    min-height: 100px;
+    max-height: 170px;
+}
+
+/* Animation */
+
+.parallax > use {
+    animation: move-forever 25s cubic-bezier(.55, .5, .45, .5) infinite;
+}
+
+.parallax > use:nth-child(1) {
+    animation-delay: -2s;
+    animation-duration: 7s;
+}
+
+.parallax > use:nth-child(2) {
+    animation-delay: -3s;
+    animation-duration: 10s;
+}
+
+.parallax > use:nth-child(3) {
+    animation-delay: -4s;
+    animation-duration: 13s;
+}
+
+.parallax > use:nth-child(4) {
+    animation-delay: -5s;
+    animation-duration: 20s;
+}
+
+@keyframes move-forever {
+    0% {
+        transform: translate3d(-90px, 0, 0);
+    }
+
+    100% {
+        transform: translate3d(85px, 0, 0);
+    }
+}
+
+/*Shrinking for mobile*/
+@media (max-width: 768px) {
+    .waves {
+        height: 40px;
+        min-height: 40px;
+    }
+}

@@ -1,0 +1,126 @@
+﻿@using PCG_FDF.Components.Dialogs;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_ENTITIES.Enums
+@using Syncfusion.Blazor.SplitButtons
+@using System.Globalization
+@using System.Security.Claims;
+@inject NavigationManager NavigationManager
+@inject WhiteLabelManager WhiteLabel
+@inject GlobalBreakpointService BreakpointService
+@inject AuthenticationStateProvider AuthProvider
+@inject GlobalLocalizer localize
+@inject ApplicationState AppState
+@inject IDialogService DialogService
+
+<div class="fragment-wrapper">
+    <AuthorizeView>
+        <Authorized>
+            @if (user_context is not null)
+            {
+                <MudStack Row="true">
+                    @if (WhiteLabel.GetUseCimaCoins())
+                    {
+                        <MudStack Row="true" class="coins-wrapper">
+                            <MudIcon Class="@($"cima-coins-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s10" : "")}")" Icon="@CustomIcons.CimaCoin.GetIcon()" ViewBox="@CustomIcons.CimaCoin.GetViewBox()"></MudIcon>
+                            <MudText Color="Color.Tertiary" Class="@(WhiteLabel.Current_Page == EPages.Cima_Shipping ? "coins-item t-white" : "coins-item")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@(string.Format("{0:n0}", user_context.User.Claims.FirstOrDefault(claims => claims.Type == "CIMA Coins")!.Value))</MudText>
+                        </MudStack>
+                    }
+                    <SfDropDownButton IconPosition="SplitButtonIconPosition.Left" IconCss="sf-icon-user-wf icon" CssClass="@($"e-custom {(BreakpointService.GetIsMobile() ? "e-caret-hide" : "")}")" Content="@(BreakpointService.GetIsMobile() ? "" : user_context.User.Claims.FirstOrDefault(claims => claims.Type == ClaimTypes.GivenName)!.Value.Split(" ").First())">
+                        <DropDownButtonEvents ItemSelected="@ItemSelected"></DropDownButtonEvents>
+                        <DropDownMenuItems>
+                            <DropDownMenuItem class="current-client-button" Id="current_client" Disabled="true" Text="@AppState.ReturnCurrentClientName()"></DropDownMenuItem>
+                            @if (AppState.GetAvailable_Subclients() is not null && AppState.GetAvailable_Subclients().Count != 1)
+                            {
+                                <DropDownMenuItem Id="client_change" Disabled="@(!AppState.GetCanChange())" Text="@localize.Get("btn_changeclient")"></DropDownMenuItem>
+                            }
+                            @if(!AppState.HasPermission("FdF Consulta Pagos Vacios"))
+                            {
+                                <DropDownMenuItem Disabled="@(!AppState.HasPermission("FdF Consultar Cotización"))" Id="quotations" Text="@localize.Get("btn_quotations")"></DropDownMenuItem>
+                                <DropDownMenuItem Disabled="@(!AppState.HasPermission("FdF Consultar Booking"))" Id="bookings" Text="Bookings"></DropDownMenuItem>
+                                <DropDownMenuItem Disabled="@(!AppState.HasPermission("FdF Consulta Pagos"))" Id="invoices" Text="@localize.Get("label_invoices")"></DropDownMenuItem>
+                                <DropDownMenuItem Id="services" Text="@localize.Get("label_handling")"></DropDownMenuItem>
+                            }
+                            else {
+                                <DropDownMenuItem Separator="true" Text="Maniobras de Vacíos" />
+                                <DropDownMenuItem Id="manuver-expo" Text="@localize.Get("lbl_simplex_maneuver_expo")"></DropDownMenuItem>
+                                <DropDownMenuItem Id="manuver-impo" Text="@localize.Get("lbl_simplex_maneuver_impo")"></DropDownMenuItem>
+                                <DropDownMenuItem Disabled="@(!AppState.HasPermission("FdF Consulta Pagos Vacios"))" Id="maneuver_invoices" Text="@localize.Get("label_maneuvers_invoices")"></DropDownMenuItem>
+                                <DropDownMenuItem Disabled="@(!AppState.HasPermission("FdF Consulta Pagos Vacios"))" Id="maneuver_addclients" Text="@localize.Get("Mis Clientes")"></DropDownMenuItem>
+                            }   
+                            
+                            <DropDownMenuItem Separator="true" />
+                            @if(!AppState.HasPermission("FdF Consulta Pagos Vacios")){
+                                <DropDownMenuItem Id="reports" Text="@localize.Get("lbl_reports")"></DropDownMenuItem>
+                            }
+                            <DropDownMenuItem Id="logout" Text="@localize.Get("btn_logout")"></DropDownMenuItem>
+                        </DropDownMenuItems>
+                    </SfDropDownButton>
+                </MudStack>
+            }
+        </Authorized> 
+    </AuthorizeView>
+</div>
+
+@code {
+    private AuthenticationState? user_context { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        AppState.OnChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async void ItemSelected(MenuEventArgs args)
+    {
+        string? navigateTo = args.Item.Id switch
+        {
+            "logout" => "logout",
+            "quotations" => "user_quotations",
+            "bookings" => "user_bookings",
+            "invoices" => "user_invoices",
+            "reports" => "reports",
+            "services" => "user_handling",
+            "manuver-impo" => "user_maneuvers/impo",
+            "manuver-expo" => "user_maneuvers/expo",
+            "maneuver_invoices" => "user_maneuvers/invoices",
+            "maneuver_addclients" => "user_maneuvers/add_clients",
+            _ => null
+        };
+
+        if(navigateTo is null)
+        {
+            DialogOptions options = new DialogOptions() { DisableBackdropClick = false, CloseButton = true };
+            var dialog = await DialogService.ShowAsync<SelectClientDialog>(localize.Get("msg_information"), options);
+            var result = await dialog.Result;
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/{navigateTo}");
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        AppState.OnChange -= StateHasChanged;
+    }
+}

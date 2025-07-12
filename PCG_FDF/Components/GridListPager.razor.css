@@ -1,0 +1,19 @@
+.pager-wrapper {
+  width: 100%;
+}
+
+.selector-wrapper {
+  min-width: 60px;
+}
+
+::deep .controls-items {
+  max-width: 200px;
+}
+
+::deep .pager {
+  align-self: center;
+}
+
+::deep .selector-wrapper.mud-select {
+  flex-grow: 0;
+}

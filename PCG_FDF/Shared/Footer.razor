@@ -1,0 +1,43 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_ENTITIES.Enums
+@using System.Reflection
+@inject GlobalLocalizer localize
+@inject WhiteLabelManager WhiteLabel
+
+<footer class="footer" id="footer">
+    <div class="footer-top">
+        <div class="foter-icon-container">
+            <MudIcon Class="@(WhiteLabel.GetIconCSSClass() + " " + WhiteLabel.GetIconFooterSizeModifier())" Size="Size.Large" Icon="@WhiteLabel.GetFooterIcon().GetIcon()" ViewBox="@WhiteLabel.GetFooterIcon().GetViewBox()"></MudIcon>
+            @if (WhiteLabel.Current_Page != EPages.The_Sharks && WhiteLabel.Current_Page != EPages.SmarGo && WhiteLabel.Current_Page != EPages.Cima_Group)
+            {
+                <MudText Typo="Typo.h5" Class="footer-text ml-3"><strong>@(WhiteLabel.GetPageName())</strong></MudText>
+            }
+        </div>
+        <div class="footer-info">
+            <MudText Typo="Typo.h6" Class="footer-text ml-3"><strong>@localize.Get("footer_touch")</strong></MudText>
+            <MudText Typo="Typo.subtitle1" Class="footer-text ml-3"><strong>@localize.Get("footer_call")</strong> @WhiteLabel.GetContactPhone()</MudText>
+            <MudText Typo="Typo.subtitle1" Class="footer-text ml-3"><strong>@localize.Get("footer_write")</strong> @WhiteLabel.GetContactEmail()</MudText>
+            <MudText Typo="Typo.subtitle1" Class="footer-text ml-3"><strong>@localize.Get("footer_address")</strong> @WhiteLabel.GetContactLocation()</MudText>
+        </div>
+    </div>
+    <MudDivider />
+    <div class="footer-bottom">
+        <MudText Typo="Typo.h6" Class="footer-copy ml-3">&copy; @DateTime.Now.Year.ToString() @WhiteLabel.GetAllRights()</MudText>
+        <MudText Typo="Typo.body2" Class="footer-version ml-3">@($"v{BuildInfo}")</MudText>
+    </div>
+</footer>
+
+@code {
+    private string BuildInfo { get; set; } = string.Empty;
+
+
+    // Obtener fecha de compilación obtenido de: https://stackoverflow.com/questions/66704588/display-build-date-in-razor-file-blazor
+    protected override void OnInitialized()
+    {
+        Assembly curAssembly = typeof(Program).Assembly;
+        BuildInfo = $"{curAssembly.GetCustomAttributes(false).OfType<AssemblyTitleAttribute>().FirstOrDefault()?.Title}";
+    }
+}

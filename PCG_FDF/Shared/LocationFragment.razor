@@ -1,0 +1,90 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_ENTITIES.Enums
+@using Syncfusion.Blazor.SplitButtons
+@using System.Globalization
+@using System.Security.Claims;
+@inject NavigationManager NavigationManager
+@inject ApplicationState AppState
+@inject WhiteLabelManager WhiteLabel
+@inject GlobalBreakpointService BreakpointService
+@inject AuthenticationStateProvider AuthProvider
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject IAuthService AuthService
+
+<div class="fragment-wrapper">
+    <AuthorizeView>
+        <Authorized>
+            @if (user_context is not null && AppState.GetAvailable_Locations() is not null)
+            {
+                <MudStack Row="true">
+                    <SfDropDownButton IconPosition="SplitButtonIconPosition.Left" IconCss="sf-icon-location-02-wf icon" CssClass="@($"e-custom {(BreakpointService.GetIsMobile() ? "e-caret-hide" : "")}")" Content="@(BreakpointService.GetIsMobile() ? "" : AppState.ReturnCurrentLocationName())">
+                        <DropDownButtonEvents ItemSelected="@ItemSelected"></DropDownButtonEvents>
+                        <DropDownMenuItems>
+                            @foreach (var location_kvp in AppState.GetCurrentClientLocations())
+                            {
+                                <DropDownMenuItem class="@(AppState.GetCurrentLocation() == location_kvp.Key ? "sf-loc-selected" : "")" Disabled="@(!AppState.GetCanChange() || empty_location_selected.HasValue)" Id="@location_kvp.Key.ToString()" Text="@location_kvp.Value"></DropDownMenuItem>
+                            }
+                        </DropDownMenuItems>
+                    </SfDropDownButton>
+                </MudStack>
+            }
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private AuthenticationState? user_context { get; set; }
+    private int? empty_location_selected { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        await GetEmptyAgentData();
+
+        if (empty_location_selected.HasValue)
+        {
+            await AppState.SetCurrentLocation(empty_location_selected.Value);
+            StateHasChanged();
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            BreakpointService.OnChange += StateHasChanged;
+            AppState.OnChange += StateHasChanged;
+            ((AuthService)AuthService).OnChange += StateHasChanged;
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task ItemSelected(MenuEventArgs args)
+    {
+        await AppState.SetCurrentLocation(Convert.ToInt32(args.Item.Id));
+    }
+
+    private async Task GetEmptyAgentData()
+    {
+        var result = await DATA_ACCESS.GetClientDocumentsDataEmptyContainers();
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            empty_location_selected = result.Result.IdAduana;
+        }
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        ((AuthService)AuthService).OnChange -= StateHasChanged;
+        AppState.OnChange -= StateHasChanged;
+    }
+}

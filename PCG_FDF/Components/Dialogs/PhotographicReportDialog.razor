@@ -1,0 +1,216 @@
+﻿@using Newtonsoft.Json;
+@using PCG_ENTITIES.Resultsets;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Utility;
+@using System.Security.Claims;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject PCG_FDF_DB DATA_ACCESS
+@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@implements IDisposable
+@implements IAsyncDisposable
+
+<MudDialog>
+	<TitleContent>
+		<MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("label_photographic")</MudText>
+	</TitleContent>
+	<DialogContent>
+		<div class="dialog-stack">
+			<MudStack>
+                @*LOCATION*@
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           Class="@ResponsiveUtil.GetMobileClass("dialog-searchbar", BreakpointService.GetIsMobile())"
+                           PopoverClass="@ResponsiveUtil.GetMobileClass("dialog-popover", BreakpointService.GetIsMobile())"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           @bind-Value="@Location"
+                           ReadOnly="@Loading"
+                           Required="@true"
+                           Clearable="@false"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_location")}")">
+
+                    @foreach (var option in AppState.GetCurrentClientLocations())
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+                </MudSelect>
+                @*BUSINESS UNIT*@
+                <MudSelect T="KeyValue"
+                           ToStringFunc="@CustomConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Class="@ResponsiveUtil.GetMobileClass("dialog-searchbar", BreakpointService.GetIsMobile())"
+                           PopoverClass="@ResponsiveUtil.GetMobileClass("dialog-popover", BreakpointService.GetIsMobile())"
+                           @bind-Value="@Business_Unit"
+                           ReadOnly="@Loading"
+                           Required="@true"
+                           Clearable="@false"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_businessunit")}")">
+
+                    @foreach (var option in Business_Units)
+                    {
+                        <MudSelectItem Value="option" />
+                    }
+                </MudSelect>
+                <MudStack Row="@(!BreakpointService.GetIsMobile())" Style="width: 100%" AlignItems="@AlignItems.Center">
+                    @*BOOKING*@
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  Required="@false"
+                                  MaxLength="17"
+                                  Clearable="@true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  DebounceInterval="1500"
+                                  @bind-Value="@Booking"
+                                  T="string"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} Booking")" />
+                    @*CONTAINER/PLATE*@
+                    <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                  Required="@false"
+                                  MaxLength="13"
+                                  Clearable="@true"
+                                  RequiredError="@Localize.Get("errmsg_required")"
+                                  DebounceInterval="1500"
+                                  @bind-Value="@Serial"
+                                  T="string"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@($"{Localize.Get("placeholder_input")} Serial")" />
+                </MudStack>
+			</MudStack>
+		</div>
+	</DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@Localize.Get("btn_cancel")</MudButton>
+        @if (!Loading)
+        {
+            <MudIconButton Color="@Color.Tertiary" OnClick="@Submit" Icon="@Icons.Material.Rounded.Download" Size="@Size.Large" />
+        }
+        else
+        {
+            <MudProgressCircular Color="Color.Tertiary" Size="Size.Medium" Indeterminate="true" />
+
+        }
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private IEnumerable<KeyValue> Business_Units = new List<KeyValue>() { new KeyValue() { Key = 2, Value = "DEPOSITO" }, new KeyValue() { Key = 3, Value = "CIMA LOGISTIC" } };
+
+    private KeyValue? Location { get; set; } = null;
+    private KeyValue? Business_Unit { get; set; } = null;
+    private string? Booking { get; set; } = null;
+    private string? Serial { get; set; } = null;
+
+    private bool Loading { get; set; } = false;
+
+    private IJSObjectReference? module_download;
+
+    protected async override Task OnInitializedAsync()
+    {
+        // Get the current location
+        var locations = AppState.GetCurrentClientLocations();
+        Location = locations.FirstOrDefault(location => location.Key == AppState.GetCurrentLocation());
+
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    async void Submit()
+    {
+        if (!Loading)
+        {
+            Loading = true;
+            try
+            {
+                if (Location is null || Business_Unit is null)
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(Localize.Get("snackbar_err_selectlocationbusiness"), Severity.Error);
+                    Loading = false;
+
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(Booking) && string.IsNullOrEmpty(Serial))
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(Localize.Get("snackbar_err_selectbookingserial"), Severity.Error);
+                    Loading = false;
+
+                    return;
+                }
+
+                var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+                var FILESTREAM = await DATA_ACCESS.DownloadAuthAsync("PCG_FDFTracking/PostGetBookingPhotographicReport", HttpMethod.Post, null, JsonConvert.SerializeObject(new RequestReportData()
+                {
+                    IdCliente = AppState.GetCurrentClientID(),
+                    IdLocalidad = Location!.Key,
+                    IdUnidadNegocio = Business_Unit!.Key,
+                    Booking = string.IsNullOrWhiteSpace(Booking) ? null : Booking.Trim().ToUpper(),
+                    Origen = string.IsNullOrWhiteSpace(Serial) ? null : Serial.Trim().ToUpper()
+                }), null);
+                
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"{Localize.Get("label_photographic")} - {DateTime.Now.ToString("dd/MM/yyyy - HH:mm")}.pdf";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download!.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                }
+                else
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(Localize.Get("snackbar_err_photographicreport"), Severity.Error);
+                }
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                Loading = false;
+            }
+        }
+    }
+
+    /*
+    * Eliminar los modulos JS cargados al terminar de usar el componente actual
+    */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

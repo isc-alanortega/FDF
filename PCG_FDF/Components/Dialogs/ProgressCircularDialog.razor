@@ -1,0 +1,19 @@
+﻿@* @inherits MudDialogBase
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Class="loading-dialog-container">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            @if (!string.IsNullOrEmpty(Message))
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-4">@Message</MudText>
+            }
+        </MudStack>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = null;
+}
+ *@

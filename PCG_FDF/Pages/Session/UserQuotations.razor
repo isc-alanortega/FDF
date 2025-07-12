@@ -1,0 +1,421 @@
+﻿@page "/user_quotations"
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@inject GlobalBreakpointService BreakpointService
+@inject NavigationManager NavigationManager
+@inject BookingDataCollection BookingData
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject QuotationDataCollection quotationService
+@inject WhiteLabelManager WhiteLabel
+@inject ShoppingCartContainer shoppingCart
+@inject AuthenticationStateProvider AuthProvider
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@implements IDisposable
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="quotations_wrapper">
+    <MudPaper Height="90%" Width="90%" Elevation="5" Class="@($"paper-grey {(BreakpointService.GetIsMobile() ? "UserQuotation-paper" : "")}")">
+        <MudText Typo="Typo.h4" Class="@($"title-h4{(BreakpointService.GetIsMobile() ? "-mobil" : "")}")">@localize.Get("uquot_quotations")</MudText>
+        <GridListPager @ref="@Pager_Reference" DisplayItem="SimpleQuotation" ItemQueryResult="@ListQuery" TotalCount="@Total_Items" UpdatePage="@UpdateQuotes">
+            <ControlsDisplay>
+                <MudStack Row="@true" Style="width: 100%">
+                    @*Date Picekers*@
+                    <MudStack>
+                        <MudDatePicker Editable="true"
+                                        Mask="@(new DateMask("dd/MM/yyyy"))"
+                                        DateFormat="dd/MM/yyyy"
+                                        Date="@DateFrom"
+                                        MaxDate="@DateTime.Now.Date"
+                                        DateChanged="@((args) => DateFromChanged(args))"
+                                        Label="@localize.Get("label_from")"
+                                        Class="@($"date-to UserQuotation-date-picker-{BreakpointService.GetStringSize()}")" />
+
+                        <MudDatePicker Editable="true"
+                                        Mask="@(new DateMask("dd/MM/yyyy"))"
+                                        DateFormat="dd/MM/yyyy"
+                                        Date="@DateTo"
+                                        MaxDate="@DateTime.Now.Date"
+                                        DateChanged="@((args) => DateToChanged(args))"
+                                        Label="@localize.Get("label_to")"
+                                        Class="@($"date-to UserQuotation-date-picker-{BreakpointService.GetStringSize()}")" />
+                    </MudStack>
+
+                    @*Location Select*@
+                    <MudStack Justify="@Justify.Center" Style="min-width: 25%;">
+                        <MudSelect T="KeyValue"
+                                    ToStringFunc="@CustomConverter"
+                                    AnchorOrigin="Origin.BottomCenter"
+                                    Variant="Variant.Outlined"
+                                    Value="@Location"
+                                    ValueChanged="@(async(args) => await LocationChanged(args))"
+                                    Clearable="true"
+                                    Placeholder="@($"{localize.Get("placeholder_select")} {localize.Get("label_location")}")"
+                                    Class="@($"UserQuotation-select{(BreakpointService.GetIsMobile() ? "-mobil" : "")}")">
+
+                                @foreach (var option in AppState.GetAvailable_Locations().Values)
+                                {
+                                    <MudSelectItem
+                                        Class="@($"UserQuotation-select-item{(BreakpointService.GetIsMobile() ? "-mobil" : "")}")"
+                                        Value="option" />
+                                }
+                        </MudSelect>
+                    </MudStack>
+                </MudStack>
+            </ControlsDisplay>
+
+            <NoItemsDisplay>
+                <MudText>@localize.Get("uquot_noitems")</MudText>
+            </NoItemsDisplay>
+
+            @*Header*@
+            <HeaderDisplay>
+                <MudStack Class="pager-header-wrapper">
+                    <div class="@($"pager-header {(BreakpointService.GetIsMobile() ? "userquotation-headerdisplay-mobil" : "")}")">
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_location")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_create")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_modified")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_until")</MudText>
+                        </MudItem>
+                    </div>
+                </MudStack>
+            </HeaderDisplay>
+
+            @*Displays Items Like Cards*@
+            <GridItemDisplay>
+                @{
+                    var valid_until = context.FechaAlta.AddDays(30);
+                    string class_grid_item_display = $"grid-item-dispay {(BreakpointService.GetIsMobile() ? $"userquotation-griditemdisplay-mobil {(BreakpointService.GetIsExtraSmall() ? "userquotation-btn-xs" : "")}" : "")}";
+                }
+                <MudItem>
+                    <MudCard Class="grid-item" Style="@($"{(BreakpointService.GetIsMobile() ? "width: 56.2em;" : "")}")">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h5" Class="@class_grid_item_display">@localize.Get("uquot_quotation") @context.Folio</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+
+                        <MudCardContent Class="@class_grid_item_display">
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_location") @context.Location</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_create") @context.FechaAlta.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_modified") @context.FechaUltimaModificacion.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+                            <MudText Color="Color.Secondary" Typo="Typo.h6">@localize.Get("uquot_quotation_until") @valid_until.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+                        </MudCardContent>
+
+                        @*Botenes de Accion del Card*@
+                        <MudCardActions>
+                            <MudStack Class="list-actions" Row="true">
+                                @if (!context.Read_Only && DateTime.UtcNow < valid_until && context.Enabled)
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(() => EditQuotation(context.GUID))">@localize.Get("btn_edit")</MudButton>
+                                }
+                                else if (context.Read_Only && DateTime.UtcNow < valid_until && context.Enabled)
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Tertiary">@localize.Get("btn_contract")</MudButton>
+                                }
+                                else if (context.Enabled)
+                                {
+                                    <MudText Color="Color.Secondary" Typo="Typo.body2">@localize.Get("uquot_quotation_expired")</MudText>
+                                }
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Typo="Typo.body2" OnClick="@(() => ViewQuotation(context.GUID))">@localize.Get("btn_view")</MudButton>
+                            </MudStack>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </GridItemDisplay>
+
+            @*Displays Items Like List*@
+            <ListItemDisplay>
+                @{
+                    var valid_until = context.FechaAlta.AddDays(30);
+                    string class_list_item_display = $"list-item-dispay {(BreakpointService.GetIsMobile() ? $"userquotation-listitemdisplay-mobil" : "")}";
+                    string btn_list_extra_small = BreakpointService.GetIsExtraSmall() ? "userquotation-btn-xs" : "";
+                }
+                <MudPaper Class="list-row">
+                    <div class="@($"inner-row {class_list_item_display}")">
+                        <MudText Typo="Typo.h5">@context.Folio</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6" >@context.Location</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6" >@context.FechaAlta.ToString("dd/MM/yyyy")</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6" >@context.FechaUltimaModificacion.ToString("dd/MM/yyyy")</MudText>
+                        <MudText Color="Color.Secondary" Typo="Typo.h6">@valid_until.ToString("dd/MM/yyyy")</MudText>
+                    </div>
+
+                    @*Botones de la lista*@
+                    <MudStack Class="@($"list-actions {(BreakpointService.GetIsMobile() ? "UserQuotation-mudstack-bnts-mobil" : "")}")" Row="true">
+                        @if (!context.Read_Only && DateTime.UtcNow < valid_until && context.Enabled)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="@($"UserQuotation-Btn-Edit {btn_list_extra_small} {(BreakpointService.GetIsMobile() ? "UserQuotation-btn-edit-mobil" : "")}")" OnClick="@(() => EditQuotation(context.GUID))">@localize.Get("btn_edit")</MudButton>
+                        }
+                        else if (context.Read_Only && DateTime.UtcNow < valid_until && context.Enabled)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="@($"UserQuotation-Btn-Contract {btn_list_extra_small} {(BreakpointService.GetIsMobile() ? "UserQuotation-btn-contract-mobil" : "")}")" OnClick="@(() => ContractQuotation(context.GUID))">@localize.Get("btn_contract")</MudButton>
+                        }
+                        else if (context.Enabled)
+                        {
+                            <MudText Color="Color.Secondary" Typo="Typo.body2">@localize.Get("uquot_quotation_expired")</MudText>
+                        }
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Typo="Typo.body2" Class="@($"UserQuotation-Btn-View {btn_list_extra_small} {(BreakpointService.GetIsMobile() ? "UserQuotation-btn-view-mobil" : "")}")" OnClick="@(() => ViewQuotation(context.GUID))">@localize.Get("btn_view")</MudButton>
+                    </MudStack>
+                </MudPaper>
+            </ListItemDisplay>
+        </GridListPager>
+    </MudPaper>
+</div>
+
+<style>
+    .UserQuotation-select-SmXs input,
+    .UserQuotation-date-picker-SmXs svg,
+    .UserQuotation-date-picker-SmXs label,
+    .UserQuotation-date-picker-SmXs input {
+        font-size: 2.1em !important;
+    }
+
+    .title-h4-mobil {
+        font-size: 2.5em !important;
+    }
+
+    .UserQuotation-select-SmXs svg,
+    .UserQuotation-select-item-SmXs p,
+    .userquotation-headerdisplay-mobil h5,
+    .userquotation-headerdisplay-mobil h6,
+    .userquotation-griditemdisplay-mobil h5,
+    .userquotation-griditemdisplay-mobil h6,
+    .userquotation-listitemdisplay-mobil h5,
+    .userquotation-listitemdisplay-mobil h6
+    {
+        font-size: 1.9em !important;
+    }
+
+    .UserQuotation-select-mobil-Md svg,
+    .UserQuotation-select-mobil-Md label,
+    .UserQuotation-select-mobil-Md input,
+    .UserQuotation-mudstack-bnts-mobil span {
+        font-size: 1.7em !important;
+    }
+
+    .UserQuotation-date-picker-Md svg,
+    .UserQuotation-date-picker-Md input,
+    .UserQuotation-date-picker-Md label {
+        font-size: 1.4em !important;
+    }
+
+    .userquotation-btn-xs {
+        max-height: 30px;
+        bottom: -1.5em;
+    }
+</style>
+
+
+@if (BreakpointService.GetIsExtraSmall() || BreakpointService.GetIsSmall())
+{
+    <style>
+        .mud-picker-datepicker-toolbar span,
+        .mud-picker-calendar-transition p {
+            font-size: 1.9em !important;
+        }
+
+        .mud-picker-calendar-header-switch span,
+        .mud-picker-calendar-header-day span
+        {
+            font-size: 1.5em !important;
+        }
+    </style>
+}
+
+@code {
+    private GridListPager<SimpleQuotation>? Pager_Reference { get; set; }
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private IEnumerable<SimpleQuotation>? ListQuery { get; set; }
+    private int Total_Items { get; set; } = 0;
+
+    private KeyValue? Location { get; set; } = null;
+    private DateTime DateFrom { get; set; } = DateTime.Now.AddMonths(-1).Date;
+    private DateTime DateTo { get; set; } = DateTime.Now.Date.AddDays(1).AddTicks(-1);
+
+    private async Task DateFromChanged(DateTime? value)
+    {
+        if (value.HasValue)
+        {
+            DateFrom = value.Value;
+            await UpdateSource();
+        }
+    }
+
+    private async Task DateToChanged(DateTime? value)
+    {
+        if (value.HasValue)
+        {
+            DateTo = value.Value;
+            await UpdateSource();
+        }
+    }
+
+    private async Task LocationChanged(KeyValue? value)
+    {
+        Location = value;
+        await UpdateSource();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (AppState.GetAvailable_Locations().TryGetValue(AppState.GetCurrentLocation(), out var location))
+        {
+            Location = location;
+        }
+
+        if (!AppState.HasPermission("FdF Consultar Cotización"))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_error_no_perms"), Severity.Error);
+            NavigationManager.NavigateTo("/");
+        }
+
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var result = await DATA_ACCESS.GetUserQuotation(new UserQuotationsRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Endpoint = WhiteLabel.Current_Page,
+                Items_Per_Page = 5,
+                Page_Number = 1,
+                Date_From = DateTime.Now.AddMonths(-1).Date.ToUniversalTime(),
+                Date_To = DateTime.Now.Date.AddDays(1).AddTicks(-1).ToUniversalTime(),
+                Location_ID = Location?.Key
+            });
+
+        if (result is not null && result.Operation_Succeeded)
+        {
+            ListQuery = result.Result.Quotes;
+            Total_Items = result.Result.Total_Items;
+        }
+        else
+        {
+            ListQuery = Enumerable.Empty<SimpleQuotation>();
+            Total_Items = 0;
+        }
+
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    private async Task UpdateSource()
+    {
+        await UpdateQuotes();
+    }
+
+    private async Task UpdateQuotes()
+    {
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var result = await DATA_ACCESS.GetUserQuotation(new UserQuotationsRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Endpoint = WhiteLabel.Current_Page,
+                Items_Per_Page = Pager_Reference.ItemsPerPage,
+                Page_Number = Pager_Reference.CurrentPage,
+                Date_From = DateFrom.Date.ToUniversalTime(),
+                Date_To = DateTo.AddDays(1).AddTicks(-1).ToUniversalTime(),
+                Location_ID = Location?.Key
+            });
+
+        if (result is not null && result.Operation_Succeeded)
+        {
+            ListQuery = result.Result.Quotes;
+            Total_Items = result.Result.Total_Items;
+        }
+        else // ERROR TODO
+        {
+            ListQuery = Enumerable.Empty<SimpleQuotation>();
+            Total_Items = 0;
+        }
+    }
+
+    private void ViewQuotation(Guid GUID)
+    {
+        quotationService.ResetSelf();
+        BookingData.ResetSelf();
+        NavigationManager.NavigateTo($"/quote/{GUID}/false");
+    }
+
+    private void ContractQuotation(Guid GUID)
+    {
+        quotationService.ResetSelf();
+        BookingData.ResetSelf();
+        BookingData.Contracting = true;
+        NavigationManager.NavigateTo($"/book/{GUID}");
+    }
+
+    private async Task EditQuotation(Guid GUID)
+    {
+        if (quotationService.GetQuotationInitialized() && !quotationService.GetQuotationHasSaved())
+        {
+            bool? result = await DialogService.ShowMessageBox(
+                localize.Get("msg_warning"),
+                localize.Get("msg_editquot"),
+                yesText: localize.Get("btn_continue"),
+                noText: localize.Get("btn_cancel")
+            );
+
+            if (result is not null && (bool)result)
+            {
+                shoppingCart.FullClear();
+                quotationService.ResetSelf();
+                NavigationManager.NavigateTo($"/quote/{GUID}");
+            }
+        }
+        else
+        {
+            shoppingCart.FullClear();
+            quotationService.ResetSelf();
+            BookingData.ResetSelf();
+            NavigationManager.NavigateTo($"/quote/{GUID}");
+        }
+        StateHasChanged();
+    }
+
+    // private async Task TryInitializePortCapital(bool IsPortCapital)
+    // {
+    //     if (!IsPortCapital || quotationService.GetHasDataPortCapital())
+    //     {
+    //         return;
+    //     }
+
+    //     await quotationService.TryInitPortcapital();
+    //     BookingData.IsPortCapital = true;
+    //     BookingData.QuotationPortCapital = quotationService.GetPortCapitalCollection().Data;
+    // }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+    }
+}

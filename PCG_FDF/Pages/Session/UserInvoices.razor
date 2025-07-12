@@ -1,0 +1,872 @@
+﻿@page "/user_invoices"
+@page "/user_invoices/{Booking_UUID:guid}"
+@using Newtonsoft.Json
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Requests;
+@using PCG_ENTITIES.Resultsets
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Entities
+@using PCG_ENTITIES.Enums;
+@using PCG_FDF.Data.Localization
+@inject GlobalBreakpointService BreakpointService
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject QuotationDataCollection quotationService
+@inject WhiteLabelManager WhiteLabel
+@inject AuthenticationStateProvider AuthProvider
+@inject ApplicationState AppState
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="quotations_wrapper">
+    <MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+        <MudText Typo="Typo.h4">@localize.Get("label_invoices")</MudText>
+        <GridListPager @ref="@Pager_Reference" DisplayItem="StatefulInvoiceInfo" ItemQueryResult="@ListQuery" TotalCount="@Total_Items" UpdatePage="@UpdateSource">
+            <ControlsDisplay>
+                <MudStack Row="@true" Style="width: 100%" AlignItems="@AlignItems.Center">
+                    @*FILTER OPTIONS*@
+                    <MudStack Justify="@Justify.Center">
+                        <MudDatePicker Editable="true"
+                                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                                       DateFormat="dd/MM/yyyy"
+                                       Date="@DateFrom"
+                                       Clearable="@true"
+                                       MaxDate="@DateTime.Now.Date"
+                                       DateChanged="@((args) => DateFromChanged(args))"
+                                       Label="@localize.Get("label_from")" />
+                        <MudDatePicker Editable="true"
+                                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                                       DateFormat="dd/MM/yyyy"
+                                       Date="@DateTo"
+                                       Clearable="@true"
+                                       MaxDate="@DateTime.Now.Date"
+                                       DateChanged="@((args) => DateToChanged(args))"
+                                       Label="@localize.Get("label_to")" />
+                    </MudStack>
+                    <MudStack Justify="@Justify.Center" Style="min-width: 20%;">
+                        <MudAutocomplete T="KeyValue"
+                                         Class="@($"invoices-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         PopoverClass="@($"invoices-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         ToStringFunc="@CustomConverter"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         CoerceValue="false"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         AdornmentColor="Color.Primary"
+                                         Clearable="@true"
+                                         Value="@Location"
+                                         ValueChanged="@(async(args) => await LocationChanged(args))"
+                                         SearchFunc="@SearchLocation"
+                                         Placeholder="@($"{localize.Get("placeholder_select")} {localize.Get("label_location")}")" />
+                        
+                        <MudAutocomplete T="KeyValueUUID"
+                                         Class="@($"invoices-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         PopoverClass="@($"invoices-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         ToStringFunc="@CustomConverterUUID"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         CoerceValue="false"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         AdornmentColor="Color.Primary"
+                                         Clearable="@true"
+                                         Value="@Booking"
+                                         ValueChanged="@(async(args) => await BookingChanged(args))"
+                                         SearchFunc="@SearchBookings"
+                                         Placeholder="@($"{localize.Get("placeholder_select")} Booking")" />
+                    </MudStack>
+                    <MudStack Justify="@Justify.Center" Style="min-width: 20%;">
+                        <MudAutocomplete T="KeyValue"
+                                         Class="@($"invoices-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         PopoverClass="@($"invoices-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                         ToStringFunc="@CustomConverter"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         CoerceValue="false"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         AdornmentColor="Color.Primary"
+                                         Clearable="@true"
+                                         Value="@Business_Unit"
+                                         ValueChanged="@(async(args) => await BusinessUnitChanged(args))"
+                                         SearchFunc="@SearchBusinessUnit"
+                                         Placeholder="@($"{localize.Get("placeholder_select")} {localize.Get("label_businessunit")}")" />
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                      MaxLength="50"
+                                      Clearable="@true"
+                                      DebounceInterval="1500"
+                                      T="string"
+                                      Value="@Invoice"
+                                      ValueChanged="@(async(args) => await InvoiceChanged(args))"
+                                      Variant="Variant.Outlined"
+                                      Placeholder="@($"{localize.Get("placeholder_input")} {localize.Get("label_invoice")}")" />
+                    </MudStack>
+                    @*SUMBIT INVOICE OPTIONS*@
+                    <MudStack Row="true" Class="selected-invoices-box">
+                        <MudStack>
+                            <MudAutocomplete T="KeyValue"
+                                             Class="@($"invoices-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             PopoverClass="@($"invoices-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             ToStringFunc="@CustomConverter"
+                                             ResetValueOnEmptyText="true"
+                                             CoerceText="true"
+                                             CoerceValue="false"
+                                             AdornmentIcon="@Icons.Material.Filled.Search"
+                                             AdornmentColor="Color.Primary"
+                                             Clearable="@true"
+                                             Value="@Payment_Form"
+                                             ValueChanged="@(async(args) => await PaymentFormChanged(args))"
+                                             SearchFunc="@SearchPaymentForm"
+                                             Placeholder="@($"{localize.Get("placeholder_select")} {localize.Get("label_payment_form")}")" />
+                            <MudAutocomplete T="KeyValue"
+                                             Class="@($"invoices-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             PopoverClass="@($"invoices-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             ToStringFunc="@CustomConverter"
+                                             ResetValueOnEmptyText="true"
+                                             CoerceText="true"
+                                             CoerceValue="false"
+                                             AdornmentIcon="@Icons.Material.Filled.Search"
+                                             AdornmentColor="Color.Primary"
+                                             Clearable="@true"
+                                             Value="@Bank"
+                                             ValueChanged="@(async(args) => await BankChanged(args))"
+                                             SearchFunc="@SearchBank"
+                                             Placeholder="@($"{localize.Get("placeholder_select")} {localize.Get("label_bank")}")" />
+                           
+                        </MudStack>
+                        <MudStack>
+                            <MudNumericField T="string"
+                                             Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                             HideSpinButtons="@true"
+                                             Clearable="@true"
+                                             DebounceInterval="1500"
+                                             Value="@Reference"
+                                             ValueChanged="@(async(args) => await ReferenceChanged(args))"
+                                             Variant="Variant.Outlined"
+                                             Placeholder="@($"{localize.Get("placeholder_input")} {localize.Get("label_reference")}")" />
+                            <MudFileUpload T="IBrowserFile" Files="@Payment_File" FilesChanged="@PaymentDocumentChanged" Accept=".pdf" Disabled="@GetDocumentReadonly()" Required="@true" RequiredError="@localize.Get("errmsg_required")">
+                                <ButtonTemplate>
+                                    <MudButton Style="height: 4rem;"
+                                               HtmlTag="label"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                                                   for="@context">
+                                            @localize.Get("btn_upload_paymentfile")
+                                    </MudButton>
+                                </ButtonTemplate>
+                            </MudFileUpload>
+                        </MudStack>
+                        <MudStack>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@($"{localize.Get("label_invoices")}: {GetSelectedCount()}")</MudText>
+                             <MudText Color="Color.Primary" Typo="Typo.h6">@($"Total: ${string.Format("{0:n0}", GetSelectedTotal())}")</MudText>
+                            <MudButton Style="height: 4rem" OnClick="@(async () => await GeneratePayment())" Color="@Color.Success" Variant="@Variant.Filled" Disabled="@PaymentDisabled()">
+                                <MudStack Row="@true">
+                                    @if (Payment_Generating)
+                                    {
+                                        <div class="loading-spinner"></div>
+                                    }
+                                    @localize.Get("btn_generatepayment")
+                                </MudStack>
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                </MudStack>
+            </ControlsDisplay>
+
+            <NoItemsDisplay>
+                <MudText>@localize.Get("uinvoices_noitems")</MudText>
+            </NoItemsDisplay>
+
+            <HeaderDisplay>
+                <MudStack Class="pager-header-wrapper">
+                    <div class="pager-header">
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_select")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_paytype")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_status")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_invoice")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_businessunit")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_location")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_date")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_balance")</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">Total</MudText>
+                        </MudItem>
+
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6"></MudText>
+                        </MudItem>
+                    </div>
+                </MudStack>
+            </HeaderDisplay>
+
+            <GridItemDisplay>
+                <MudItem>
+                    <MudCard Class="grid-item">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h5">@localize.Get("label_invoice") @context.Invoice.Invoice</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_status") @GetStatusString(context.Invoice.Status)</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_businessunit") @context.Invoice.Business_Unit</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_location") @context.Invoice.Location</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_date") @context.Invoice.Date.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_balance") $@string.Format("{0:n0}", context.Invoice.Balance)</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">Total $@string.Format("{0:n0}", context.Invoice.Total)</MudText>
+                            <MudStack Row="true">
+                                <MudCheckBox Disabled="@SelectDisabled(context)" T="bool" Style="width: fit-content;" Color="@Color.Tertiary" Value="@context.Selected" ValueChanged="@((args) => SelectedChanged(context, args))"></MudCheckBox>
+                                <MudStack>
+                                    <MudChipSet ReadOnly="@(!context.Selected)"
+                                                Mandatory="@true"
+                                                MudChipEqualityComparer="@Comparer"
+                                                SelectedChip="@context.Selected_Chip"
+                                                SelectedChipChanged="@((args) => SelectedChipChanged(context, args))"
+                                                ValueExpression="@context.Selected_Chip">
+                                        <MudChip Variant="@Variant.Text" Disabled="@(!context.Selected)" Color="@Color.Warning" Tag="@EInvoicePaymentType.PARTIAL">@localize.Get("label_partial")</MudChip>
+                                        <MudChip Variant="@Variant.Text" Disabled="@(!context.Selected)" Color="@Color.Success" Tag="@EInvoicePaymentType.FULL">Total</MudChip>
+                                    </MudChipSet>
+                                    @if (context.Payment_Type.HasValue && context.Payment_Type == EInvoicePaymentType.PARTIAL)
+                                    {
+                                        <MudNumericField Class="@($"numerical-input {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                                                         T="decimal?"
+                                                         Variant="Variant.Outlined"
+                                                         Value="@context.Payment"
+                                                         ValueChanged="@((args) => PaymentAmountChanged(context, args))"
+                                                         Min="1"
+                                                         Max="@(context.Invoice.Balance - 1)"
+                                                         Required="true"
+                                                         RequiredError="@localize.Get("errmsg_required")"
+                                                         Placeholder="@($"{localize.Get("placeholder_input")} {localize.Get("label_amountmoney")}")" />
+                                    }
+                                </MudStack>
+                            </MudStack>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudStack Class="list-actions" Row="true"></MudStack>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </GridItemDisplay>
+
+            <ListItemDisplay>
+                <MudPaper Class="list-row">
+                    <div class="inner-row" style="align-items: center;">
+                        <MudCheckBox T="bool"
+                                     Disabled="@SelectDisabled(context)"
+                                     Style="width: fit-content;"
+                                     Color="@Color.Tertiary"
+                                     Value="@context.Selected"
+                                     ValueChanged="@((args) => SelectedChanged(context, args))">
+                        </MudCheckBox>
+                        <MudStack>
+                            <MudChipSet ReadOnly="@(!context.Selected)"
+                                        MudChipEqualityComparer="@Comparer"
+                                        Mandatory="@true"
+                                        SelectedChip="@context.Selected_Chip"
+                                        SelectedChipChanged="@((args) => SelectedChipChanged(context, args))"
+                                        ValueExpression="@context.Selected_Chip">
+                                <MudChip Variant="@Variant.Text" Disabled="@(!context.Selected)" Color="@Color.Warning" Tag="@EInvoicePaymentType.PARTIAL">@localize.Get("label_partial")</MudChip>
+                                <MudChip Variant="@Variant.Text" Disabled="@(!context.Selected)" Color="@Color.Success" Tag="@EInvoicePaymentType.FULL">Total</MudChip>
+                            </MudChipSet>
+                            @if (context.Payment_Type.HasValue && context.Payment_Type == EInvoicePaymentType.PARTIAL)
+                            {
+                                <MudNumericField Style="max-width: 150px"
+                                                 T="decimal?"
+                                                 Variant="Variant.Outlined"
+                                                 Value="@context.Payment"
+                                                 ValueChanged="@((args) => PaymentAmountChanged(context, args))"
+                                                 Min="1"
+                                                 Max="@(context.Invoice.Balance - 1)"
+                                                 Required="true"
+                                                 RequiredError="@localize.Get("errmsg_required")"
+                                                 Placeholder="@($"{localize.Get("placeholder_input")} {localize.Get("label_amountmoney")}")" />
+                            }
+                        </MudStack>
+                        <MudText Typo="Typo.h5">@GetStatusString(context.Invoice.Status)</MudText>
+                        <MudText Typo="Typo.h5">@context.Invoice.Invoice</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">@context.Invoice.Business_Unit</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">@context.Invoice.Location</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">@context.Invoice.Date.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">$@string.Format("{0:n0}", context.Invoice.Balance)</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">$@string.Format("{0:n0}", context.Invoice.Total)</MudText>
+                    </div>
+                    <MudStack Class="list-actions" Row="true">
+                        <MudTooltip Text="PDF" Arrow="true" Placement="Placement.Top">
+                            <MudIconButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(async () => await DownloadInvoicePDF(context.Invoice))">
+                                <MudIcon Icon="@CustomIcons.PDF.GetIcon()" ViewBox="@CustomIcons.PDF.GetViewBox()"></MudIcon>
+                            </MudIconButton>
+                        </MudTooltip>
+                        <MudTooltip Text="XML" Arrow="true" Placement="Placement.Top">
+                            <MudIconButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(async () => await DownloadInvoiceXML(context.Invoice))">
+                                <MudIcon Icon="@CustomIcons.XML.GetIcon()" ViewBox="@CustomIcons.XML.GetViewBox()"></MudIcon>
+                            </MudIconButton>
+                        </MudTooltip>
+                    </MudStack>
+                </MudPaper>
+            </ListItemDisplay>
+        </GridListPager>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? Booking_UUID { get; set; }
+    private GridListPager<StatefulInvoiceInfo> Pager_Reference { get; set; }
+    private ChipEInvoiceComparer Comparer { get; set; } = new();
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private Func<KeyValueUUID, string> CustomConverterUUID = kvp => kvp?.Value!;
+    private IList<StatefulInvoiceInfo>? ListQuery { get; set; }
+    private int Total_Items { get; set; } = 0;
+    private bool Payment_Generating { get; set; } = false;
+
+    private KeyValue? Location { get; set; } = null;
+    private KeyValue? Business_Unit { get; set; } = null;
+    private KeyValueUUID? Booking { get; set; } = null;
+    private string? Invoice { get; set; } = null;
+    private DateTime? DateFrom { get; set; } = DateTime.Now.AddMonths(-1).Date;
+    private DateTime? DateTo { get; set; } = DateTime.Now.Date.AddDays(1).AddTicks(-1);
+    private IBrowserFile? Payment_File { get; set; }
+    private KeyValue? Payment_Form { get; set; }
+    private KeyValue? Bank { get; set; }
+    private string? Reference { get; set; }
+
+    private IJSObjectReference? module_download;
+
+    private bool SelectDisabled(StatefulInvoiceInfo context)
+    {
+        if (context.Invoice.Balance == 0)
+        {
+            return true;
+        }
+
+        if (context.Invoice.Status == EStatusFactura.ACTIVE_CANCELLATION || context.Invoice.Status == EStatusFactura.CANCELED || context.Invoice.Status == EStatusFactura.PAID)
+        {
+            return true;
+        }
+
+        if (context.Invoice.Payments.Any() || string.IsNullOrEmpty(context.Invoice.Invoice))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private string GetStatusString(EStatusFactura state)
+    {
+        return localize.Get($"enum_{nameof(EStatusFactura)}_{Enum.GetName(state)}");
+    }
+
+    private bool GetDocumentReadonly()
+    {
+        if (ListQuery is null || !ListQuery.Any())
+        {
+            return true;
+        }
+
+        if (!ListQuery.Any(invoice => invoice.Selected))
+        {
+            return true;
+        }
+
+        return !ListQuery.Where(invoice => invoice.Selected).All(selected =>
+        {
+            if (selected.Payment_Type.HasValue)
+            {
+                if (selected.Payment_Type == EInvoicePaymentType.PARTIAL)
+                {
+                    return selected.Payment.HasValue;
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private async Task GeneratePayment()
+    {
+        if (!Payment_Generating)
+        {
+            Payment_Generating = true;
+            try
+            {
+                var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+                var location_id = ListQuery.Where(invoice => invoice.Selected && invoice.Payment_Type.HasValue).First().Invoice.Location_ID;
+                var business_unit_id = ListQuery.Where(invoice => invoice.Selected && invoice.Payment_Type.HasValue).First().Invoice.Business_Unit_ID;
+                var user_id = user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value;
+                var invoice_data = new InvoicesToPay()
+                    {
+                        Invoices = ListQuery.Where(invoice => invoice.Selected && invoice.Payment_Type.HasValue).Select(selected => new InvoiceToPay()
+                        {
+                            Invoice_ID = selected.Invoice.Invoice_ID,
+                            Payment = selected.Payment!.Value,
+                            Payment_Type = selected.Payment_Type!.Value
+                        }),
+                        Business_Unit_ID = business_unit_id,
+                        Location_ID = location_id,
+                        User_ID = Convert.ToInt32(user_id),
+                        Client_ID = AppState.GetPrincipalClient()!.Value,
+                        Impersonated_Client_ID = AppState.GetCurrentClientID() == AppState.GetPrincipalClient() ? null : AppState.GetCurrentClientID()!.Value,
+                        Payment_Form_ID = Payment_Form!.Key,
+                        Bank_ID = Payment_Form!.Key == 189071 || Payment_Form!.Key == 189091 ? (int?)null : Bank!.Key,
+                        Reference = Payment_Form!.Key == 189071 || Payment_Form!.Key == 189091 ? null : Reference
+                    };
+
+                var form = new MultipartFormDataContent()
+                {
+                    // Add the file to the form data
+                    // 50Mb Limit
+                    { new StreamContent(Payment_File.OpenReadStream(maxAllowedSize: 51200 * 1024)), "File", Payment_File.Name },
+
+                    // Add additional data to the form data
+                    { new StringContent(user_id), "User_ID" },
+
+                    // Add additional data to the form data
+                    { new StringContent(JsonConvert.SerializeObject(invoice_data)), "Invoices_Data" },
+                };
+
+                var result = await DATA_ACCESS.SendAuthTAsync<APIResult<bool>>("/PCG_FDF_Pagos/PostPaymentFile", HttpMethod.Post, null, null, form);
+
+                if (result is not null && result.Operation_Succeeded && result.Result)
+                {
+                    await UpdateSource();
+                }
+                else
+                {
+                    if (result is null)
+                    {
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(localize.Get("snackbar_err_apicomm"), Severity.Error);
+                    }
+                    else if (!string.IsNullOrEmpty(result.Error_Message))
+                    {
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(localize.Get(result.Error_Message), Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(localize.Get("snackbar_err_exception"), Severity.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            finally
+            {
+                Payment_Generating = false;
+            }
+        }
+    }
+
+    private bool PaymentDisabled()
+    {
+        if (Payment_Generating)
+        {
+            return true;
+        }
+
+        if (ListQuery is null || !ListQuery.Any())
+        {
+            return true;
+        }
+
+        if (Payment_Form is null || (Payment_Form.Key != 0 && Payment_Form.Key != 20 && (Bank is null || string.IsNullOrEmpty(Reference))))
+        {
+            return true;
+        }
+
+        return !ListQuery.Any(invoice => invoice.Selected) || !ListQuery.Where(invoice => invoice.Selected).All(selected =>
+        {
+            if (selected.Payment_Type == EInvoicePaymentType.PARTIAL)
+            {
+                return selected.Payment.HasValue;
+            }
+            return true;
+        }) || Payment_File is null;
+    }
+
+    private int GetSelectedCount()
+    {
+        if (ListQuery is null)
+        {
+            return 0;
+        }
+        return ListQuery.Where(invoice => invoice.Selected && invoice.Payment_Type.HasValue).Count();
+    }
+
+    private decimal GetSelectedTotal()
+    {
+        if (ListQuery is null)
+        {
+            return 0;
+        }
+
+        return ListQuery.Where(invoice => invoice.Selected && invoice.Payment_Type.HasValue).Sum(selected =>
+        {
+            if (selected.Payment_Type == EInvoicePaymentType.PARTIAL)
+            {
+                return selected.Payment ?? selected.Invoice.Balance;
+            }
+
+            return selected.Invoice.Balance;
+        });
+    }
+
+    private void SelectedChipChanged(StatefulInvoiceInfo context, MudChip? selected_chip)
+    {
+        context.Selected_Chip = selected_chip;
+        var payment_type = (EInvoicePaymentType?)selected_chip?.Tag;
+        if (!payment_type.HasValue || payment_type == EInvoicePaymentType.PARTIAL)
+        {
+            context.Payment = null;
+        }
+        else
+        {
+            context.Payment = context.Invoice.Balance;
+        }
+        context.Payment_Type = payment_type;
+    }
+
+    private void PaymentDocumentChanged(IBrowserFile file)
+    {
+        Payment_File = file;
+    }
+
+    private void PaymentAmountChanged(StatefulInvoiceInfo context, decimal? value)
+    {
+        context.Payment = value;
+    }
+
+    private void SelectedChanged(StatefulInvoiceInfo context, bool value)
+    {
+        var first = ListQuery!.FirstOrDefault(invoice => invoice.Selected);
+        if (first is not null && (first.Invoice.Business_Unit_ID != context.Invoice.Business_Unit_ID || first.Invoice.Location_ID != context.Invoice.Location_ID))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_err_invoice_unitloc"), Severity.Error);
+        }
+        else
+        {
+            context.Selected = value;
+            if (!value)
+            {
+                SelectedChipChanged(context, null);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task DateFromChanged(DateTime? value)
+    {
+        DateFrom = value;
+        await UpdateSource();
+    }
+
+    private async Task DateToChanged(DateTime? value)
+    {
+        DateTo = value;
+        await UpdateSource();
+    }
+
+    private async Task LocationChanged(KeyValue? value)
+    {
+        Location = value;
+        await UpdateSource();
+    }
+
+    private async Task BookingChanged(KeyValueUUID? value)
+    {
+        Booking = value;
+        await UpdateSource();
+    }
+
+    private async Task BusinessUnitChanged(KeyValue? value)
+    {
+        Business_Unit = value;
+        await UpdateSource();
+    }
+
+    private async Task InvoiceChanged(string? value)
+    {
+        Invoice = value;
+        await UpdateSource();
+    }
+
+    private async Task PaymentFormChanged(KeyValue? value)
+    {
+        Payment_Form = value;
+    }
+
+    private async Task BankChanged(KeyValue? value)
+    {
+        Bank = value;
+    }
+
+    public async Task ReferenceChanged(string? value)
+    {
+        Reference = value;
+    }
+
+    private async Task<IEnumerable<KeyValueUUID>> SearchBookings(string? value)
+    {
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<IEnumerable<KeyValueUUID>?>>("/PCG_FDF_Pagos/PostGetInvoicedBookings", HttpMethod.Post, null, JsonConvert.SerializeObject(new UserInvoicedBookingsRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Invoice = value,
+                Location_ID = Location?.Key
+            }));
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValueUUID>();
+        }
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchLocation(string? value)
+    {
+        IEnumerable<KeyValue> result = AppState.GetAvailable_Locations().Values;
+        if (result is not null && result.Any())
+        {
+            result = result.Where(location => string.IsNullOrEmpty(value) || location.Value.Contains(value));
+            return result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchBusinessUnit(string? value)
+    {
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<IEnumerable<KeyValue>?>>("/PCGParametros/GetUnidadesNegocio", HttpMethod.Get, new Dictionary<string, string?> { { "search", value } }, null);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchPaymentForm(string? value)
+    {
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<IEnumerable<KeyValue>?>>("/PCGParametros/GetCatalogoSAT", HttpMethod.Get, new Dictionary<string, string?> { { "catalog", "c_FormaPago" }, { "search", value } }, null);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchBank(string? value)
+    {
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<IEnumerable<KeyValue>?>>("/PCGParametros/GetCatalogoSAT", HttpMethod.Get, new Dictionary<string, string?> { { "catalog", "c_Bancos" }, { "search", value } }, null);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (AppState.GetAvailable_Locations().TryGetValue(AppState.GetCurrentLocation(), out var location))
+        {
+            Location = location;
+        }
+        if (!AppState.HasPermission("FdF Consulta Pagos"))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_error_no_perms"), Severity.Error);
+            NavigationManager.NavigateTo("/");
+        }
+
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<PCG_ENTITIES.PCG_FDF.UtilityEntities.UserInvoices?>>("/PCG_FDF_Pagos/PostGetInvoices", HttpMethod.Post, null, JsonConvert.SerializeObject(new UserInvoicesRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Items_Per_Page = Pager_Reference.ItemsPerPage,
+                Page_Number = Pager_Reference.CurrentPage,
+                Date_From = DateTime.Now.AddMonths(-1).Date.ToUniversalTime(),
+                Date_To = DateTime.Now.Date.AddDays(1).AddTicks(-1).ToUniversalTime(),
+                Location_ID = Location?.Key,
+                Business_Unit_ID = Business_Unit?.Key,
+                User_ID = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value),
+                Booking_UUID = Booking_UUID,
+                Invoice = Invoice,
+                Initial_Request = true
+            }));
+        if (result is null)
+        {
+            ListQuery = Enumerable.Empty<StatefulInvoiceInfo>().ToList();
+            Total_Items = 0;
+        }
+        else
+        {
+            if (result.Operation_Succeeded)
+            {
+                ListQuery = result.Result!.Invoices.Select(invoice => new StatefulInvoiceInfo()
+                    {
+                        Invoice = invoice,
+                        Selected = false
+                    }).ToList();
+                if (result.Result.Initial_Booking is not null)
+                {
+                    Booking = result.Result.Initial_Booking;
+                }
+                Total_Items = result.Result.Total_Count;
+            }
+            else
+            {
+                ListQuery = Enumerable.Empty<StatefulInvoiceInfo>().ToList();
+                Total_Items = 0;
+            }
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task UpdateSource()
+    {
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var result = await DATA_ACCESS.SendAuthTAsync<APIResult<PCG_ENTITIES.PCG_FDF.UtilityEntities.UserInvoices?>>("/PCG_FDF_Pagos/PostGetInvoices", HttpMethod.Post, null, JsonConvert.SerializeObject(new UserInvoicesRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Items_Per_Page = Pager_Reference.ItemsPerPage,
+                Page_Number = Pager_Reference.CurrentPage,
+                Date_From = DateFrom,
+                Date_To = DateTo,
+                Business_Unit_ID = Business_Unit?.Key,
+                User_ID = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value),
+                Location_ID = Location?.Key,
+                Booking_UUID = Booking?.Key,
+                Invoice = Invoice,
+                Initial_Request = false
+            }));
+
+        if (result is not null)
+        {
+            if (result.Operation_Succeeded)
+            {
+                ListQuery = result.Result!.Invoices.Select(invoice => new StatefulInvoiceInfo()
+                    {
+                        Invoice = invoice,
+                        Selected = false
+                    }).ToList();
+                Total_Items = result.Result.Total_Count;
+            }
+            else
+            {
+                // ERROR TODO
+                ListQuery = Enumerable.Empty<StatefulInvoiceInfo>().ToList();
+                Total_Items = 0;
+            }
+        }
+        else
+        {
+            // ERROR TODO
+            ListQuery = Enumerable.Empty<StatefulInvoiceInfo>().ToList();
+            Total_Items = 0;
+        }
+
+        Payment_File = null;
+        Payment_Form = null;
+        Bank = null;
+        Reference = null;
+    }
+
+    private async Task DownloadInvoicePDF(InvoiceInfo? invoice)
+    {
+        if (invoice is null)
+        {
+            return;
+        }
+
+        if (invoice.Stamped_Date == null)
+        {
+            // Mostrar mensaje de que no está timbrada
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("error_notstamped_invoice"), Severity.Error);
+            return;
+        }
+
+        var FILESTREAM = await DATA_ACCESS.PostDownloadInvoiceDocument(invoice, true);
+        if (FILESTREAM is not null && module_download is not null)
+        {
+            var fileName = $"Factura_{invoice.Invoice}";
+            using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+            await module_download.InvokeVoidAsync("downloadFileFromStream", $"{fileName}.pdf", streamRef);
+        }
+    }
+
+    private async Task DownloadInvoiceXML(InvoiceInfo? invoice)
+    {
+        if (invoice is null)
+        {
+            return;
+        }
+
+        if (invoice.Stamped_Date == null)
+        {
+            // Mostrar mensaje de que no está timbrada
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("error_notstamped_invoice"), Severity.Error);
+            return;
+        }
+
+        var FILESTREAM = await DATA_ACCESS.PostDownloadInvoiceDocument(invoice, false);
+        if (FILESTREAM is not null && module_download is not null)
+        {
+            var fileName = $"Factura_{invoice.Invoice}";
+            using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+            await module_download.InvokeVoidAsync("downloadFileFromStream", $"{fileName}.xml", streamRef);
+        }
+    }
+}

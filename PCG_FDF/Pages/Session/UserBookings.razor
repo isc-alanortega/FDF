@@ -1,0 +1,452 @@
+﻿@page "/user_bookings"
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.ComponentDI.Tracking
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@inject GlobalBreakpointService BreakpointService
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject WhiteLabelManager WhiteLabel
+@inject TrackingDataCollection TrackingData
+@inject BookingDataCollection BookingData
+@inject AuthenticationStateProvider AuthProvider
+@inject ApplicationState AppState
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@implements IDisposable
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="quotations_wrapper">
+    <MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+        <MudText Typo="Typo.h4">Bookings</MudText>
+        <GridListPager @ref="@Pager_Reference" DisplayItem="SimpleBooking" ItemQueryResult="@ListQuery" TotalCount="@Total_Items" UpdatePage="@UpdateBookings">
+            <ControlsDisplay>
+                <MudStack Row="@(!BreakpointService.GetIsXsSmScreen())" Style="width: 100%">
+                        <MudStack Justify="@Justify.Center" Row="@(BreakpointService.GetIsSmall())">
+                        @{
+                            string class_date_picker = $"userbookings-date-picker {BreakpointService.GetStringSize()}";
+                        }
+                        <MudDatePicker Editable="true"
+                        Mask="@(new DateMask("dd/MM/yyyy"))"
+                        DateFormat="dd/MM/yyyy"
+                        Date="@DateFrom"
+                        MaxDate="@DateTime.Now.Date"
+                        DateChanged="@(async(args) => await DateFromChanged(args))"
+                        Label="@localize.Get("label_from")"
+                        Class="@($"date-from {class_date_picker}")" />
+
+                        <MudDatePicker Editable="true"
+                        Mask="@(new DateMask("dd/MM/yyyy"))"
+                        DateFormat="dd/MM/yyyy"
+                        Date="@DateTo"
+                        MaxDate="@DateTime.Now.Date"
+                        DateChanged="@(async(args) => await DateToChanged(args))"
+                        Label="@localize.Get("label_to")" 
+                        Class="@($"date-to {class_date_picker}")"/>
+                    </MudStack>
+
+                    <MudStack Justify="@Justify.Center" Style="min-width: 25%;" Row="@(BreakpointService.GetIsSmall())">
+                        <MudSelect T="KeyValue"
+                        ToStringFunc="@CustomConverter"
+                        AnchorOrigin="Origin.BottomCenter"
+                        Variant="Variant.Outlined"
+                        Value="@Location"
+                        ValueChanged="@(async(args) => await LocationChanged(args))"
+                        Clearable="true"
+                        Placeholder="@($"{localize.Get("placeholder_select")} {localize.Get("label_location")}")"
+                        Class="@($"userbooking-select select-location {BreakpointService.GetStringSize()}")">
+
+                            @foreach (var option in AppState.GetAvailable_Locations().Values)
+                            {
+                                <MudSelectItem Class="@($"userbooking-select-item select-item-location {BreakpointService.GetStringSize()}")" Value="option" />
+                            }
+                        </MudSelect>
+
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="50"
+                        Clearable="@true"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@Booking"
+                        ValueChanged="@(async(args) => await BookingChanged(args))"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{localize.Get("placeholder_input")} Booking")" />
+                    </MudStack>
+
+                    <MudStack Justify="@Justify.Center" Row="@(BreakpointService.GetIsXsSmScreen())">
+                        @{
+                            string class_chk = $"{(BreakpointService.GetIsMobile() ? "resize-it" : "")} userbooking-chk {BreakpointService.GetStringSize()}" ;
+                        }
+                        <MudCheckBox Class="@($"chk-pagado {class_chk}")"
+                        T="bool?"
+                        Value="@Paid"
+                        ValueChanged="@(async(args) => await PaidChanged(args))"
+                        Color="Color.Tertiary"
+                        TriState="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@localize.Get("label_paid")</strong></MudText>
+                        </MudCheckBox>
+
+                        <MudCheckBox Class="@($"chk-ficha {class_chk}")"
+                        T="bool?"
+                        Value="@File"
+                        ValueChanged="@(async(args) => await FileChanged(args))"
+                        Color="Color.Tertiary"
+                        TriState="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@localize.Get("label_file")</strong></MudText>
+                        </MudCheckBox>
+                    </MudStack>
+                </MudStack>
+            </ControlsDisplay>
+
+            <NoItemsDisplay>
+                <MudText Class="userbooking-noitemdisplay-text">@localize.Get("ubook_noitems")</MudText>
+            </NoItemsDisplay>
+
+            <HeaderDisplay>
+                <MudStack Class="pager-header-wrapper">
+                    <div class="pager-header userbooking-headerdisplay-stack">
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">Booking</MudText>
+                        </MudItem>
+
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_create")</MudText>
+                        </MudItem>
+
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("label_location")</MudText>
+                        </MudItem>
+
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("ubook_bookings_status")</MudText>
+                        </MudItem>
+                    </div>
+                </MudStack>
+            </HeaderDisplay>
+
+            <GridItemDisplay>
+                <MudItem Class="userbooking-griditemdisplay-main">
+                    <MudCard Class="@($"grid-item {context.Status}")">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Class="userbooking-griditemdisplay-cardheader-item" Typo="Typo.h5">@($"Booking {context.Folio}")</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+
+                        <MudCardContent Class="userbooking-griditemdisplay-cardcontent">
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@localize.Get("uquot_quotation_create") @context.Fecha_Alta.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@context.Localidad</MudText>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">@GetStatusAsText(context.Status)</MudText>
+                        </MudCardContent>
+
+                        <MudCardActions Class="userbooking-griditemdisplay-cardactions">
+                            <MudStack Class="list-actions" Row="true">
+                                @if (context.Status == EStatusContratacion.INITIAL_DATA || context.Status == EStatusContratacion.SAVED)
+                                {
+                                    <MudTooltip Text="@localize.Get("btn_edit")" Arrow="true" Placement="Placement.Top">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.Edit" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(() => ViewOrEditBooking(context.UUID_Contratacion, context.Status))" />
+                                    </MudTooltip>
+                                }
+                                else
+                                {
+                                    <MudTooltip Text="Tracking" Arrow="true" Placement="Placement.Top">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.PinDrop" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => TrackBooking(context.UUID_Contratacion))" />
+                                    </MudTooltip>
+
+                                    <MudTooltip Text="@localize.Get("btn_view")" Arrow="true" Placement="Placement.Top">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.RemoveRedEye" Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => ViewOrEditBooking(context.UUID_Contratacion, context.Status))" />
+                                    </MudTooltip>
+                                }
+
+                                <MudTooltip Text="@localize.Get("label_quotation")" Arrow="true" Placement="Placement.Top">
+                                    <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => ViewQuotation(context.UUID_Cotizacion))" />
+                                </MudTooltip>
+
+                                @if (context.Status >= EStatusContratacion.DATA_COMPLETED && context.Status != EStatusContratacion.CANCELED)
+                                {
+                                    <MudTooltip Text="@localize.Get("label_invoices")" Arrow="true" Placement="Placement.Top">
+                                        <MudIconButton Icon="@Icons.Material.Rounded.AttachMoney" Variant="Variant.Filled" Color="Color.Info" OnClick="@(() => BookingPayments(context.UUID_Booking))" />
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </GridItemDisplay>
+
+            <ListItemDisplay>
+                <MudPaper Class="@($"list-row {context.Status}")">
+                    <div class="inner-row userbooking-listitemdisplay-list-content">
+                        <MudText Typo="Typo.h5">@context.Folio</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">@context.Fecha_Alta.ToString("dd/MM/yyyy")</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">@context.Localidad</MudText>
+                        <MudText Color="Color.Primary" Typo="Typo.h6">@GetStatusAsText(context.Status)</MudText>
+                    </div>
+
+                    <MudStack Class="list-actions userbooking-listitemdisplay-list-actions" Row="true">
+                        @if (context.Status == EStatusContratacion.INITIAL_DATA || context.Status == EStatusContratacion.SAVED)
+                        {
+                            <MudTooltip Text="@localize.Get("btn_edit")" Arrow="true" Placement="Placement.Top">
+                                <MudIconButton Icon="@Icons.Material.Rounded.Edit" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(() => ViewOrEditBooking(context.UUID_Contratacion, context.Status))" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Tracking" Arrow="true" Placement="Placement.Top">
+                                <MudIconButton Icon="@Icons.Material.Rounded.PinDrop" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => TrackBooking(context.UUID_Contratacion))" />
+                            </MudTooltip>
+
+                            <MudTooltip Text="@localize.Get("btn_view")" Arrow="true" Placement="Placement.Top">
+                                <MudIconButton Icon="@Icons.Material.Rounded.RemoveRedEye" Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => ViewOrEditBooking(context.UUID_Contratacion, context.Status))" />
+                            </MudTooltip>
+                        }
+
+                        <MudTooltip Text="@localize.Get("label_quotation")" Arrow="true" Placement="Placement.Top">
+                            <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => ViewQuotation(context.UUID_Cotizacion))" />
+                        </MudTooltip>
+
+                        @if (context.Status >= EStatusContratacion.DATA_COMPLETED && context.Status != EStatusContratacion.CANCELED)
+                        {
+                            <MudTooltip Text="@localize.Get("label_invoices")" Arrow="true" Placement="Placement.Top">
+                                <MudIconButton Icon="@Icons.Material.Rounded.AttachMoney" Variant="Variant.Filled" Color="Color.Info" OnClick="@(() => BookingPayments(context.UUID_Booking))" />
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </ListItemDisplay>
+        </GridListPager>
+    </MudPaper>
+</div>
+
+@if(BreakpointService.GetIsXsSmScreen())
+{
+    <style>
+        .userbooking-select-item p,
+        .mud-picker-calendar p,
+        .mud-picker-datepicker-toolbar span,
+        .mud-picker-calendar-header-last p,
+        .mud-picker-calendar-header-last svg,
+        .mud-picker-calendar-header-day span {
+        font-size: 1.8em !important;
+        }
+    </style>
+}
+
+
+@code {
+    private GridListPager<SimpleBooking>? Pager_Reference { get; set; }
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+    private IEnumerable<SimpleBooking>? ListQuery { get; set; }
+    private int Total_Items { get; set; } = 0;
+
+    private KeyValue? Location { get; set; } = null;
+    private bool? Paid { get; set; } = null;
+    private bool? File { get; set; } = null;
+    private string? Booking { get; set; } = null;
+    private DateTime DateFrom { get; set; } = DateTime.Now.AddMonths(-1).Date;
+    private DateTime DateTo { get; set; } = DateTime.Now.Date.AddDays(1).AddTicks(-1);
+
+    private async Task DateFromChanged(DateTime? value)
+    {
+        if (value.HasValue)
+        {
+            DateFrom = value.Value;
+            await UpdateSource();
+        }
+    }
+
+    private async Task DateToChanged(DateTime? value)
+    {
+        if (value.HasValue)
+        {
+            DateTo = value.Value;
+            await UpdateSource();
+        }
+    }
+
+    private async Task LocationChanged(KeyValue? value)
+    {
+        Location = value;
+        await UpdateSource();
+    }
+
+    private async Task PaidChanged(bool? value)
+    {
+        Paid = value;
+        await UpdateSource();
+    }
+
+    private async Task FileChanged(bool? value)
+    {
+        Paid = value;
+        await UpdateSource();
+    }
+
+    private async Task BookingChanged(string? value)
+    {
+        Booking = value;
+        await UpdateSource();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (AppState.GetAvailable_Locations().TryGetValue(AppState.GetCurrentLocation(), out var location))
+        {
+            Location = location;
+        }
+        if (!AppState.HasPermission("FdF Consultar Cotización"))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_error_no_perms"), Severity.Error);
+            NavigationManager.NavigateTo("/");
+        }
+
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var result = await DATA_ACCESS.GetUserBookings(new UserBookingsRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Items_Per_Page = 5,
+                Page_Number = 1,
+                Date_From = DateTime.Now.AddMonths(-1).Date.ToUniversalTime(),
+                Date_To = DateTime.Now.Date.AddDays(1).AddTicks(-1).ToUniversalTime(),
+                File = File,
+                Invoice = Booking,
+                Location_ID = Location?.Key,
+                Paid = Paid
+            });
+
+        if (result is not null)
+        {
+            if (result.Operation_Succeeded)
+            {
+                ListQuery = result.Result.Contracts;
+                Total_Items = result.Result.Total_Items;
+            }
+            else
+            {
+                // ERROR TODO
+                ListQuery = Enumerable.Empty<SimpleBooking>();
+                Total_Items = 0;
+            }
+        }
+        else
+        {
+            // ERROR TODO
+            ListQuery = Enumerable.Empty<SimpleBooking>();
+            Total_Items = 0;
+        }
+
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateSource()
+    {
+        await UpdateBookings();
+    }
+
+    private async Task UpdateBookings()
+    {
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var result = await DATA_ACCESS.GetUserBookings(new UserBookingsRequest()
+            {
+                Client_ID = AppState.GetCurrentClientID() ?? 0,
+                Items_Per_Page = Pager_Reference.ItemsPerPage,
+                Page_Number = Pager_Reference.CurrentPage,
+                Date_From = DateFrom.Date.ToUniversalTime(),
+                Date_To = DateTo.AddDays(1).AddTicks(-1).ToUniversalTime(),
+                File = File,
+                Invoice = Booking,
+                Location_ID = Location?.Key,
+                Paid = Paid
+            });
+
+        if (result is not null)
+        {
+            if (result.Operation_Succeeded)
+            {
+                ListQuery = result.Result.Contracts;
+                Total_Items = result.Result.Total_Items;
+            }
+            else
+            {
+                // ERROR TODO
+                ListQuery = Enumerable.Empty<SimpleBooking>();
+                Total_Items = 0;
+            }
+        }
+        else
+        {
+            // ERROR TODO
+            ListQuery = Enumerable.Empty<SimpleBooking>();
+            Total_Items = 0;
+        }
+    }
+
+    private string GetStatusAsText(EStatusContratacion status)
+    {
+        var message = status switch
+        {
+            EStatusContratacion.INITIAL_DATA 
+                or EStatusContratacion.SAVED => "EStatus_form_process",
+            EStatusContratacion.DATA_COMPLETED 
+                or EStatusContratacion.DATA_COMPLETED_LOCKED => "EStatus_form_completed",
+            EStatusContratacion.APPROVED => "EStatus_form_approved",
+            EStatusContratacion.ASSIGNED => "EStatus_form_assigned",
+            EStatusContratacion.IN_PROCESS => "EStatus_form_progress",
+            EStatusContratacion.FINALIZED => "EStatus_form_finalized",
+            EStatusContratacion.CANCELED => "EStatus_form_canceled",
+            EStatusContratacion.OBSERVED => "EStatus_form_observed",
+            _ => string.Empty
+        };
+
+        return localize.Get(message);
+    }
+
+    private void TrackBooking(Guid UUID)
+    {
+        TrackingData.ResetSelf();
+        TrackingData.SetInitialContractUUID(UUID);
+        NavigationManager.NavigateTo($"/Tracking");
+    }
+
+    private void BookingPayments(Guid UUID)
+        => NavigationManager.NavigateTo($"/user_invoices/{UUID}");
+
+    private void ViewOrEditBooking(Guid UUID, EStatusContratacion status)
+    {
+        BookingData.ResetSelf();
+        BookingData.SetStatus(status);
+        BookingData.Contracting = false;
+        BookingData.IsForceEdit = false;
+        NavigationManager.NavigateTo($"/book/{UUID}");
+    }
+
+    private void ViewQuotation(Guid UUID)
+    {
+        NavigationManager.NavigateTo($"/quote/{UUID}/false");
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

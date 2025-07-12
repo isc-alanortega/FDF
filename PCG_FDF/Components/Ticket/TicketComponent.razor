@@ -1,0 +1,103 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_FDF.Data.ComponentDI.Booking
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+@inject QuotationDataCollection quotationService
+@inject ApplicationState AppState
+@inject GlobalBreakpointService BreakpointService
+@inject WhiteLabelManager WhiteLabel
+@inject BookingDataCollection BookingData
+@inject DirectContractService directContractService
+@implements IDisposable
+
+@if (directContractService.IsShowTicketHeader())
+{
+    <div class="outer-wrapper">
+        <div class="ticket-wrapper">
+            <MudStack Class="ticket">
+            
+                <TicketHeaderComponent />
+            
+
+                @try{
+                    <PortCapitalComponent />
+                }
+                catch(Exception ex)
+                {
+                }
+
+                @if (AppState.GetShouldShowPrices() && !quotationService.IsServiceWithoutQuotation())
+                {
+                    @if (quotationService.GetServicesTariffs() is not null && quotationService.GetServicesTariffs().Count != 0)
+                    {
+                        @foreach (var item in quotationService.GetServicesTariffs())
+                        {
+                            @if (item.Value is null || item.Value.Service_Tariff is null || !item.Value.Valid_Tariff)
+                            {
+                                <MudStack Class="ticket-row" Row="true">
+                                    <MudText Typo="Typo.h5">@quotationService.GetQuotationCart().GetServices()[item.Key].FullName</MudText>
+                                        <MudStack Row="true">
+                                            <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Secondary" Size="Size.Large"></MudIcon>
+                                            <MudText Typo="Typo.h5">@localize.Get("com_ticket_tariffnotfound")</MudText>
+                                        </MudStack>
+                                    </MudStack>
+                            }
+                            else
+                            {
+                                <ServiceTicketComponent ServiceTariff="@item.Value"></ServiceTicketComponent>
+                            }
+                        }
+                    }
+                    @if (quotationService.GetPackagesTariffs() is not null && quotationService.GetPackagesTariffs().Count != 0)
+                    {
+                        foreach (var item in quotationService.GetPackagesTariffs())
+                        {
+                            <PackageTicketComponent PackageTariff="@item.Value"></PackageTicketComponent>
+                        }
+                    }
+                }
+            </MudStack>
+        </div>
+    </div>
+}
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        BookingData.OnChange += StateHasChanged;
+        // directContractService.OnChange += StateHasChanged;
+
+        await BreakpointService.InitializeService();
+        quotationService.SetIsPortCapital(WhiteLabel.GetUsePortCapital());
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        quotationService.OnChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    public void Dispose()
+    {
+        quotationService.OnChange -= StateHasChanged;
+        BreakpointService.OnChange -= StateHasChanged;
+        BookingData.OnChange -= StateHasChanged;
+        // directContractService.OnChange -= StateHasChanged;
+    }
+}

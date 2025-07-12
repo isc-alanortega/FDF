@@ -1,0 +1,131 @@
+﻿@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.ComponentDI.Tracking
+@using PCG_ENTITIES.Enums
+@using PCG_ENTITIES.PCG_FDF.TrackingEntities
+@using PCG_FDF.Utility
+@using PCG_FDF.Data.ComponentDI.AuthManagement
+@using PCG_FDF.Data.DataAccess
+@using PCG_ENTITIES.Resultsets
+@inherits TrackingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+@inject IJSRuntime JS
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject AuthenticationStateProvider AuthProvider
+@inject TrackingDataCollection TrackingData
+@implements IDisposable
+@implements IAsyncDisposable
+
+@if (TrackingUnits is not null && TrackingUnits.Any())
+{
+    <MudStack Class="ma-8" Row="@(!BreakpointService.GetIsXsSmScreen())">
+        <MudStack>
+            <MudCheckBox T="@bool"
+                         Checked="@AllUnits"
+                         CheckedChanged="@(async(args) => await HandleChangedAllUnitsAsync(args))"
+                         ReadOnly="@AllGPS"
+                         Class="trackingmapelement-chk-element lbl-all-units">
+                @Localize.Get("lbl_all_units")
+            </MudCheckBox>
+
+            <MudSelect T="TrackingUnit"
+                       ToStringFunc="@UnitConverter"
+                       AnchorOrigin="Origin.BottomCenter"
+                       Variant="Variant.Outlined"
+                       Value="@SelectedUnit"
+                       ReadOnly="@Readonly"
+                       ValueChanged="@SelectedUnitChanged"
+                       Clearable="@false"
+                       Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_dragunit")}")"
+                       InputClass="trackingmapelement-select-element-input"
+                       ListClass="trackingmapelement-select-element-list">
+
+                @foreach (var option in TrackingUnits)
+                {
+                    <MudSelectItem Value="option" />
+                }
+            </MudSelect>
+        </MudStack>
+
+        @if (SelectedUnit is not null)
+        {
+            <MudStack>
+                <MudCheckBox T="@bool"
+                             Checked="@AllGPS"
+                             CheckedChanged="@(async(args) => await HandleChangedAllGPSAsync(args))"
+                             ReadOnly="@AllUnits"
+                             Class="trackingmapelement-chk-element lbl-all-GPS">
+                    @Localize.Get("lbl_all_GPS")
+                </MudCheckBox>
+
+                <MudSelect T="string"
+                           ToStringFunc="@IntConverter"
+                           AnchorOrigin="Origin.BottomCenter"
+                           Variant="Variant.Outlined"
+                           Value="@SelectedGPS"
+                           ValueChanged="@SelectedGPSChanged"
+                           ReadOnly="@Readonly"
+                           Clearable="@false"
+                           Placeholder="@($"{Localize.Get("placeholder_select")} GPS")"
+                           InputClass="trackingmapelement-select-element-input"
+                           ListClass="trackingmapelement-select-element-list">
+
+                    @if (SelectedUnit.GPS_Positions is not null && SelectedUnit.GPS_Positions.Any())
+                    {
+                        @foreach (var Key in SelectedUnit.GPS_Positions.Keys)
+                        {
+                            var positions = SelectedUnit.GPS_Positions[Key];
+                            <MudSelectItem Value="Key.ToString()">
+                                @positions.First().GPS_Name
+                            </MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            </MudStack>
+
+            <MudStack>
+                <MudText> @localize.Get("label_from") </MudText>
+                <MudStack Row="true">
+                    <MudDatePicker Editable="true"
+                                   Mask="@(new DateMask("dd/MM/yyyy"))"
+                                   DateFormat="dd/MM/yyyy"
+                                   Date="@DateFrom"
+                                   MaxDate="@MaxDate.Date"
+                                   MinDate="@MinDate.Date"
+                                   DateChanged="@(async(args) => await HandleChangedDateFromAsync(args))"
+                                   Class="@($"date-from")" />
+
+                    <MudTimePicker AmPm="true"
+                                   Time="TimeFrom"
+                                   TimeChanged="@(async(args) => await HandleOnChangeTimeFromAsync(args))"
+                                   TimeFormat="hh:mm tt"
+                                   Placeholder="@($"{Localize.Get("placeholder_set")} Desde")" />
+                </MudStack>
+            </MudStack>
+
+            <MudStack>
+                <MudText> @localize.Get("label_to") </MudText>
+                <MudStack Row="true">
+                    <MudDatePicker Editable="true"
+                                   Mask="@(new DateMask("dd/MM/yyyy"))"
+                                   Date="@DateTo"
+                                   DateFormat="dd/MM/yyyy"
+                                   MaxDate="@MaxDate.Date"
+                                   MinDate="@MinDate.Date"
+                                   DateChanged="@(async(args) => await HandleChangedDateToAsync(args))"
+                                   Class="@($"date-to")" />
+
+                    <MudTimePicker AmPm="true"
+                                   Time="TimeTo"
+                                   TimeChanged="@(async(args) => await HandleOnChangeTimeToAsync(args))"
+                                   TimeFormat="hh:mm tt"
+                                   Placeholder="@($"{Localize.Get("placeholder_set")} Desde")" />
+                </MudStack>                
+            </MudStack>
+        }
+    </MudStack>
+    <div @ref="MapElement" style="width:100%;height:40vh"></div>
+}

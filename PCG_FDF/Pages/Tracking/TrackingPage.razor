@@ -1,0 +1,357 @@
+﻿@page "/Tracking"
+@page "/Tracking/{ObjectUUID:guid}"
+@using Newtonsoft.Json
+@using PCG_ENTITIES.Enums
+@using PCG_ENTITIES.PCG_FDF.TrackingEntities
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Resultsets
+@using PCG_FDF.Components.Tracking.Elements
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement
+@using PCG_FDF.Data.ComponentDI.Tracking
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer Localize
+@inject WhiteLabelManager WhiteLabel
+@inject TrackingDataCollection TrackingData
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
+@implements IDisposable
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="tracking-wrapper">
+    <MudPaper MinHeight="90%" Width="90%" Elevation="5" Class="paper-grey">
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="tracking-main-stack">
+            @if (TrackingData.GetTrackingData() is not null)
+            {
+                <MudText Class="title-text" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@($"Booking: {TrackingData.GetTrackingData()!.Booking_Invoice}")</strong></MudText>
+                <MudStack Class="main-tracking-pane">
+                    <div class="main-status">
+                        <MudStack Row="true" AlignItems="@AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div class="@($"progress-circle{GetMessageTypeClass(TrackingData.GetTrackingData()!.Global_Tracking_Status)}")">
+                                <MudText Class="progress-circle-text" Color="@GetMessageTypeColorText(TrackingData.GetTrackingData()!.Global_Tracking_Status)"><strong>@($"{(int)TrackingData.GetTrackingData()!.Completion_Percentage}%")</strong></MudText>
+                            </div>
+
+                            <MudText Class="trackingpage-text-overallstatus">@GetLocalizedOverallStatus(TrackingData.GetTrackingData()!.Global_Tracking_Status)</MudText>
+                        </MudStack>
+                    </div>
+
+                    <div class="contracts-chipset-container">
+                        <MudChipSet Mandatory="true"
+                                    Class="contracts-chipset"
+                                    MudChipEqualityComparer="@Comparer"
+                                    ValueExpression="@(() => TrackingData.GetSelectedContractChip())"
+                                    SelectedChip="@TrackingData.GetSelectedContractChip()"
+                                    SelectedChipChanged="TrackingData.SetSelectedContractChip">
+
+                            @foreach (var contract in TrackingData.GetTrackingData()!.Contracts_Data.Values)
+                            {
+                                <MudChip SelectedColor="@Color.Primary" Color="@Color.Transparent" Variant="@Variant.Outlined" Tag="@contract" Class="contract-chip" Default="@(contract.Contract_UUID == TrackingData.GetInitialContractUUID())">
+                                    <div class="chip-inner-wrapper">
+                                        <MudText Class="chip-text">@contract.Contract_Invoice</MudText>
+                                        
+                                        <div class="@($"tracking-progress-bar{GetMessageTypeClass(contract.Global_Contract_Status)}")" style="@($"width: {contract.Completion_Percentage}%;")" />
+                                    </div>
+                                 </MudChip>
+                            }
+                        </MudChipSet>
+                    </div>
+
+                    <MudStack Row="true" Class="inner-tracking-pane d-flex">
+                        @if (TrackingData.GetSelectedContractChip() is not null)
+                        {
+                            <div class="cart-pane">
+                                <MudTreeView Items="@TrackingData.GetSelectedContractCart()">
+                                    <ItemTemplate>
+                                        <div class="@($"tree-item-container{(context.Is_Selected ? " selected" : string.Empty)}")">
+                                            <MudTreeViewItem @bind-Expanded="@context.Is_Expanded" Items="@context.Tree_Items">
+                                                <Content>
+                                                    <div class="tree-item-content" @onclick="@(() => OnTreeItemClick(context))" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+                                                        <div>
+                                                            <MudStack Row="@true" AlignItems="@AlignItems.Center">
+                                                                <MudTreeViewItemToggleButton @bind-Expanded="@context.Is_Expanded" Visible="@context.Has_Child" />
+                                                                <MudText>@context.Product_Name</MudText>
+                                                            </MudStack>
+
+                                                            <div class="@($"tree-tracking-progress-bar{GetMessageTypeClass(context.Global_Product_Status)}")" style="@($"width: {context.Completion_Percentage}%;")" />
+                                                        </div>
+                                                    </div>
+                                                </Content>
+                                            </MudTreeViewItem>
+                                        </div>
+                                    </ItemTemplate>
+                                </MudTreeView>
+                            </div>
+
+                            <MudStack Class="tracking-data-pane">
+                                @if (TrackingData.GetSelectedCartItem() is not null)
+                                {
+                                    <div class="product-title">
+                                        <MudStack Row="true" Spacing="16" Justify="@Justify.SpaceBetween" AlignItems="@AlignItems.Center">
+                                            <MudStack Row="true" AlignItems="@AlignItems.Center">
+                                                <div class="@($"progress-circle{GetMessageTypeClass(TrackingData.GetSelectedCartItem()!.Global_Product_Status)}")">
+                                                    <MudText Color="@GetMessageTypeColorText(TrackingData.GetSelectedCartItem()!.Global_Product_Status)"><strong>@($"{(int)TrackingData.GetSelectedCartItem()!.Completion_Percentage}%")</strong></MudText>
+                                                </div>
+
+                                                <MudText Class="trackingpage-text-product-title-text">@TrackingData.GetSelectedCartItem()!.Product_Name</MudText>
+                                            </MudStack>
+
+                                            <MudTooltip Text="Refresh Tracking" Arrow="true" Placement="Placement.Top" Inline="false">
+                                                <MudIconButton Icon="@Icons.Material.Rounded.Refresh" Variant="Variant.Filled" Color="Color.Success" OnClick="@(async () => await TrackingData.RefreshTrackingData(await GetRequestTracking()))" />
+                                            </MudTooltip>
+                                        </MudStack>
+                                    </div>
+
+                                    <div class="tracking-info-area">
+                                        @{
+                                            var trackingStages = TrackingData.TryGetTrackingStages();
+                                        }
+
+                                        @if (trackingStages is not null && trackingStages.Any())
+                                        {
+                                            TrackingData.SetTrackingStageParameter(trackingStages);
+                                            <TrackingExpasionPanel />
+                                        }
+                                    </div>
+                                }
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudStack>
+            }
+            else
+            {
+                @if (Error)
+                {
+                }
+                else
+                {
+                    for (var i = 0; i < 5; i++)
+                    {
+                        <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                            <MudStack>
+                                <MudSkeleton Height="100px" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                                <MudSkeleton Width="80%" />
+                                <MudSkeleton Width="80%" />
+                                <MudSkeleton Width="80%" />
+                            </MudStack>
+                        </MudPaper>
+                    }
+                }
+            }
+        </MudStack>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? ObjectUUID { get; set; }
+
+    private ChipContractInfoComparer Comparer { get; } = new();
+
+    private bool Error { get; set; } = false;
+
+    private TimeZoneInfo User_Timezone { get; set; } = TimeZoneInfo.Utc;
+
+    private async Task InitServices()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        TrackingData.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await InitServices();
+
+        if (ObjectUUID.HasValue)
+        {
+            TrackingData.SetInitialContractUUID(ObjectUUID.Value);
+        }
+
+        var request = await GetRequestTracking();
+
+        var tracking_data = await DATA_ACCESS.SendAuthTAsync<APIResult<TrackingInitializer?>?>("/PCG_FDFTracking/PostGetBookingTracking", HttpMethod.Post, null, JsonConvert.SerializeObject(request));
+
+        if (tracking_data is null)
+        {
+            Error = true;
+        }
+        else
+        {
+            if (tracking_data.Operation_Succeeded)
+            {
+                var module_timeoffset = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/timeoffset_helper.js");
+                int offsetMinutes = await module_timeoffset.InvokeAsync<int>("GetTimezoneValue");
+                TimeSpan offset = TimeSpan.FromMinutes(-offsetMinutes);
+                string timeZoneId = "ClientTimeZone";
+                User_Timezone = TimeZoneInfo.CreateCustomTimeZone(timeZoneId, offset, timeZoneId, timeZoneId);
+                await module_timeoffset.DisposeAsync();
+                TrackingData.SetTrackingData(tracking_data.Result!);
+            }
+            else
+            {
+                Error = true;
+            }
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<RequestTrackingForm> GetRequestTracking()
+    {
+        var user_context = await((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var Client_ID = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "Client ID")!.Value);
+
+        return new RequestTrackingForm()
+        {
+            IDUsuario = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value),
+            IDCliente = AppState.GetCurrentClientID()!.Value,
+            IDClientePrincipal = Client_ID,
+            Language = LanguageUtil.getCurrentCulture(),
+            UUID_Contratacion = TrackingData.GetInitialContractUUID()!.Value
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        AppState.SetCanChange(false);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private Color GetMessageTypeColor(ETrackingMessageType? Type)
+    {
+        switch (Type)
+        {
+            case ETrackingMessageType.INFO:
+                {
+                    return Color.Success;
+                }
+            case ETrackingMessageType.WARNING:
+                {
+                    return Color.Warning;
+                }
+            case ETrackingMessageType.CRITICAL:
+                {
+                    return Color.Error;
+                }
+            default:
+                {
+                    return Color.Transparent;
+                }
+        }
+    }
+
+    private Color GetMessageTypeColorText(ETrackingMessageType? Type)
+    {
+        switch (Type)
+        {
+            case ETrackingMessageType.INFO:
+                {
+                    return Color.Success;
+                }
+            case ETrackingMessageType.WARNING:
+                {
+                    return Color.Warning;
+                }
+            case ETrackingMessageType.CRITICAL:
+                {
+                    return Color.Error;
+                }
+            default:
+                {
+                    return Color.Inherit;
+                }
+        }
+    }
+
+    private string GetMessageTypeClass(ETrackingMessageType? Type)
+    {
+        switch (Type)
+        {
+            case ETrackingMessageType.INFO:
+                {
+                    return " color-info";
+                }
+            case ETrackingMessageType.WARNING:
+                {
+                    return " color-warning";
+                }
+            case ETrackingMessageType.CRITICAL:
+                {
+                    return " color-critical";
+                }
+            default:
+                {
+                    return string.Empty;
+                }
+        }
+    }
+
+    private string GetLocalizedOverallStatus(ETrackingMessageType? Type)
+    {
+        switch (Type)
+        {
+            case ETrackingMessageType.INFO:
+                {
+                    return Localize.Get("tracking_allgood");
+                }
+            case ETrackingMessageType.WARNING:
+                {
+                    return Localize.Get("tracking_warning");
+                }
+            case ETrackingMessageType.CRITICAL:
+                {
+                    return Localize.Get("tracking_critical");
+                }
+            default:
+                {
+                    return Localize.Get("tracking_default");
+                }
+        }
+    }
+
+    private void HandleSelection(CartTreeItemData Data, HashSet<CartTreeItemData> Tree)
+    {
+        foreach (var item in Tree)
+        {
+            if (item != Data)
+            {
+                item.Is_Selected = false;
+            }
+            else
+            {
+                item.Is_Selected = true;
+            }
+            if (item.Has_Child)
+            {
+                HandleSelection(Data, item.Tree_Items);
+            }
+        }
+    }
+
+    private void OnTreeItemClick(CartTreeItemData Data)
+    {
+        TrackingData.SetSelectedCartItem(Data);
+        HandleSelection(Data, TrackingData.GetSelectedContractCart());
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        TrackingData.OnChange -= StateHasChanged;
+        TrackingData.ResetSelf();
+    }
+}

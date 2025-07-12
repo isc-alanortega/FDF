@@ -1,0 +1,401 @@
+﻿@page "/quote"
+@page "/quote/{QuotationUUID:guid}"
+@page "/quote/{QuotationUUID:guid}/{HideLayout:bool}"
+@using Newtonsoft.Json;
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.QuotationEntities;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Components.BillingList
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Components.Quotation;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility;
+@inject PCG_FDF_DB DATA_ACCESS
+@inject ShoppingCartContainer shoppingCart
+@inject EstimationWrapperContainer estimationService
+@inject ApplicationState AppState
+@inject BookingDataCollection BookingData
+@inject QuotationDataCollection quotationService
+@inject GlobalBreakpointService BreakpointService
+@inject WhiteLabelManager WhiteLabel
+@inject LayoutController LayoutControl
+@inject DrawerBridge Bridge
+@inject GlobalLocalizer Localize
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="quotation-wrapper">
+    <MudPaper Height="90%" Width="90%" Elevation="0" Class="paper-grey">
+        <MudPaper Width="90%" Elevation="0" Class="drawer-card">
+            @if (BreakpointService.GetIsMobile())
+            {
+                <MudDrawer DisableOverlay="true" @bind-Open="@_billDrawerOpen" Class="bill-drawer" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="0" Width="100vw" Variant="@DrawerVariant.Responsive">
+                    @if (initialized)
+                    {
+                        <BillingList ChangePackage="@changeActivePackage" ChangeService="changeActiveService" />
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                </MudDrawer>
+                <MudFab Color="Color.Secondary" OnClick="@OpenDrawer" StartIcon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" Class="mobile-floating-bill" />
+            }
+            else
+            {
+                <MudDrawer @bind-Open="@_billDrawerOpen" Class="bill-drawer" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="0" Width="35vw" Variant="@DrawerVariant.Responsive">
+                    @if (initialized)
+                    {
+                        <BillingList ChangePackage="@changeActivePackage" ChangeService="changeActiveService" />
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                    <MudFab Color="Color.Secondary" OnClick="@OpenDrawer" StartIcon="@Icons.Material.Rounded.ArrowBackIos" Size="Size.Large" Class="floating-bill" />
+                </MudDrawer>
+            }
+        </MudPaper>
+
+        @if (Service_ID.HasValue || Package_ID.HasValue)
+        {
+            var product_data = quotationService.GetProductData(Service_ID, Package_ID, Is_Package, Is_Package_Service);
+            <MudStack Class="title-stack" Row="true">
+                <MudIcon Class="@($"title-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")}")" Icon="@product_data.Icon" ViewBox="@product_data.ViewBox"></MudIcon>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@product_data.Name</strong></MudText>
+            </MudStack>
+        }
+
+        @if (initialized)
+        {
+            @foreach (var card in quotationService.TryGetProductForm(Service_ID, Package_ID, Is_Package).Select(card_id => quotationService.GetCards()[card_id]).OrderBy(card_data => card_data.Card_Sequence))
+            {
+                <MudPaper Width="90%" Elevation="0" Class="@($"group-data-card {(quotationService.GetCardValidationState(card.Card_ID) ? "all-clear" : "need-info")}")">
+                    <QuotationCard Card="@card"></QuotationCard>
+                </MudPaper>
+            }
+
+            var subservices = quotationService.TryGetSubservices(Service_ID);
+            @if (subservices.Any && subservices.Subservices!.Any())
+            {
+                <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                    <SubservicesComponent ServiceID="@Service_ID!.Value" UsesMany="false" ServiceName="null" Subservicios="@subservices.Subservices!.Values"></SubservicesComponent>
+                </MudPaper>
+            }
+        }
+        else
+        {
+            @for (var i = 0; i < 5; i++)
+            {
+                <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                    <MudStack>
+                        <MudSkeleton Height="100px" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                        <MudSkeleton Width="80%" />
+                        <MudSkeleton Width="80%" />
+                        <MudSkeleton Width="80%" />
+                    </MudStack>
+                </MudPaper>
+            }
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? authenticationState { get; set; }
+
+    [Parameter]
+    public Guid? QuotationUUID { get; set; }
+    [Parameter]
+    public bool? HideLayout { get; set; }
+
+    bool _billDrawerOpen = true;
+    private int? Service_ID { get; set; }
+    private int? Package_ID { get; set; }
+    private bool Is_Package { get; set; }
+    private bool Is_Package_Service { get; set; }
+    private bool initialized { get; set; } = false;
+    private IJSObjectReference? module_refresh { get; set; }
+    private bool _from_database { get; set; } = false;
+    private bool Block_Quotation { get; set; } = false;
+
+    private void navigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login/quote");
+    }
+
+    private void navigateToMain()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (HideLayout != null)
+        {
+            LayoutControl.SetControl((bool)HideLayout!);
+        }
+        else
+        {
+            LayoutControl.SetControl(false);
+        }
+        base.OnParametersSet();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Bridge.CloseQuotation += OpenDrawer;
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        estimationService.OnChange += StateHasChanged;
+        quotationService.OnChange += StateHasChanged;
+        BookingData.OnChange += StateHasChanged;
+
+        if (QuotationUUID is not null)
+        {
+            _from_database = true;
+            // Do new init
+            await SavedInitialize();
+        }
+        else
+        {
+            if (authenticationState is not null)
+            {
+                var authState = await authenticationState;
+                var user = authState?.User;
+
+                if (user?.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    if (!AppState.HasPermission("FdF Alta Cotización"))
+                    {
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add(Localize.Get("snackbar_error_no_perms"), Severity.Error);
+                        navigateToMain();
+                    }
+                    await InitializeQuotationForm();
+                }
+                else
+                {
+                    navigateToLogin();
+                }
+            }
+            else
+            {
+                navigateToLogin();
+            }
+        }
+    }
+
+    private async Task SavedInitialize()
+    {
+        var result = await DATA_ACCESS.PostQuotationObject(QuotationUUID!.Value);
+        if (result is null)
+        {
+            navigateToMain();
+        }
+        else
+        {
+            if (result.Operation_Succeeded)
+            {
+                quotationService.ResetSelf();
+                BookingData.ResetSelf();
+                switch (result.Result.Status)
+                {
+                    case EStatusCotizacion.INITIAL_DATA:
+                        {
+                            var initializer = JsonConvert.DeserializeObject<QuotationInitializer>(result.Result.Serialized_Data);
+                            FullJSONDeserializer.RegenerateObjectData(initializer!);
+                            var cart_initialization_data = await DATA_ACCESS.GetShoppingCartObject(LanguageUtil.getCurrentCulture(), initializer!.Services_Rel_Cards.Keys, initializer.Packages_Rel_Cards.Keys);
+                            quotationService.Initialize(initializer, WhiteLabel.GetPageURI(), cart_initialization_data);
+                            Block_Quotation = await BlockQuotation();
+                            quotationService.Block_Quotation = Block_Quotation;
+                            await ChangeClientLocation(initializer.Location_ID, initializer.Client_ID);
+                            initialized = true;
+                            break;
+                        }
+                    case EStatusCotizacion.SAVED:
+                    case EStatusCotizacion.DATA_COMPLETED:
+                    case EStatusCotizacion.CONTRACTED:
+                        {
+                            var initializer = JsonConvert.DeserializeObject<QuotationMiddleware>(result.Result.Serialized_Data);
+                            FullJSONDeserializer.RegenerateObjectData(initializer!);
+                            var cart_initialization_data = await DATA_ACCESS.GetShoppingCartObject(LanguageUtil.getCurrentCulture(), initializer!.Services_Rel_Cards.Keys.Where(service => !initializer.Quotation_Packages_Services_Reverse.Keys.Contains(service)), initializer.Packages_Rel_Cards.Keys);
+                            quotationService.Initialize(initializer, cart_initialization_data, result.Result.Status);
+                            Block_Quotation = await BlockQuotation();
+                            quotationService.Block_Quotation = Block_Quotation;
+                            await ChangeClientLocation(initializer.Location_ID, initializer.Client_ID);
+                            initialized = true;
+                            await TryInitializePortCapitalAsync();
+                            break;
+                        }
+                    default:
+                        {
+                            navigateToMain();
+                            break;
+                        }
+                }
+
+                if (quotationService.GetQuotationCart().GetPackages().Any())
+                {
+                    changeActivePackage(quotationService.GetQuotationCart().GetPackages().Values.First());
+                }
+                else
+                {
+                    changeActiveService(new Tuple<IService, bool, int?>(quotationService.GetQuotationCart().GetServices().Values.First(), false, null));
+                }
+            }
+            else
+            {
+                navigateToMain();
+            }
+        }
+    }
+
+    private async Task TryInitializePortCapitalAsync()
+    {
+        if (!WhiteLabel.GetUsePortCapital() || quotationService.GetHasDataPortCapital())
+        {
+            return;
+        }
+
+        await quotationService.InitializedPortCapital();
+    }
+
+    private async Task<bool> BlockQuotation()
+    {
+        if (authenticationState is not null)
+        {
+            var authState = await authenticationState;
+            var user = authState?.User;
+
+            if (user?.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+                var User_ID = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value);
+                return User_ID != quotationService.User_ID;
+            }
+        }
+        return true;
+    }
+
+    private async Task ChangeClientLocation(int Location_ID, int Client_ID)
+    {
+        if (!Block_Quotation)
+        {
+            AppState.SetPreviousLocation(AppState.GetCurrentLocation());
+            AppState.SetPreviousClient(AppState.GetCurrentClientID());
+            await AppState.SetCurrentClient(Client_ID);
+            await AppState.SetCurrentLocation(Location_ID);
+            AppState.SetCanChange(false);
+        }
+    }
+
+    private async Task InitializeQuotationForm()
+    {
+        if (!quotationService.GetQuotationInitialized())
+        {
+            quotationService.ResetSelf();
+            var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+            var User_ID = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value);
+            var Client_ID = AppState.GetCurrentClientID();
+            quotationService.CreateQuotationCart(shoppingCart);
+
+            if (quotationService.GetQuotationCart().GetPackages().Any())
+            {
+                changeActivePackage(quotationService.GetQuotationCart().GetPackages().Values.First());
+            }
+            else
+            {
+                changeActiveService(new Tuple<IService, bool, int?>(quotationService.GetQuotationCart().GetServices().Values.First(), false, null));
+            }
+
+            var services = quotationService.GetQuotationCart().GetServiceVersionPairs();
+            var packages_services = quotationService.GetQuotationCart().GetPackageServiceVersionPairs();
+            var data = new RequestQuotationForm()
+                {
+                    Language = LanguageUtil.getCurrentCulture(),
+                    IDUsuario = User_ID,
+                    Location_ID = AppState.GetCurrentLocation(),
+                    IDCliente = Client_ID!.Value,
+                    IDClientePrincipal = AppState.GetPrincipalClient()!.Value,
+                    Page = WhiteLabel.Current_Page,
+                    Services = services,
+                    Packages = packages_services,
+                };
+
+            var response = await DATA_ACCESS.PostGetQuotationForm(data);
+            if (response is not null && response.Operation_Succeeded)
+            {
+                FullJSONDeserializer.RegenerateObjectData(response.Result);
+                quotationService.Initialize(response.Result, WhiteLabel.GetPageURI(), services, packages_services);
+                AppState.SetCanChange(false);
+                initialized = true;
+            }
+            else
+            {
+                navigateToMain();
+            }
+        }
+        else
+        {
+            if (quotationService.GetQuotationCart().GetPackages().Any())
+            {
+                changeActivePackage(quotationService.GetQuotationCart().GetPackages().Values.First());
+            }
+            else
+            {
+                changeActiveService(new Tuple<IService, bool, int?>(quotationService.GetQuotationCart().GetServices().Values.First(), false, null));
+            }
+            initialized = true;
+        }
+    }
+
+    private void changeActiveService(Tuple<IService, bool, int?> args)
+    {
+        Is_Package_Service = args.Item2;
+        Is_Package = false;
+        Package_ID = args.Item3;
+        Service_ID = args.Item1.Id;
+    }
+
+    private void changeActivePackage(PaquetesCompletosEditable paquete)
+    {
+        Is_Package_Service = false;
+        Is_Package = true;
+        Service_ID = null;
+        Package_ID = paquete.Paquete.ID;
+    }
+
+    public void Dispose()
+    {
+        AppState.SetCanChange(true);
+        if (_from_database)
+        {
+            Task.Run(async () => await AppState.SetCurrentLocation(AppState.GetPreviousLocation()));
+            Task.Run(async () => await AppState.SetCurrentClient(AppState.GetPreviousClient()));
+            AppState.SetPreviousLocation(null);
+            quotationService.ResetSelf();
+            QuotationUUID = null;
+        }
+        Bridge.CloseQuotation -= OpenDrawer;
+        estimationService.OnChange -= StateHasChanged;
+        BreakpointService.OnChange -= StateHasChanged;
+        quotationService.OnChange -= StateHasChanged;
+        BookingData.OnChange -= StateHasChanged;
+    }
+
+    void OpenDrawer()
+    {
+        _billDrawerOpen = !_billDrawerOpen;
+        Bridge.SetQuotationBind(_billDrawerOpen);
+        StateHasChanged();
+    }
+}

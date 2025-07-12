@@ -1,0 +1,651 @@
+﻿@using Newtonsoft.Json
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG
+@using PCG_ENTITIES.Resultsets;
+@using PCG_FDF.Components.Dialogs;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_ENTITIES.Extensions
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_ENTITIES.PCG_FDF.BookingEntities;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Payments;
+@using PCG_FDF.Data.ComponentDI.AuthManagement
+@using PCG_FDF.Data.ComponentDI.Booking
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility;
+@inject GlobalLocalizer localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject NavigationManager NavigationManager
+@inject QuotationDataCollection quotationService
+@inject WhiteLabelManager WhiteLabel
+@inject BookingDataCollection BookingData
+@inject GlobalBreakpointService BreakpointService
+@inject AuthenticationStateProvider AuthProvider
+@inject ApplicationState AppState
+@inject StaticShoppingCart staticShoppingCartServices
+@inject ShoppingCartContainer shoppingCartContainerServices
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject DirectContractService directContractService
+@implements IDisposable
+@implements IAsyncDisposable
+
+@if (directContractService.IsShowTicketHeader())
+{
+    <div class="ticket-header-wrapper">
+        <MudStack Class="ticket-header-container">
+            @* <MudStack Class="ticket-header-row subtotal" Row="true">
+                <MudCheckBox Class="@($"chk-pagado")"
+                             T="bool?"
+                             Value="@IsChecked"
+                             ValueChanged="@((check) => OnCheckedChanged(check))"
+                             Color="Color.Tertiary" >
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>USD</strong></MudText>
+                </MudCheckBox>
+            </MudStack> *@
+
+            @if (AppState.GetShouldShowPrices() && !quotationService.IsServiceWithoutQuotation())
+            {
+                @if ((quotationService.GetTotals().Packages_Discount.HasValue && quotationService.GetTotals().Packages_Discount != 0) || quotationService.HasCommercial() || (quotationService.GetTotals().Total_Taxes.HasValue && quotationService.GetTotals().Total_Taxes != 0))
+                {
+                    <MudStack Class="ticket-header-row subtotal" Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>Subtotal</strong></MudText>
+                        <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>$@(string.Format("{0:N2}", quotationService.GetTotals().Subtotal) + " " + quotationService.GetStringMoneyKind())</strong></MudText>
+                    </MudStack>
+                }
+
+                @if (quotationService.GetTotals().Packages_Discount.HasValue && quotationService.GetTotals().Packages_Discount != 0 && quotationService.GetTotals().Packages_Discount > 0)
+                {
+                    <MudStack Class="ticket-header-row package-discounts" Row="true">
+                        <MudText Color="Color.Success" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@localize.Get("com_ticketheader_packdiscount")</strong></MudText>
+                        <MudText Color="Color.Success" Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>-$@(string.Format("{0:N2}", quotationService.GetTotals().Packages_Discount) + " " + quotationService.GetStringMoneyKind())</strong></MudText>
+                    </MudStack>
+                }
+
+                @if (quotationService.HasCommercial() && quotationService.GetTotals().Commercial_Discount != 0 && quotationService.GetTotals().Commercial_Discount > 0)
+                {
+                    <MudStack Class="ticket-header-row com-discounts" Row="true">
+                        <MudText Color="Color.Success" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@localize.Get("com_ticketheader_comdiscounts")</strong></MudText>
+                        <MudText Color="Color.Success" Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>-$@(string.Format("{0:N2}", quotationService.GetTotals().Commercial_Discount) + " " + quotationService.GetStringMoneyKind())</strong></MudText>
+                    </MudStack>
+                }
+
+                @if (quotationService.GetTotals().Subtotal_W_Discount.HasValue)
+                {
+                    <MudStack Class="ticket-header-row com-discounts" Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@localize.Get("com_ticketheader_discountedsubtotal")</strong></MudText>
+                        <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>$@(string.Format("{0:N2}", quotationService.GetTotals().Subtotal_W_Discount) + " " + quotationService.GetStringMoneyKind())</strong></MudText>
+                    </MudStack>
+                }
+
+                @if (quotationService.GetTotals().Total_Taxes.HasValue && quotationService.GetTotals().Total_Taxes != 0)
+                {
+                    <MudStack Class="ticket-header-row taxes" Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@localize.Get("com_ticketheader_taxes")</strong></MudText>
+                        <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>$@(string.Format("{0:N2}", quotationService.GetTotals().Total_Taxes!.Value) + " " + quotationService.GetStringMoneyKind())</strong></MudText>
+                    </MudStack>
+                }
+
+                <MudStack Class="ticket-header-row total" Row="true">
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>Total</strong></MudText>
+                    <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>$@(string.Format("{0:N2}", quotationService.GetTotals().Total_To_Pay) + " " + quotationService.GetStringMoneyKind())</strong></MudText>
+                </MudStack>
+
+                @if (quotationService.GetTotals().CIMA_Coins_Won != 0 && show_coins && WhiteLabel.GetUseCimaCoins())
+                {
+                    <MudStack Class="ticket-header-row coins-header" Row="true">
+                        <MudIcon Class="@($"cima-coins-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s10" : "")}")" Icon="@CustomIcons.CimaCoin.GetIcon()" ViewBox="@CustomIcons.CimaCoin.GetViewBox()"></MudIcon>
+                        <MudText Class="to-win" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("com_ticketheader_cimacoins")</MudText>
+                        <MudText Class="money-item" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@(string.Format("{0:n0}", quotationService.GetTotals().CIMA_Coins_Won))</strong></MudText>
+                    </MudStack>
+                }
+            }
+
+            @if (IsStatic)
+            {
+
+                <MudStack Class="ticket-actions">
+                    @if (BookingData.GetBookingDataComplete())
+                    {
+                        if (BookingData.IsPortCapital && BookingData.QuotationPortCapital is not null)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ticketheadercomponent-btn-navigatetobooking btn_directly_contract" Disabled="@(@BookingData.GetBookingIsSaving() || BookingData.PDF_Ready)" OnClick="@TrySaveFinalBooking">
+                                <MudStack Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">
+                                        <strong>$@(string.Format("{0:N2}", quotationService.GetTotals().Total_To_Pay) + " " + quotationService.GetStringMoneyKind())</strong>
+                                        <br />
+                                        Contratar Directamente
+                                    </MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Beenhere"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                        }
+                        else
+                        {
+
+                            <MudButton Variant="Variant.Filled" Class="save-button ticketheadercomponent-btn-trysavefinalbooking" Disabled="@(BookingData.GetBookingIsSaving() || BookingData.PDF_Ready)" OnClick="@TrySaveFinalBooking">
+                                <MudStack Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">Guardar Booking</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Save"></MudIcon>
+                                </MudStack>
+                            </MudButton>
+                        }
+                    }
+
+                    @if (BookingData.GetBookingDataComplete() && BookingData.PDF_Ready && !quotationService.IsServiceNoGenerateBookink())
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="download-button ticketheadercomponent-btn-downloadpdfbooking" Disabled="@DownloadPDFDisabled()" OnClick="@(async () => await DownloadPDFBooking())">
+                            <MudStack Class="button-inner-row" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_get_pdf")</MudText>
+                                @if (in_progress)
+                                {
+                                    <div class="@(BreakpointService.GetIsMobile() ? "progress resize-it" : "progress")"></div>
+                                }
+                                else
+                                {
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Rounded.SaveAlt"></MudIcon>
+                                }
+                            </MudStack>
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Class="clone-button ticketheadercomponent-btn-tryclonebooking" Disabled="@(BookingData.GetBookingIsSaving())" OnClick="@TryCloneBooking">
+                            <MudStack Class="button-inner-row" Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_clone_booking")</MudText>
+                                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Settings"></MudIcon>
+                            </MudStack>
+                        </MudButton>
+                    }
+
+                    @if (BookingData.GetIsReadonly() & BookingData.PDF_Ready)
+                    {
+                        <MudStack>                            
+                            @if (BookingData.GetElements().Keys.Any(key => key == 1092 || key == 1164)){
+                                var emptyGroup = BookingData.GetSharedElementValueAs<EmptyContainerGroup>(BookingData.GetElements().Keys.First());
+
+                                if (emptyGroup.Has_Credit.HasValue && !emptyGroup.Has_Credit.Value)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">
+                                        @localize.Get("msg_savedbooking_sendingpayment")
+                                    </MudText>
+                                }
+                            }
+                        </MudStack>
+                    }
+                </MudStack>
+            }
+            else
+            {
+                <MudStack Class="ticket-actions">
+                    @if (quotationService.AllReady() && !quotationService.IsGloballyReadonly() && quotationService.GetQuotationFullyValid())
+                    {
+                        if (AppState.HasPermission("Ver Tarifas FDF"))
+                        {
+                            @if (quotationService.ShowContract())
+                            {
+                                <MudButton Variant="Variant.Filled" Class="save-button ticketheadercomponent-btn-shouldusepreviousbooking btn_save_quotation" Disabled="@quotationService.IsGloballyReadonly()" OnClick="@(async () => await ShouldUsePreviousBooking(false))">
+                                    <MudStack Class="button-inner-row" Row="true">
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_save_quotation")</MudText>
+                                        <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Save"></MudIcon>
+                                    </MudStack>
+                                </MudButton>
+                            }
+                        }
+                        else
+                        {
+                            @if (quotationService.ShowContract())
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="save-button ticketheadercomponent-btn-shouldusepreviousbooking btn_continue_contract" Disabled="@quotationService.IsGloballyReadonly()" OnClick="@(async () => await ShouldUsePreviousBooking(true))">
+                                    <MudStack Class="button-inner-row" Row="true">
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_continue_contract")</MudText>
+                                        <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Save"></MudIcon>
+                                    </MudStack>
+                                </MudButton>
+                            }
+                        }
+                    }
+                    <MudStack Row="true">
+                        @if (quotationService.GetQuotationPDFAvailable() && AppState.GetShouldShowPrices())
+                        {
+                            <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" Class="download-button ticketheadercomponent-btn-downloadPDF" OnClick="@(async () => await DownloadPDF())">
+                                <MudStack Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_get_pdf")</MudText>
+                                
+                                    @if (in_progress)
+                                    {
+                                        <div class="@(BreakpointService.GetIsMobile() ? "progress resize-it" : "progress")"></div>
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Rounded.SaveAlt"></MudIcon>
+                                    }
+                                </MudStack>
+                            </MudButton>
+                        }
+                        @*@if (quotationService.GetQuotationHasSaved() && !quotationService.GetQuotationIsCalculating())
+                            {
+                            <MudButton Variant="Variant.Filled" Class="@($"whatsapp-button {(quotationService.GetQuotationPDFAvailable() ? "half-size" : "full-size")}")" OnClick="@(async () => await NavigateWhatsapp())">
+                            <MudStack Class="button-inner-row" Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_open_whatsapp")</MudText>
+                            <MudIcon Class="@($"whatsapp-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")}")" Icon="@Icons.Custom.Brands.WhatsApp"></MudIcon>
+                            </MudStack>
+                            </MudButton>
+                            }*@
+                    </MudStack>
+
+                    @if (quotationService.AllReady() && !quotationService.GetQuotationIsCalculating() && quotationService.GetQuotationFullyValid() && quotationService.GetQuotationPDFAvailable() && !quotationService.Block_Quotation && quotationService.ShowContract())
+                    {
+                    
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="save-button ticketheadercomponent-btn-navigatetobooking" Disabled="@(!quotationService.IsGloballyReadonly())" OnClick="@NavigateToBooking">
+                                <MudStack Class="button-inner-row" Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("btn_contract")</MudText>
+                                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.Beenhere"></MudIcon>
+                                </MudStack>
+                            </MudButton>              
+                    }
+                </MudStack>
+            }
+        </MudStack>
+    </div>
+}
+@code {
+    [CascadingParameter(Name = "IsStatic")]
+    public bool IsStatic { get; set; }
+
+    private IJSObjectReference? module_download;
+    private string money_kind = "USD";
+    private bool show_coins = false;
+    private AuthenticationState? user_context { get; set; }
+    private bool in_progress { get; set; } = false;
+    private bool download_payment_progress { get; set; } = false;
+
+    private bool IsChecked { get; set; } = false;
+
+    private void OnCheckedChanged(bool? isChecked)
+    {
+        if (isChecked is not null)
+        {
+            IsChecked = isChecked.Value;
+            quotationService.ChangeTypeMoneyKind(isChecked.Value ? EMoney.USD : EMoney.MXN);
+            money_kind = quotationService.GetStringMoneyKind();
+            StateHasChanged();
+        }
+    }
+
+    public async Task NavigateWhatsapp()
+    {
+        string url = $"https://wa.me/19202640097?text=COTIZA%20{quotationService.UUID}";
+        await JS.InvokeAsync<object>("open", url, "_blank");
+    }
+
+    private async void TrySaveFinalBooking()
+    {
+        try
+        {
+            var elements = BookingData.GetElements();
+
+            if (elements.Keys.Any(key => key == 1092 || key == 1164))
+            {
+                var emptyGroup = BookingData.GetSharedElementValueAs<EmptyContainerGroup>(elements.Keys.First());
+
+                if (emptyGroup.Has_Credit.HasValue && !emptyGroup.Has_Credit.Value && !BookingData.IsForceEdit)
+                {
+                    // If Show_Payment_Modal true, show dialog
+                    if (emptyGroup.Show_Payment_Modal)
+                    {
+                        var options = new DialogOptions
+                        {
+                            CloseButton = false,
+                            MaxWidth = MaxWidth.Small,
+                            FullWidth = false,
+                            DisableBackdropClick = true
+                        };
+
+                        var dialog = DialogService.Show<SaveNoCreditEmptyDialog>("", options);
+                        var dialogResult = await dialog.Result;
+                        if (dialogResult.Canceled)
+                        {
+                            return;
+                        }
+
+                        // Show loader dialog
+                        var loaderDialog = ShowLoaderDialog("msg_generating_paymentreference");
+                        StateHasChanged();
+
+                        emptyGroup.Show_Payment_Modal = (bool)dialogResult.Data;
+
+                        // Save Final Booking
+                        var resultSaveNoCredit = await BookingData.SaveFinalBookingData();
+
+                        if (resultSaveNoCredit is not null)
+                        {
+                            var errorMessage = !localize.TryGet(resultSaveNoCredit) ? "error_saving" : resultSaveNoCredit;
+
+                            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                            Snackbar.Add($"{localize.Get(errorMessage)}", Severity.Error);
+                            loaderDialog.Close();
+
+                            return;
+                        }
+
+                        // Reload booking to get payment reference
+                        var completeBookingData = await BookingData.ReloadBookingData(BookingData.Client_ID, BookingData.UUID, BookingData.GetStatus(), false);
+                        if (completeBookingData is not null)
+                        {
+                            var bookingMidleware = completeBookingData.FDF_Booking;
+                            var sharedElements = bookingMidleware.Shared_Element_Data_Storage;
+                            var rawObject = sharedElements.Values.First();
+                            var json = JsonConvert.SerializeObject(rawObject);
+                            var reloadedEmptyGroup = JsonConvert.DeserializeObject<EmptyContainerGroup>(json);
+
+                            if (reloadedEmptyGroup is not null && reloadedEmptyGroup.PaymentReference is not null)
+                            {
+                                emptyGroup.PaymentReference = reloadedEmptyGroup.PaymentReference;
+
+                                var parameters = new DialogParameters
+                                {
+                                    { "PaymentReference", emptyGroup.PaymentReference },
+                                    { "SendEmail", false }
+
+                                };
+
+                                // Open dialog and add if doesn't exist
+                                var optionsDialog = new DialogOptions
+                                {
+                                    CloseButton = true,
+                                    MaxWidth = MaxWidth.False,
+                                    FullWidth = true,
+                                    DisableBackdropClick = true
+                                };
+
+                                loaderDialog.Close();
+                                var referenceDialog = DialogService.Show<ReferencePaymentOpenPayDialog>(localize.Get("msg_referencespei_title"), parameters, optionsDialog);
+                            }
+                        }
+
+                        await BookingData.WriteSharedElementValue(emptyGroup, elements.Keys.First());
+
+                        StateHasChanged();
+                        return;
+                    }
+                }
+                else
+                {
+                    var loaderDialog2 = ShowLoaderDialog("msg_saving_booking");
+                    StateHasChanged();
+
+                    var resultSave = await BookingData.SaveFinalBookingData();
+                    if (resultSave is not null)
+                    {
+                        var errorMessage = !localize.TryGet(resultSave) ? "error_saving" : resultSave;
+
+                        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                        Snackbar.Add($"{localize.Get(errorMessage)}", Severity.Error);
+                    }
+                    loaderDialog2.Close();
+
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            bool? result = await DialogService.ShowMessageBox(
+                localize.Get("msg_warning"),
+                localize.Get("msg_save_booking"),
+                yesText: localize.Get("btn_continue"),
+                noText: localize.Get("btn_cancel"));
+
+            if (result == true)
+            {
+                var resultSave = await BookingData.SaveFinalBookingData();
+                if (resultSave is not null)
+                {
+                    var errorMessage = !localize.TryGet(resultSave) ? "error_saving" : resultSave;
+
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add($"{localize.Get(errorMessage)}", Severity.Error);
+                }
+            }
+        }
+        catch
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add($"{localize.Get("error_saving")}", Severity.Error);
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async void TryCloneBooking()
+    {
+        var dialog = await DialogService.ShowAsync<CloneBookingDialog>(localize.Get("msg_warning"));
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            var save_result = (APIResult<bool>)result.Data;
+            if (save_result.Operation_Succeeded)
+            {
+                NavigationManager.NavigateTo("/user_bookings");
+            }
+            else
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                if (save_result.Error_Message is not null)
+                {
+                    Snackbar.Add(localize.Get(save_result.Error_Message), Severity.Error);
+                }
+                if (save_result.Errors is not null)
+                {
+                    Snackbar.Add(localize.Get(string.Join("\n", save_result.Errors)), Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task DownloadPDF()
+    {
+        if (!in_progress)
+        {
+            in_progress = true;
+            if (quotationService.GetQuotationPDFAvailable())
+            {
+                var FILESTREAM = await quotationService.GetQuotationPDF();
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"{(LanguageUtil.Language == ELanguage.SPANISH ? "Cotizacion" : "Quote")}-{quotationService.Invoice}.pdf";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                }
+            }
+            in_progress = false;
+        }
+    }
+
+    private async Task DownloadPDFBooking()
+    {
+        if (!in_progress)
+        {
+            in_progress = true;
+            if (BookingData.PDF_Ready)
+            {
+                var FILESTREAM = await BookingData.GetBookingPDF();
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"Booking-{BookingData.Invoice}.pdf";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                }
+            }
+            in_progress = false;
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (IsStatic)
+        {
+            BookingData.OnChange += StateHasChanged;
+        }
+        user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        money_kind = quotationService.Money_Kind.GetStringValue();
+        string _show_coins = await DATA_ACCESS.GetParametro(6);
+        var coins_option = Convert.ToInt32(_show_coins);
+        show_coins = coins_option == 1;
+
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override void OnInitialized()
+    {
+        quotationService.OnChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    private void NavigateToBooking()
+    {
+        var claim = user_context.User.Claims.FirstOrDefault(claims => claims.Type == "Full Register");
+
+        if (claim is null)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("err_register_incomplete"), Severity.Error);
+            return;
+        }
+
+        var permission = Convert.ToBoolean(claim.Value);
+
+        if (!permission)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("err_register_incomplete"), Severity.Error);
+            return;
+        }
+
+        BookingData.ResetSelf();
+        BookingData.Contracting = true;
+        if (quotationService.GetIsPortCapital() && quotationService.GetPortCapitalCollection() != null && quotationService.GetPortCapitalCollection().Data != null)
+        {
+            BookingData.QuotationPortCapital = quotationService.GetPortCapitalCollection().Data;
+            BookingData.IsPortCapital = true;
+        }
+        NavigationManager.NavigateTo($"/book/{quotationService.UUID}");
+    }
+
+    private async Task ShouldUsePreviousBooking(bool immediate_continue)
+    {
+        if (immediate_continue)
+        {
+            await SaveAndContract();
+        }
+        else
+        {
+            var dialog = await DialogService.ShowAsync<SelectQuoteBookingDialog>(localize.Get("msg_information"));
+            var result = await dialog.Result;
+        }
+    }
+
+    private async Task SaveAndContract()
+    {
+        user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var claim = user_context.User.Claims.FirstOrDefault(claims => claims.Type == "Full Register");
+
+        if (claim is null)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("err_register_incomplete"), Severity.Error);
+            return;
+        }
+
+        var permission = Convert.ToBoolean(claim.Value);
+
+        if (!permission)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("err_register_incomplete"), Severity.Error);
+            return;
+        }
+
+        var success = await quotationService.TrySaveFullQuotation();
+        if (success)
+        {
+            BookingData.ResetSelf();
+            BookingData.Contracting = true;
+
+            if (quotationService.GetIsPortCapital() && quotationService.GetPortCapitalCollection() != null && quotationService.GetPortCapitalCollection().Data != null)
+            {
+                BookingData.QuotationPortCapital = quotationService.GetPortCapitalCollection().Data;
+                BookingData.IsPortCapital = true;
+            }
+
+            NavigationManager.NavigateTo($"/book/{quotationService.UUID}");
+        }
+        else
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("error_saving"), Severity.Error);
+        }
+    }
+
+    public bool DownloadPDFDisabled()
+    {
+        return BookingData.GetElements().Keys.Any(key => key == 1092);
+    }
+
+    private IDialogReference ShowLoaderDialog(string title)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Title", localize.Get(title) },
+            { "Message", localize.Get("label_the_process_may_takes_a_few_minutes") },
+            { "ShowProgressCircular", true }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = false,
+            DisableBackdropClick = true,
+            MaxWidth = MaxWidth.Small,
+            NoHeader = true
+        };
+
+        return DialogService.Show<ProgresAlertDialog>("", parameters, options);
+    }
+
+    public void Dispose()
+    {
+        quotationService.OnChange -= StateHasChanged;
+        BreakpointService.OnChange -= StateHasChanged;
+        if (IsStatic)
+        {
+            BookingData.OnChange -= StateHasChanged;
+        }
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

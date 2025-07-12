@@ -1,0 +1,56 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    @if (elementData is not null)
+    {
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack Class="bulk-amount-row" Row="true">
+                @if (elementData.GetIntFields() is not null)
+                {
+                    <MudIcon Color="Color.Primary" Class="bulk-amount-icon" Icon="@CustomIcons.suelta.GetIcon()" ViewBox="@CustomIcons.suelta.GetViewBox()"></MudIcon>
+                    <MudNumericField Disabled="@quotationService.GetQuotationLocked()" Class="@($"bulk-amount {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")" ValueExpression="@(() => elementData.GetIntFields()![23])" Value="@elementData.GetIntFields()![23]" ValueChanged="@((int? args) => elementData.SetIntValue(23, args))" Label="@localize.Get("label_amount")" Variant="Variant.Outlined" Min="1" Max="500" />
+                }
+            </MudStack>
+        </MudStack>
+    }
+    else
+    {
+        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+    }
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 16;
+    private ElementQuotationData? elementData;
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

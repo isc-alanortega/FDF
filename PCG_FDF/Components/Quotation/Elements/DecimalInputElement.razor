@@ -1,0 +1,39 @@
+﻿@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudNumericField Class="@($"numerical-input {(Breakpoint_Service.GetIsMobile() ? "increase-it" : "")}")"
+                         T="double?"
+                         Variant="Variant.Outlined"
+                         Value="@TryGetStorageValue()"
+                         ValueChanged="@(async (args) => await TryWriteStorageValue(args))"
+                         ReadOnly="@GetElementReadonly()"
+                         Disabled="@GetElementReadonly()"
+                         Required="true"
+                         RequiredError="@Localize.Get("errmsg_required")"
+                         Placeholder="@($"{Localize.Get("placeholder_input")} {GetElementName()}")" />
+    </MudStack>
+</div>
+
+@code {
+    private double? TryGetStorageValue()
+    {
+        return Quotation_Data.GetElementValueAs<double?>(Card.Card_ID, ElementData.Element_ID);
+    }
+
+    private async Task TryWriteStorageValue(double? value)
+    {
+        await Quotation_Data.WriteSharedElementValue(value, Card.Card_ID, ElementData.Element_ID);
+    }
+}

@@ -1,0 +1,86 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Payments;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject PCG_FDF_DB dataAccessService
+@inject GlobalLocalizer localize
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="width: 100%">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                     Class="title-text">
+                <strong>@($"{Localize.Get("label_invoice")} {InvoiceData.InvoiceSerie} {InvoiceData.InvoiceFolio} {Localize.Get("label_of")} {InvoiceData.ClientName}")</strong>
+            </MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="width: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Error"/>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text">
+                    @Localize.Get("msg_deletereference")
+                </MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="width: 100%;">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Error" />
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text">
+                    @Localize.Get("msg_infodeletereference")
+                </MudText>
+            </MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                     Class="title-text">
+                <strong>@($"{Localize.Get("label_reference")}: {InvoiceData.ReferenceId}")</strong>
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="OnClickCancel">@Localize.Get("btn_cancel")</MudButton>
+        <MudButton Color="Color.Error" OnClick="Submit">@Localize.Get("btn_delete")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public PaymentInvoceResponse InvoiceData { get; set; } = new PaymentInvoceResponse();
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    private async Task Submit()
+    {
+        var result = await dataAccessService.DeleteLastReference(InvoiceData.ReferenceId);
+        if (result == null || !result.Operation_Succeeded)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("err_delete_reference"), Severity.Error);
+
+            MudDialog.Cancel();
+            return;
+        }
+
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+        Snackbar.Add(localize.Get("msg_reference_successfully_deleted"), Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+
+    void OnClickCancel()
+    {
+        MudDialog.Cancel();
+    }
+}

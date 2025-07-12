@@ -1,0 +1,64 @@
+﻿@using PCG_ENTITIES.PCG;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Data.Localization;
+@inject QuotationDataCollection quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    <MudStack>
+        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@($"{localize.Get("quot_subservices_subservices")}{(UsesMany ? " - " + ServiceName : "")} ")</MudText>
+        </MudStack>
+        <div>
+            @foreach (var item in Subservicios)
+        {
+            <MudCheckBox Disabled="@quotationService.IsGloballyReadonly()"
+                         Class="@($"subservice-checkbox {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                         T="bool" Color="Color.Tertiary"
+                         Value="@quotationService.GetSubserviceStatus(ServiceID, item.Subservice_ID)"
+                         CheckedChanged="@(async (bool args) => await quotationService.SetSubserviceStatus(args, ServiceID, item.Subservice_ID))">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudIcon Class="@($"checkbox-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")}")" Icon="@item.Icon" ViewBox="@item.ViewBox" Size="@Size.Large"></MudIcon>
+                    <MudText Class="@($"checkbox-text {(BreakpointService.GetIsMobile() ? "icon-rem-s2" : "")}")" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.body1)">@item.Name</MudText>
+                </MudStack>
+            </MudCheckBox>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public int ServiceID { get; set; }
+    [Parameter, EditorRequired]
+    public IEnumerable<StatefulSubservice> Subservicios { get; set; }
+    [Parameter]
+    public bool UsesMany { get; set; } = false;
+    [Parameter]
+    public string? ServiceName { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

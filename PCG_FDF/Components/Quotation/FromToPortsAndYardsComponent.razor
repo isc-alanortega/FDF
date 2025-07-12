@@ -1,0 +1,145 @@
+﻿@using Newtonsoft.Json;
+@using PCG_ENTITIES.PCG
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@inject PCG_FDF_DB DATA_ACCESS
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    <MudStack>
+        @if (elementData is not null)
+        {
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack Class="bars-stack" Row="@(BreakpointService.GetIsMobile() ? false : true)">
+                @if (elementData.GetGuidFields() is not null)
+                {
+                    <MudAutocomplete Disabled="@quotationService.GetQuotationLocked()"
+                             Class="@($"location-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                             PopoverClass="@($"location-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                             T="LugaresEntidad"
+                             ToStringFunc="@(localization_entity => localization_entity == null ? null : $"{localization_entity.Ubicacion_Completa}")"
+                             Label="@localize.Get("quot_fromto_from")" Value="elementData.GetComplex()![3]"
+                             ValueChanged="@(async (LugaresEntidad value) => await SetOrigin(value))"
+                             SearchFunc="@Search"
+                             ResetValueOnEmptyText="false"
+                             CoerceText="true"
+                             CoerceValue="false"
+                             AdornmentIcon="@Icons.Material.Filled.Search"
+                             AdornmentColor="Color.Primary" />
+
+                    <MudAutocomplete Disabled="@quotationService.GetQuotationLocked()"
+                             Class="@($"location-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                             PopoverClass="@($"location-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                             T="LugaresEntidad"
+                             ToStringFunc="@(localization_entity => localization_entity == null ? null : $"{localization_entity.Ubicacion_Completa}")"
+                             Label="@localize.Get("quot_fromto_to")"
+                             Value="@elementData.GetComplex()![4]"
+                             ValueChanged="@(async (LugaresEntidad value) => await SetDestination(value))"
+                             SearchFunc="@Search"
+                             ResetValueOnEmptyText="false"
+                             CoerceText="true"
+                             CoerceValue="false"
+                             AdornmentIcon="@Icons.Material.Filled.Search"
+                             AdornmentColor="Color.Primary" />
+                }
+                else
+                {
+                    for (var i = 0; i < 2; i++)
+                    {
+                        <MudSkeleton Height="200px" Width="50%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                }
+            </MudStack>
+        }
+        else
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                <MudSkeleton Height="200px" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+            }
+        }
+    </MudStack>
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 2;
+    private ElementQuotationData? elementData;
+    private LugaresEntidad service_location_origin, service_location_destination;
+
+    private async Task SetOrigin(LugaresEntidad value)
+    {
+        service_location_origin = value;
+        if (!quotationService.GetQuotationLocked())
+        {
+            await elementData!.SetGuidValue(3, value.GUID_Ubicacion);
+            elementData.GetComplex()![3] = value;
+        }
+    }
+
+    private async Task SetDestination(LugaresEntidad value)
+    {
+        service_location_destination = value;
+        if (!quotationService.GetQuotationLocked())
+        {
+            await elementData!.SetGuidValue(4, value.GUID_Ubicacion);
+            elementData.GetComplex()![4] = value;
+        }
+    }
+
+    private async Task<IEnumerable<LugaresEntidad>> Search(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            var result = await DATA_ACCESS.GetBuscarCatalogosDinamicos("a", 2);
+            if (result is not null)
+            {
+                return JsonConvert.DeserializeObject<IEnumerable<LugaresEntidad>>(result)!;
+            }
+            else
+            {
+                return new List<LugaresEntidad>();
+            }
+        }
+        else
+        {
+            var result = await DATA_ACCESS.GetBuscarCatalogosDinamicos(value, 2);
+            if (result is not null)
+            {
+                return JsonConvert.DeserializeObject<IEnumerable<LugaresEntidad>>(result)!;
+            }
+            else
+            {
+                return new List<LugaresEntidad>();
+            }
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        elementData.ElementHasComplex(new List<int>() { 3, 4 });
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

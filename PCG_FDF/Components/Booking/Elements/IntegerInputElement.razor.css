@@ -1,0 +1,25 @@
+.element-boundary {
+  margin: 8px 0px;
+}
+
+::deep .numerical-input.increase-it {
+  max-width: 100%;
+}
+::deep .numerical-input.increase-it .mud-input {
+  font-size: 2rem;
+}
+::deep .numerical-input.increase-it .mud-input-label {
+  font-size: 2rem;
+}
+::deep .numerical-input.increase-it .mud-input-numeric-spin {
+  flex-direction: row;
+}
+::deep .numerical-input.increase-it .mud-input-numeric-spin .mud-icon-root {
+  font-size: 6rem;
+}
+
+@media (min-width: 600px) {
+  ::deep .mud-input-error {
+    font-size: 1.7em !important;
+  }
+}

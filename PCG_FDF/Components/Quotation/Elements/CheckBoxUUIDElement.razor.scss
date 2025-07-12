@@ -1,0 +1,15 @@
+﻿.element-boundary {
+    margin: 8px 0px;
+}
+
+::deep .mud-input-control.mud-input-control-boolean-input {
+    &.resize-it {
+        .mud-icon-root {
+            font-size: 2rem;
+        }
+
+        .mud-typography {
+            font-size: 2rem;
+        }
+    }
+}

@@ -1,0 +1,263 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Utility
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+@inject ShoppingCartContainer shoppingCart
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject QuotationDataCollection quotationService
+@inject BookingDataCollection BookingData
+@inject GlobalBreakpointService BreakpointService
+@inject DirectContractService directContractService
+@inject IDialogService DialogService
+@implements IDisposable
+
+<div class="shopping-cart-wrapper">
+    <div class="cart-title">
+        <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")" Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large"></MudIcon>
+        <MudText Class="cart-title-text" Typo="@(BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4)">@localize.Get("cart_summary")</MudText>
+    </div>
+    <MudStack>
+        @if (shoppingCart.GetPackages() is not null && shoppingCart.GetPackages().Count != 0)
+        {
+            <MudPaper Class="package-item-badge"><MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("com_shopping_packagesbadge")</MudText></MudPaper>
+            @foreach (KeyValuePair<int, PaquetesCompletosEditable> paquete in shoppingCart.GetPackages())
+            {
+                <PackageCartCard RemoveSubserviceAction="@RemovePackageService" Paquete="@paquete" RemoveAction="@removePackageFromCart"></PackageCartCard>
+            }
+        }
+        @if (shoppingCart.GetFullTrace() is not null && shoppingCart.GetFullTrace().Count != 0)
+        {
+            <MudPaper Class="service-item-badge"><MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@localize.Get("com_shopping_servicesbadge")</MudText></MudPaper>
+            @foreach (KeyValuePair<int, List<BreadcrumbItem>> trace in shoppingCart.GetFullTrace())
+            {
+                <MudPaper Class="stack-card">
+                    <MudStack>
+                        <MudBreadcrumbs Class="@($"service-trace {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Items="trace.Value">
+                            <SeparatorTemplate>
+                                <MudIcon Class="breadcrumb-icon" Icon="@Icons.Material.Filled.ArrowForwardIos" Size="Size.Small" />
+                            </SeparatorTemplate>
+                        </MudBreadcrumbs>
+                    </MudStack>
+                    <MudIconButton Class="@($"btn-trash {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" OnClick="@(async () => await removeFromCart(trace.Key))" Icon="@CustomIcons.trashcan.GetIcon()" Color="Color.Secondary"></MudIconButton>
+                </MudPaper>
+            }
+        }
+    </MudStack>
+    <MudStack Class="btn-actions">
+        <MudButton OnClick="@navigateToEstimate" Variant="Variant.Filled" Size="Size.Large" Color="Color.Primary" Class="@($"shoppingcartcomponent-btnaction-do actual-action{GetButtonName()}")">
+            <MudStack Class="button-inner-row" Row="true">
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)">@GetButtonName()</MudText>
+                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.ArrowForwardIos"></MudIcon>
+            </MudStack>
+        </MudButton>
+    </MudStack>
+    @if (shoppingCart.GetSuggestion() is not null)
+    {
+        <MudStack Class="package-suggestion">
+            <SuggestionPackageCartCard RejectSuggestion="@RejectSuggestion" PackageName="@shoppingCart.GetSuggestion()!.Paquete.Nombre_Corto_Paquete" Services="@shoppingCart.GetServiceTraces().Values.Select(services => services.Last().FullName)" AddPackage="@AddSuggestion"></SuggestionPackageCartCard>
+        </MudStack>
+    }
+    <MudStack Class="btn-action-empty shoppingcartcomponent-btn-emptycar">
+        <MudButton OnClick="@OnClearClicked" Variant="Variant.Filled" Size="Size.Large" Color="Color.Tertiary">
+            <MudStack Class="button-inner-row" Row="true">
+                <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@CustomIcons.trashcan.GetIcon()" ViewBox="@CustomIcons.trashcan.GetViewBox()"></MudIcon>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)">@localize.Get("btn_clearcart")</MudText>
+            </MudStack>
+        </MudButton>
+    </MudStack>
+</div>
+
+
+@if (BreakpointService.GetIsXsSmScreen())
+{
+    <style>
+        .mud-dialog-title h6 {
+        font-size: 2.0em !important;
+        }
+
+        .mud-dialog-content {
+        font-size: 1.9em !important;
+        }
+
+        .mud-dialog-actions span {
+        font-size: 1.9em !important;
+        }
+
+        .mud-dialog mud-dialog-width-sm {
+        width: calc(15vw - 5px);
+        }
+    </style>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Action ResetCart { get; set; }
+    [Parameter, EditorRequired]
+    public Action ActivateAnimation { get; set; }
+    [Parameter, EditorRequired]
+    public Action ResetAnimatedCheck { get; set; }
+    private bool isOpen;
+[CascadingParameter]
+    private Task<AuthenticationState>? authenticationState { get; set; }
+
+
+    private string GetButtonName()
+    {
+        if (AppState.GetCurrentClientID().HasValue)
+        {
+            return AppState.HasPermission("Ver Tarifas FDF") ? localize.Get("btn_quote") : localize.Get("btn_contract");
+        }
+        return localize.Get("btn_quote");
+    }
+
+    private void RejectSuggestion()
+    {
+        shoppingCart.UnsetSuggestion();
+        ResetAnimatedCheck.Invoke();
+    }
+
+    protected override void OnInitialized()
+    {
+        shoppingCart._onChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        await BreakpointService.ReCheckSize();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private void RemovePackageService(int data)
+    {
+        quotationService.RemovePackageService(data);
+    }
+
+    private async void OnClearClicked()
+    {
+        if (quotationService.GetQuotationInitialized() && !quotationService.GetQuotationHasSaved())
+        {
+            bool? result = await DialogService.ShowMessageBox(
+                localize.Get("msg_warning"),
+                localize.Get("msg_emptycart"),
+                yesText: localize.Get("btn_emptycart"), noText: localize.Get("btn_cancel"));
+            if (result is not null && (bool)result)
+            {
+                shoppingCart.FullClear();
+                ResetCart.Invoke();
+                quotationService.ResetSelf();
+                BookingData.ResetSelf();
+            }
+        }
+        else
+        {
+            shoppingCart.FullClear();
+            ResetCart.Invoke();
+            quotationService.ResetSelf();
+            BookingData.ResetSelf();
+        }
+        StateHasChanged();
+    }
+
+    private async Task removeFromCart(int key)
+    {
+        if (shoppingCart.GetServiceTraces().Count == 1 && !shoppingCart.GetPackages().Any())
+        {
+            quotationService.ResetSelf();
+            BookingData.ResetSelf();
+        }
+        else
+        {
+            quotationService.RemoveService(key);
+            BookingData.ResetSelf();
+        }
+        shoppingCart.RemoveAt(key);
+        decreaseAmount();
+        await shoppingCart.ServiceCheck(LanguageUtil.getCurrentCulture());
+        if (shoppingCart.GetSuggestion() is not null)
+        {
+            ActivateAnimation.Invoke();
+            ResetAnimatedCheck.Invoke();
+        }
+    }
+
+    private void removePackageFromCart(int key)
+    {
+        if (shoppingCart.GetPackages().Count == 1 && !shoppingCart.GetServiceTraces().Any())
+        {
+            quotationService.ResetSelf();
+            BookingData.ResetSelf();
+        }
+        else
+        {
+            quotationService.RemovePackage(key);
+            BookingData.ResetSelf();
+        }
+        var package_services = shoppingCart.GetPackages()[key].Servicios.Keys;
+        shoppingCart.RemovePackageAt(key);
+        decreaseAmount();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        shoppingCart._onChange -= StateHasChanged;
+    }
+
+    private void increaseAmount()
+    {
+        shoppingCart.IncreaseTotalItems();
+    }
+
+    private void decreaseAmount()
+    {
+        if (shoppingCart.GetTotalItems() == 1)
+        {
+            ResetCart.Invoke();
+        }
+        else
+        {
+            shoppingCart.DecreaseTotalItems();
+        }
+    }
+
+    private void AddSuggestion()
+    {
+        shoppingCart.AddSuggestion();
+        ResetAnimatedCheck.Invoke();
+    }
+
+    private void navigateToEstimate()
+    {
+        shoppingCart.GenerateBillingList();
+
+        if(shoppingCart.IsNoShowQuotation())
+        {
+            tryNavigateToContract();
+            return;
+        }
+
+        NavigationManager.NavigateTo("/quote");
+    }
+
+    private async void tryNavigateToContract()
+    {
+        if (authenticationState is null) return;
+
+        var authState = await authenticationState;
+        await directContractService.InitializeQuotationForm(authState);
+    }
+}

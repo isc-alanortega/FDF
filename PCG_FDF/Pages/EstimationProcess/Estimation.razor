@@ -1,0 +1,398 @@
+﻿@page "/estimate/{QuotationUUID:guid}"
+@page "/estimate"
+@using PCG_ENTITIES.PCG
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Components.Quotation
+@using PCG_FDF.Components.BillingList
+@using PCG_FDF.Utility
+@implements IAsyncDisposable
+@implements IDisposable
+@inject IJSRuntime JS
+@inject PCG_FDF_DB DATA_ACCESS
+@inject ShoppingCartContainer shoppingCart
+@inject EstimationWrapperContainer estimationService
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalBreakpointService BreakpointService
+@inject WhiteLabelManager WhiteLabel
+@inject DrawerBridge Bridge
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="estimation-wrapper">
+    <MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+        <MudPaper Width="90%" Elevation="5" Class="drawer-card">
+            @*@if (BreakpointService.GetIsMobile())
+            {
+                <MudDrawer DisableOverlay="true" @bind-Open="@_billDrawerOpen" Class="bill-drawer" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="4" Width="100vw" Variant="@DrawerVariant.Responsive">
+                    @if (initialized)
+                    {
+                        <BillingList ChangePackage="@changeActivePackage" ChangeService="changeActiveService"></BillingList>
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                </MudDrawer>
+                <MudFab Color="Color.Secondary" OnClick="@OpenDrawer" StartIcon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" Class="mobile-floating-bill" />
+            }
+            else
+            {
+                <MudDrawer @bind-Open="@_billDrawerOpen" Class="bill-drawer" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="4" Width="35vw" Variant="@DrawerVariant.Responsive">
+                    @if (initialized)
+                    {
+                        <BillingList ChangePackage="@changeActivePackage" ChangeService="changeActiveService"></BillingList>
+                    }
+                    else
+                    {
+                        <MudSkeleton Height="100%" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                    }
+                    <MudFab Color="Color.Secondary" OnClick="@OpenDrawer" StartIcon="@Icons.Material.Rounded.ArrowBackIos" Size="Size.Large" Class="floating-bill" />
+                </MudDrawer>
+            }*@
+        </MudPaper>
+        @if (estimationService.obtenerServicio() is not null)
+        {
+            <MudStack Class="title-stack" Row="true">
+                <MudIcon Class="@($"title-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")}")" Icon="@estimationService.obtenerServicio()!.Icon" ViewBox="@estimationService.obtenerServicio()!.ViewBox"></MudIcon>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@estimationService.obtenerServicio()!.Name</strong></MudText>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack Class="title-stack" Row="true">
+                <MudIcon Class="@($"title-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")}")" Icon="@estimationService.obtenerPaquete()!.Paquete.Icon" ViewBox="@estimationService.obtenerPaquete()!.Paquete.Viewbox"></MudIcon>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@estimationService.obtenerPaquete()!.Paquete.Nombre_Paquete</strong></MudText>
+            </MudStack>
+        }
+        @if (quotationService.ServiceDataExists(activeServiceIds))
+        {
+            foreach (var item in quotationService.GetElements(activeServiceIds))
+            {
+                @switch (item)
+                {
+                    case 1:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(1).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <FromToComponent></FromToComponent>
+                        </MudPaper>
+                        break;
+                    case 2:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(2).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <FromToPortsAndYardsComponent></FromToPortsAndYardsComponent>
+                        </MudPaper>
+                        break;
+                    case 3:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(3).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <CargoTypeComponent></CargoTypeComponent>
+                        </MudPaper>
+                        break;
+                    case 5:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(5).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <ContainerSelectionComponent></ContainerSelectionComponent>
+                        </MudPaper>
+                        break;
+                    case 6:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(6).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <DragUnitComponent></DragUnitComponent>
+                        </MudPaper>
+                        break;
+                    case 11:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(11).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <ContainerAmountComponent></ContainerAmountComponent>
+                        </MudPaper>
+                        break;
+                    case 12:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(12).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <PackagingComponent></PackagingComponent>
+                        </MudPaper>
+                        break;
+                    case 13:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(13).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <ContainerTypeComponent></ContainerTypeComponent>
+                        </MudPaper>
+                        break;
+                    case 14:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(14).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <LocationComponent></LocationComponent>
+                        </MudPaper>
+                        break;
+                    case 15:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(15).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <PalletAmountComponent></PalletAmountComponent>
+                        </MudPaper>
+                        break;
+                    case 16:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(16).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <BulkAmountComponent></BulkAmountComponent>
+                        </MudPaper>
+                        break;
+                    case 17:
+                        <MudPaper Width="90%" Elevation="5" Class="@($"group-data-card {(quotationService.GetElementQuotationData(17).AllFieldsAnswered() ? "all-clear" : "need-info")}")">
+                            <OperationTypeComponent></OperationTypeComponent>
+                        </MudPaper>
+                        break;
+                }
+            }
+            @if (estimationService.obtenerPaquete() is not null)
+            {
+                foreach (var service_id in activeServiceIds)
+                {
+                    @if (quotationService.CheckSubservicesExist(service_id))
+                    {
+                        <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                            <SubservicesComponent_LEGACY ServiceID="@service_id" Subservicios="@estimationService.obtenerPaquete()!.Servicios[service_id].Subservicios.Values" UsesMany="true" ServiceName="@estimationService.obtenerPaquete()!.Servicios[service_id].Name"></SubservicesComponent_LEGACY>
+                        </MudPaper>
+                    }
+                }
+            }
+            else
+            {
+                @if (quotationService.CheckSubservicesExist(activeServiceIds.First()))
+                {
+                    <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                        <SubservicesComponent_LEGACY ServiceID="@activeServiceIds.First()" Subservicios="@estimationService.obtenerServicio()!.Subservicios.Values"></SubservicesComponent_LEGACY>
+                    </MudPaper>
+                }
+            }
+        }
+        else
+        {
+            for (var i = 0; i < 5; i++)
+            {
+                <MudPaper Width="90%" Elevation="5" Class="group-data-card">
+                    <MudStack>
+                        <MudSkeleton Height="100px" Width="100%" SkeletonType="SkeletonType.Rectangle" />
+                        <MudSkeleton Width="80%" />
+                        <MudSkeleton Width="80%" />
+                        <MudSkeleton Width="80%" />
+                    </MudStack>
+                </MudPaper>
+            }
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? QuotationUUID { get; set; }
+
+    bool _billDrawerOpen = true;
+    private IEnumerable<int> activeServiceIds;
+    private bool initialized = false;
+    private IJSObjectReference? module_refresh;
+    private bool _from_database { get; set; } = false;
+
+    private void navigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Bridge.CloseQuotation += OpenDrawer;
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        estimationService.OnChange += StateHasChanged;
+
+        if (QuotationUUID is not null)
+        {
+            _from_database = true;
+            var initialization_data = await DATA_ACCESS.GetQuotationObject((Guid)QuotationUUID!);
+            var cart_initialization_data = await DATA_ACCESS.GetShoppingCartObject(LanguageUtil.getCurrentCulture(), initialization_data.service_ids, initialization_data.package_ids);
+            if (initialization_data.read_only)
+            {
+                NavigationManager.NavigateTo($"/quotation/{(Guid)QuotationUUID}/false");
+            }
+            quotationService.ResetSelf();
+            quotationService.Initialize(initialization_data, cart_initialization_data);
+            if (quotationService.GetQuotationCart().GetPackages() is not null && quotationService.GetQuotationCart().GetPackages().Count != 0)
+            {
+                estimationService.seleccionarPaquete(quotationService.GetQuotationCart().GetPackages().Values.First());
+                setActiveService(estimationService.obtenerPaquete()!.Servicios.Keys);
+            }
+            else
+            {
+                estimationService.seleccionarServicio(quotationService.GetQuotationCart().GetServices().Values.First(), false);
+                setActiveService(new List<int>() { estimationService.obtenerServicio()!.Id });
+            }
+            initialized = true;
+        }
+        else
+        {
+            if (!quotationService.GetQuotationInitialized())
+            {
+                quotationService.ResetSelf();
+            }
+
+            quotationService.CreateQuotationCart(shoppingCart);
+            if (quotationService.GetQuotationCart().GetPackages() is not null && quotationService.GetQuotationCart().GetPackages().Count != 0)
+            {
+                estimationService.seleccionarPaquete(quotationService.GetQuotationCart().GetPackages().Values.First());
+                setActiveService(estimationService.obtenerPaquete()!.Servicios.Keys);
+            }
+            else
+            {
+                estimationService.seleccionarServicio(quotationService.GetQuotationCart().GetServices().Values.First(), false);
+                setActiveService(new List<int>() { estimationService.obtenerServicio()!.Id });
+            }
+
+            // Set all package IDs
+            quotationService.SetPackageIDs(quotationService.GetQuotationCart().GetAllPackageIDs());
+            // Set all package -> services IDs
+            quotationService.SetPackageServicesIds(quotationService.GetQuotationCart().GetPackagesServicesIDs());
+            // Get a relationship of all package services and their subservices
+            var Package_Services_Subservices = quotationService.GetQuotationCart().GetPackagesServicesSubservicesLookup();
+            // Get a relationship of all services and their subservices
+            var Services_Subservices = quotationService.GetQuotationCart().GetServicesSubservicesLookup();
+            // Set all service IDs
+            quotationService.SetServiceIDs(quotationService.GetQuotationCart().GetAllServiceIDs());
+            // Set the reverse lookup of service -> package
+            quotationService.SetPackagesReverseLookup(quotationService.GetQuotationCart().GetPackagesServicesReverseLookup());
+
+            await InitializeAllForms(Package_Services_Subservices.Concat(Services_Subservices));
+            await ReCheckAll(Package_Services_Subservices.Concat(Services_Subservices).Select(key_value_pair => key_value_pair.Key));
+
+            if (!quotationService.GetQuotationInitialized())
+            {
+                if (!_from_database && module_refresh is not null)
+                {
+                    await module_refresh.InvokeVoidAsync("AddListener");
+                }
+                await quotationService.Initialize();
+            }
+
+            initialized = true;
+        }
+
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_refresh = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/RefreshHelper.js");
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task InitializeAllForms(IEnumerable<KeyValuePair<int, ICollection<int>>> allServiceIds)
+    {
+        var exclusions = await DATA_ACCESS.GetExclusiones(allServiceIds.Select(kvp => kvp.Key));
+        foreach (var service_kvp in allServiceIds)
+        {
+            if (!quotationService.ServiceDataExists(service_kvp.Key))
+            {
+                if (service_kvp.Value.Any())
+                {
+                    quotationService.AddSubservices(service_kvp.Key, service_kvp.Value);
+                    foreach (var subservicio in service_kvp.Value)
+                    {
+                        var campos_subservicio = await DATA_ACCESS.GetCamposTarifariosServicio(subservicio);
+                        quotationService.AddNewTarifaFields(subservicio, campos_subservicio);
+                    }
+                }
+                // Elementos del servicio activo
+                IEnumerable<ServiciosElementosCompletosEntidad> service_element_data = await DATA_ACCESS.GetElementosServicio(LanguageUtil.getCurrentCulture(), service_kvp.Key);
+                IEnumerable<ServicioCamposTarifariosEntidad> campos_tarifarios = await DATA_ACCESS.GetCamposTarifariosServicio(service_kvp.Key);
+                foreach (var element in service_element_data)
+                {
+                    if (!quotationService.ElementDataExists(element.Elemento.ID))
+                    {
+                        ElementQuotationData data = new ElementQuotationData(quotationService);
+                        data.SetElementID(element.Elemento.ID);
+                        data.SetElementName(element.Elemento.Nombre);
+                        foreach (var field_type in element.Campos)
+                        {
+                            data.AddField(field_type.IdCampo, field_type.IdTipo);
+                        }
+                        data.AddServiceReference(service_kvp.Key);
+                        data.OnChange += StateHasChanged;
+                        quotationService.AddNewQuotationData(element.Elemento.ID, data);
+                    }
+                    else
+                    {
+                        quotationService.GetElementQuotationData(element.Elemento.ID).AddServiceReference(service_kvp.Key);
+                    }
+                    if (exclusions.TryGetValue(element.Elemento.ID, out var element_exclusions))
+                    {
+                        foreach (var exclusion_kvp in element_exclusions)
+                        {
+                            quotationService.GetElementQuotationData(element.Elemento.ID).TryAddExclusion(exclusion_kvp.Key, exclusion_kvp.Value);
+                        }
+                    }
+                    quotationService.AddNewTarifaFields(service_kvp.Key, campos_tarifarios);
+                    quotationService.AddServicePair(service_kvp.Key, element.Elemento.ID);
+                }
+            }
+        }
+    }
+
+    private async Task ReCheckAll(IEnumerable<int> allServiceIds)
+    {
+        await quotationService.CheckServiceDataReady(allServiceIds);
+    }
+
+    private void changeActiveService(Tuple<IService, bool> args)
+    {
+        estimationService.seleccionarServicio(args.Item1, args.Item2);
+        setActiveService(new List<int>() { estimationService.obtenerServicio()!.Id });
+    }
+
+    private void changeActivePackage(PaquetesCompletosEditable paquete)
+    {
+        estimationService.seleccionarPaquete(paquete);
+        setActiveService(estimationService.obtenerPaquete()!.Servicios.Keys);
+    }
+
+    private void setActiveService(IEnumerable<int> target)
+    {
+        activeServiceIds = target;
+    }
+
+    void OpenDrawer()
+    {
+        _billDrawerOpen = !_billDrawerOpen;
+        Bridge.SetQuotationBind(_billDrawerOpen);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        foreach (var item in quotationService.GetQuotationData().Values)
+        {
+            item.OnChange -= StateHasChanged;
+        }
+        if (_from_database)
+        {
+            quotationService.ResetSelf();
+            QuotationUUID = null;
+        }
+        Bridge.CloseQuotation -= OpenDrawer;
+        estimationService.OnChange -= StateHasChanged;
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    /*
+    * Eliminar los modulos JS cargados al terminar de usar el componente actual y otras operaciones
+    */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_refresh is not null)
+        {
+            if (!quotationService.GetHasInitialized() && quotationService.GetQuotationHasSaved())
+            {
+                await module_refresh.InvokeVoidAsync("RemoveListener");
+            }
+            await module_refresh.DisposeAsync();
+        }
+
+        Dispose();
+    }
+}

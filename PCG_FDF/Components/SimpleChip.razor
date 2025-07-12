@@ -1,0 +1,62 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Utility
+@implements IDisposable
+@inject GlobalBreakpointService BreakpointService
+
+<div class="simple-chip-wrapper">
+    <MudChip Disabled="@Disabled" Default="@Default" Tag="@ChipTag" Class="simple-chip" Variant="Variant.Text" Color="Color.Primary">
+        <div class="internal-chip-wrapper">
+            <MudIcon Class="@($"internal-button-icon {IconCSS}")" ViewBox="@IconViewBox" Icon="@ChipIcon" Size="Size.Large"></MudIcon>
+            <div class="internal-vertical-spacer"></div>
+            <div class="chip-footer-container">
+                <div class="internal-footer-spacer"></div>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.body2)" Class="internal-chip-text">@ChipText</MudText>
+            </div>
+        </div>
+    </MudChip>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public String ChipIcon { get; set; }
+
+    [Parameter, EditorRequired]
+    public String IconViewBox { get; set; }
+
+    [Parameter, EditorRequired]
+    public String ChipText { get; set; }
+
+    [Parameter, EditorRequired]
+    public Object ChipTag { get; set; }
+
+    [Parameter]
+    public bool Default { get; set; } = false;
+
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    [Parameter]
+    public string IconCSS { get; set; } = "normal";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

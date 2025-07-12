@@ -1,0 +1,33 @@
+﻿@using Syncfusion.Blazor.SplitButtons
+@using System.Globalization
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="lang-component-wrapper">
+    <SfDropDownButton IconCss="sf-icon-globe-wf icon" CssClass="e-caret-hide e-custom">
+        <DropDownButtonEvents ItemSelected="@ItemSelected"></DropDownButtonEvents>
+        <DropDownMenuItems>
+            <DropDownMenuItem Text="ES" Id="es-MX"></DropDownMenuItem>
+            <DropDownMenuItem Text="EN" Id="en-US"></DropDownMenuItem>
+        </DropDownMenuItems>
+    </SfDropDownButton>
+</div>
+
+@code {
+    private String selectedLang = "ES";
+    private IDictionary<String, CultureInfo> cultures = new Dictionary<String, CultureInfo>() {
+        { "es-MX", new CultureInfo("es-MX") },
+        { "en-US", new CultureInfo("en-US") }
+    };
+
+    private async Task ItemSelected(MenuEventArgs args)
+    {
+        if (cultures.TryGetValue(args.Item.Id, out CultureInfo? value) && CultureInfo.CurrentCulture.Name != value.Name)
+        {
+            var js = (IJSInProcessRuntime)JS;
+            var language_module = await js.InvokeAsync<IJSObjectReference>("import", "./scripts/global_language_module.js");
+            await language_module.InvokeVoidAsync("setCulture", value.Name);
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+        }
+    }
+}

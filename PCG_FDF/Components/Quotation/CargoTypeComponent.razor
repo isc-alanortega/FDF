@@ -1,0 +1,163 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Data.Localization
+@implements IDisposable
+@inject GlobalBreakpointService BreakpointService
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+
+<div class="card-wrapper">
+    @if (elementData is not null)
+    {
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack Row="@(!(BreakpointService.GetIsSmall() || BreakpointService.GetIsExtraSmall()))">
+                @if (elementData.GetChipFields() is not null && elementData.GetGuidFields() is not null)
+                {
+                    var f5_exclusions = elementData.GetFieldExclusions(5);
+                    <div class="chipset-wrapper">
+                        <MudChipSet ReadOnly="@quotationService.GetQuotationLocked()" MudChipEqualityComparer="@Comparer" ValueExpression="@(() => GetSelectedChip(5))" SelectedChip="@GetSelectedChip(5)" SelectedChipChanged="@(async (chip) => await ChipHasChanged(5, chip))" Class="chip-set-selector" Mandatory="true">
+                            @if (!f5_exclusions.Contains(guid_container))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![5] == guid_container)" IconCSS="extra-large" ChipTag="guid_container" ChipIcon="@CustomIcons.contenedor.GetIcon()" IconViewBox="@CustomIcons.contenedor.GetViewBox()" ChipText="@localize.Get("quot_cargoty_container")"></SimpleChip>
+                            }
+                            @if (!f5_exclusions.Contains(guid_consolidated))
+                            {
+                            <SimpleChip Default="@(elementData.GetGuidFields()![5] == guid_consolidated)" IconCSS="extra-large" ChipTag="guid_consolidated" ChipIcon="@CustomIcons.suelta.GetIcon()" IconViewBox="@CustomIcons.suelta.GetViewBox()" ChipText="@localize.Get("quot_cargoty_consolidated")"></SimpleChip>
+                            }
+                            @if (!f5_exclusions.Contains(guid_bulk))
+                            {
+                            <SimpleChip Default="@(elementData.GetGuidFields()![5] == guid_bulk)" IconCSS="extra-large" ChipTag="guid_bulk" ChipIcon="@CustomIcons.granel.GetIcon()" IconViewBox="@CustomIcons.granel.GetViewBox()" ChipText="@localize.Get("quot_cargoty_bulk")"></SimpleChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                }
+                @if (elementData.GetBoolFields() is not null)
+                {
+                    <div class="additional-checks">
+                        <MudStack>
+                            <MudCheckBox Disabled="@quotationService.GetQuotationLocked()" Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")" T="bool?" Checked="@elementData.GetBoolFields()![16]" CheckedChanged="@(async (bool? args) => await CheckBoxHasChanged(16, args))" ValueExpression="@(() => elementData.GetBoolFields()![16])" Label="@localize.Get("quot_cargoty_danger")" Color="Color.Tertiary"></MudCheckBox>
+                            <MudCheckBox Disabled="@quotationService.GetQuotationLocked()" Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")" T="bool?" Checked="@elementData.GetBoolFields()![17]" CheckedChanged="@(async (bool? args) => await CheckBoxHasChanged(17, args))" ValueExpression="@(() => elementData.GetBoolFields()![17])" Label="@localize.Get("quot_cargoty_overdimensional")" Color="Color.Tertiary"></MudCheckBox>
+                        </MudStack>
+                    </div>
+                }
+                else
+                {
+                    <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                        <MudItem xs="12">
+                            <MudSkeleton Height="100px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudSkeleton Height="100px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                        </MudItem>
+                    </MudGrid>
+                }
+            </MudStack>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Row="true">
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudItem xs="2">
+                        <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                <MudItem xs="12">
+                    <MudSkeleton Height="100px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSkeleton Height="100px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    }
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 3;
+    private ElementQuotationData? elementData;
+    private ChipUUIDComparer Comparer { get; } = new();
+
+    private Guid guid_container = new Guid("A4657E58-4728-42B0-84E0-622A9A6FDF0E");
+    private Guid guid_consolidated = new Guid("1142164E-4935-4BC3-AA8B-75BC43D884A0");
+    private Guid guid_bulk = new Guid("1A2692D6-2145-4EAC-8E91-405B27338122");
+
+    private Guid guid_danger_yes = new Guid("0BEC5DC7-C88A-451E-952A-7821A279291F");
+    private Guid guid_overdim_yes = new Guid("C3247472-30FE-436D-B10A-23A60092606E");
+    private Guid guid_danger_no = new Guid("D89283EB-AC13-48FE-87FF-DC674EE1072A");
+    private Guid guid_overdim_no = new Guid("F457F62F-969E-43BE-B25D-78F34A7606EB");
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        elementData.ElementHasChips(new List<int>() { 5 });
+        GuidInitializer();
+        await base.OnInitializedAsync();
+    }
+
+    private void GuidInitializer()
+    {
+        if (elementData!.GetGuidFields() is null)
+        {
+            elementData.ElementHasGuid();
+        }
+
+        if (!elementData!.GetGuidFields()!.TryGetValue(16, out _))
+        {
+            elementData.InitGuidValue(16, guid_danger_no);
+        }
+
+        if (!elementData!.GetGuidFields()!.TryGetValue(17, out _))
+        {
+            elementData.InitGuidValue(17, guid_overdim_no);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task CheckBoxHasChanged(int id, bool? args)
+    {
+        await elementData!.SetBoolValue(id, args);
+        if (id == 16)
+        {
+            await elementData!.SetGuidValue(id, args!.Value ? guid_danger_yes : guid_danger_no);
+        }
+        else
+        {
+            await elementData!.SetGuidValue(id, args!.Value ? guid_overdim_yes : guid_overdim_no);
+        }
+    }
+
+    private async Task ChipHasChanged(int id, MudChip chip)
+    {
+        await elementData!.SetChipValue(id, chip);
+        await elementData!.SetGuidValue(id, (Guid)chip.Tag);
+    }
+
+    private MudChip? GetSelectedChip(int id)
+    {
+        return elementData!.GetChipFields()![id];
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

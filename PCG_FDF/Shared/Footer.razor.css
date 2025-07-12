@@ -1,0 +1,158 @@
+:root {
+  --color-primary: #0045AC;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #DA291C;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #112f5c;
+  --color-nav-info: #112f5c;
+  --color-package-subtitle: #A1B5D3;
+  --color-complex-chip: #EDF4FA;
+  --color-booking-panel: #869AAC;
+}
+
+.footer {
+  bottom: 0;
+  width: 100%;
+  background: var(--color-primary);
+  padding: 30px;
+}
+
+::deep .internal-bafar-icon #mane-gold {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-bafar-icon #face-blue {
+  fill: var(--color-global-RGBA-transparent);
+}
+
+::deep .internal-shipping-icon #red-group {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-shipping-icon #blue-group {
+  fill: var(--color-global-fullwhite);
+}
+
+::deep .internal-thesharks-icon #deepblue {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-thesharks-icon #lightblue {
+  fill: var(--color-global-fullwhite);
+}
+
+::deep .internal-smargo-icon {
+  fill: white !important;
+}
+
+::deep .footer-version {
+  color: grey;
+}
+
+::deep .internal-cima-icon {
+  font-size: 4rem;
+  width: 4em;
+  height: 2em;
+}
+::deep .internal-cima-icon #cima-logo-outline {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-middle {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-triangle-left {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-triangle-right {
+  fill: var(--color-global-fullwhite);
+}
+::deep .internal-cima-icon #cima-logo-triangle-top {
+  fill: var(--color-global-fullwhite);
+}
+
+.footer-top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 80%;
+  width: 100%;
+  padding-bottom: 20px;
+  padding-inline: 55px;
+}
+@media (max-width: 950px) {
+  .footer-top {
+    flex-direction: column;
+  }
+}
+
+.footer-info {
+  flex: 1;
+}
+
+.left-footer-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  row-gap: 10px;
+  width: 30%;
+}
+
+.right-footer-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  row-gap: 10px;
+  width: 70%;
+  padding-left: 30px;
+}
+
+::deep .footer-text {
+  color: var(--color-global-fullwhite);
+}
+
+.footer-bottom {
+  padding-top: 25px;
+  text-align: center;
+}
+
+::deep .footer-copy {
+  color: var(--color-global-lowwhite);
+}
+
+.foter-icon-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}

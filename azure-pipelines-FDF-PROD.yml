@@ -1,0 +1,73 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+
+- task: UseDotNet@2
+  displayName: 'Install .NET Core SDK Version 6.x'
+  inputs:
+    version: 6.x
+    performMultiLevelLookup: true
+
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet Tool'
+
+# - task: NuGetCommand@2
+#   displayName: 'Restore Solution NuGet Packages with NuGet Command'
+#   inputs:
+#     restoreSolution: '$(solution)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore Project NuGet Packages with .NET Core CLI'
+  inputs:
+    command: restore
+    projects: $(projectPath)
+    feedsToUse: 'select'
+    vstsFeed: 'CIMA Front de Fronts/MudBlazor-Internal'  ## Required when feedsToUse == Select
+    includeNuGetOrg: true
+
+#- task: VSBuild@1
+#  inputs:
+#    solution: '$(solution)'
+#    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+#    platform: '$(buildPlatform)'
+#    configuration: '$(buildConfiguration)'
+
+#- task: VSTest@2
+#  inputs:
+#    platform: '$(buildPlatform)'
+#    configuration: '$(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build FDF Project and Dependencies'
+  inputs:
+    command: build
+    publishWebProjects: false
+    projects: $(projectPath)
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish FDF Project'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: $(projectPath)
+    arguments: '--configuration release --output $(build.artifactstagingdirectory) /property:PublishWithAspNetCoreTargetManifest=false'
+    zipAfterPublish: false
+ 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish FDF Artifacts'
+  inputs:
+    ArtifactName: PCG_FDF

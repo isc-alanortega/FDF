@@ -1,0 +1,13 @@
+﻿.complex-selector-wrapper {
+    flex-direction: column;
+    width: 95%;
+}
+
+::deep .skeleton-grid {
+    padding-bottom: 20px;
+}
+
+.mini-divider {
+    width: 95%;
+    border: 0.1px dotted rgba(80, 80, 80, 0.08);
+}

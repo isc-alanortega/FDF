@@ -1,0 +1,228 @@
+:root {
+  --color-primary: #0045AC;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #DA291C;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #112f5c;
+  --color-nav-info: #112f5c;
+  --color-package-subtitle: #A1B5D3;
+  --color-complex-chip: #EDF4FA;
+  --color-booking-panel: #869AAC;
+}
+
+.tracking-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+::deep .paper-grey {
+  border-radius: 15px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  background-image: linear-gradient(to bottom, #ededed, #e0e0e0);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+::deep .tracking-main-stack {
+  width: 100%;
+  height: 100%;
+}
+
+::deep .title-text {
+  margin-top: 14px;
+}
+
+.main-status {
+  padding: 6px;
+  background-color: white;
+  border-radius: 6px;
+}
+
+::deep .contract-chip {
+  border-radius: 6px !important;
+  height: 4rem !important;
+  padding: 0 !important;
+}
+
+::deep .chip-text {
+  padding: 0 12px;
+}
+
+.tracking-progress-bar {
+  width: 100%;
+  height: 0.7rem;
+  position: absolute;
+  bottom: 0;
+}
+.tracking-progress-bar.color-info {
+  background-color: #00c853;
+}
+.tracking-progress-bar.color-warning {
+  background-color: #ff9800;
+}
+.tracking-progress-bar.color-critical {
+  background-color: #f44336;
+}
+
+.tree-tracking-progress-bar {
+  width: 100%;
+  height: 0.7rem;
+}
+.tree-tracking-progress-bar.color-info {
+  background-color: #00c853;
+}
+.tree-tracking-progress-bar.color-warning {
+  background-color: #ff9800;
+}
+.tree-tracking-progress-bar.color-critical {
+  background-color: #f44336;
+}
+
+.progress-circle {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 4px;
+}
+.progress-circle.color-info {
+  border-color: #00c853;
+}
+.progress-circle.color-warning {
+  border-color: #ff9800;
+}
+.progress-circle.color-critical {
+  border-color: #f44336;
+}
+
+::deep .tracking-stage-panel.color-info .mud-expand-panel-header {
+  background-color: #99E9BA;
+}
+::deep .tracking-stage-panel.color-warning .mud-expand-panel-header {
+  background-color: #FFD599;
+}
+::deep .tracking-stage-panel.color-critical .mud-expand-panel-header {
+  background-color: #FAB3AE;
+}
+
+::deep .main-tracking-pane {
+  width: 100%;
+  height: 100%;
+}
+
+.contracts-chipset-container {
+  padding: 6px;
+  background-color: white;
+  border-radius: 6px;
+}
+
+::deep .inner-tracking-pane {
+  height: 100%;
+}
+
+::deep .contracts-chipset {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+
+.cart-pane {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 20%;
+  width: 100%;
+  background-color: white;
+  border-radius: 6px;
+  padding-left: 6px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+::deep .tracking-data-pane {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  height: 100%;
+  padding: 8px;
+  background-color: white;
+  border-radius: 6px;
+}
+
+.tree-item-content {
+  width: 100%;
+}
+
+.tree-item-container {
+  border: 1px solid;
+  border-color: #bfbfbf;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  margin-right: 12px;
+}
+.tree-item-container.selected {
+  background-color: #e0e0e0;
+}
+
+@media (max-width: 690px) {
+  ::deep .progress-circle {
+    width: 10.5vw;
+    height: 10.5vw;
+  }
+  ::deep .chip-text {
+    font-size: 0.8em;
+  }
+  ::deep .mud-checkbox p,
+  ::deep .mud-checkbox span,
+  ::deep .progress-circle p,
+  ::deep .tree-item-content p {
+    font-size: 1.5em !important;
+  }
+  ::deep .titlecontent-element-text,
+  ::deep .trackingpage-text-overallstatus,
+  ::deep .trackingpage-text-info-tracking p,
+  ::deep .trackingpage-text-info-tracking svg,
+  ::deep .trackingpage-text-product-title-text {
+    font-size: 1.95em !important;
+  }
+}

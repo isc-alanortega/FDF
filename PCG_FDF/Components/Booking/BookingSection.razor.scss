@@ -1,0 +1,84 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+
+::deep .booking-panel {
+    margin: 16px 0px !important;
+    border-radius: 8px !important;
+
+    &.single-panel {
+        .mud-expand-panel-header {
+            background-color: css-color-var(booking-panel);
+            border-radius: inherit;
+            .mud-expand-panel-text > div {
+                    align-items: center !important;
+            }
+        }
+    }
+
+    &.multi-panel {
+        .mud-expand-panel-header {
+            background-color: css-color-var(secondary);
+            border-radius: inherit;
+        }
+
+        .single-panel {
+            .mud-expand-panel-header {
+                background-color: css-color-var(primary);
+                border-radius: inherit;
+            }
+        }
+    }
+}
+
+.section-badge {
+    align-self: center;
+    margin-left: auto;
+    margin-right: 4px;
+}
+
+::deep .title-text.service {
+    font-size: 0.8rem;
+}
+
+.document-boundary {
+    padding: 8px;
+    height: 100%;
+    background-color: #0000000D;
+    border-radius: 8px;
+
+    &.rejected-document {
+        background-color: #FBD9D3;
+    }
+}
+
+.t-white {
+    color: white;
+}
+
+.t-black {
+    color: #272c34;
+}
+
+::deep .t-white {
+    color: white;
+}
+
+::deep .t-black {
+    color: #272c34;
+}
+
+@media(max-width: 960px) {
+    ::deep .mud-input-error {
+        font-size: 1.4em;
+    }
+
+    ::deep .section-badge span,
+    ::deep .mud-select-input input,
+    ::deep .bookingsection-title-section strong {
+        font-size: 1.5em;
+    }
+
+    ::deep .document-boundary span {
+        font-size: 1.65em;
+    }
+    
+}

@@ -1,0 +1,65 @@
+﻿@* @using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.DataAccess;
+@inherits BookingElementBase
+@inject PCG_FDF_DB dataAccessService
+
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+    </MudStack>
+
+    <MudGrid>
+        <MudItem md="12" sm="12" xs="12">
+            <MudSelect T="DireccionPrecargada"
+                       ToStringFunc="@AddressConverter"
+                       AnchorOrigin="Origin.BottomCenter"
+                       Variant="Variant.Outlined"
+                       Value="@SelectedAddress"
+                       ValueChanged="@TrySelectPreloadedAddress"
+                       Disabled="@GetElementReadonly()"
+                       ReadOnly="@GetElementReadonly()"
+                       RequiredError="@Localize.Get("errmsg_required")"
+                       Clearable="false"
+                       Label="@Localize.Get($"label_preloaded_address_{AddressType}")"
+                       Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get($"label_preloaded_address_{AddressType}")}")">
+
+                @foreach (var option in GetPreloadedListAs<DireccionPrecargada>("ADDRESSESPRELOAD", true))
+                {
+                    <MudSelectItem Value="option" />
+                }
+
+            </MudSelect>
+        </MudItem>
+
+        RFC 
+        <MudItem md="6" sm="12" xs="12">
+            <MudStack Row="true">
+                <MudTextField MaxLength="500"
+                              Clearable="false"
+                              RequiredError="@Localize.Get("errmsg_required")"
+                              Disabled="@GetElementReadonly()"
+                              ReadOnly="@GetElementReadonly()"
+                              DebounceInterval="1500"
+                              T="string"
+                              Value="@((string?)TryGetContentsField("RFC"))"
+                              ValueChanged="@((args) => TryModifyField("RFC", args))"
+                              Variant="Variant.Outlined"
+                              Label="@Localize.Get("label_postcode")"
+                              Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_postcode")}")" />
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+
+</div> *@

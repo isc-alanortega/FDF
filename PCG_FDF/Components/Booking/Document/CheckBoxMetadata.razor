@@ -1,0 +1,48 @@
+﻿@inherits MetadataElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudCheckBox Disabled="@GetElementReadonly()"
+                         ReadOnly="@GetElementReadonly()"
+                         Checked="@TryGetStorageValue()"
+                         CheckedChanged="@(async(args) => await TryWriteStorageValue(args))"
+                         Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")"
+                         T="bool"
+                         Color="Color.Tertiary"
+                         Required="@MetadataData.Required"
+                         RequiredError="@Localize.Get("errmsg_required")"></MudCheckBox>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@MetadataData.Metadata_Name</strong></MudText>
+        </MudStack>
+    </MudStack>
+</div>
+
+@code {
+    private bool TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedMetadataValueAs<bool?>(SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID) ?? false;
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedMetadataValueAs<bool?>(DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID) ?? false;
+        }
+    }
+
+    private async Task TryWriteStorageValue(bool value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedMetadataValue(value, SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedMetadataValue(value, DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+}

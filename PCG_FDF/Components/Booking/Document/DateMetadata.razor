@@ -1,0 +1,52 @@
+﻿@inherits MetadataElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@MetadataData.Metadata_Name</strong></MudText>
+            @if (MetadataData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudDatePicker Disabled="@GetElementReadonly()"
+                       ReadOnly="@GetElementReadonly()"
+                       Editable="true"
+                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                       DateFormat="dd/MM/yyyy"
+                       Date="@TryGetStorageValue()"
+                       DateChanged="@(async(args) => await TryWriteStorageValue(args))"
+                       Required="@MetadataData.Required"
+                       RequiredError="@Localize.Get("errmsg_required")" />
+    </MudStack>
+</div>
+
+@code {
+    private DateTime? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedMetadataValueAs<DateTime?>(SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedMetadataValueAs<DateTime?>(DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+
+    private async Task TryWriteStorageValue(DateTime? value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedMetadataValue(value, SectionData.Key, SectionData.Value.Keys.First(), DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedMetadataValue(value, DocumentData.Document_Subtype_ID, MetadataData.Metadata_ID);
+        }
+    }
+}

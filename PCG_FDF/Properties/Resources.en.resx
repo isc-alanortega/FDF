@@ -1,0 +1,2242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="agreement-accept-1" xml:space="preserve">
+    <value>The agreement with invoice number</value>
+  </data>
+  <data name="agreement-accept-2" xml:space="preserve">
+    <value>at the following date and time</value>
+  </data>
+  <data name="agreement-fail" xml:space="preserve">
+    <value>Error the agreement you tried to accept does not exist or has already been accepted</value>
+  </data>
+  <data name="btn_accept" xml:space="preserve">
+    <value>ACCEPT</value>
+  </data>
+  <data name="btn_add" xml:space="preserve">
+    <value>ADD</value>
+  </data>
+  <data name="btn_addcontainer" xml:space="preserve">
+    <value>Add Container</value>
+  </data>
+  <data name="btn_addmerch" xml:space="preserve">
+    <value>Add Merchandise</value>
+  </data>
+  <data name="btn_cancel" xml:space="preserve">
+    <value>CANCEL</value>
+  </data>
+  <data name="btn_changeclient" xml:space="preserve">
+    <value>Change Client</value>
+  </data>
+  <data name="btn_clearcart" xml:space="preserve">
+    <value>Clear Cart</value>
+  </data>
+  <data name="btn_clone_booking" xml:space="preserve">
+    <value>Clone Booking</value>
+  </data>
+  <data name="btn_close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="btn_continue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="btn_continue_contract" xml:space="preserve">
+    <value>Continue Contract</value>
+  </data>
+  <data name="btn_contract" xml:space="preserve">
+    <value>Contract</value>
+  </data>
+  <data name="btn_deletecontainer" xml:space="preserve">
+    <value>Remove Container</value>
+  </data>
+  <data name="btn_deletemerch" xml:space="preserve">
+    <value>Remove Merchandise</value>
+  </data>
+  <data name="btn_download_form" xml:space="preserve">
+    <value>DOWNLOAD FORM</value>
+  </data>
+  <data name="btn_edit" xml:space="preserve">
+    <value>EDIT</value>
+  </data>
+  <data name="btn_editcontainer" xml:space="preserve">
+    <value>Editar Contenedor</value>
+  </data>
+  <data name="btn_editmerch" xml:space="preserve">
+    <value>Edit Merchandise</value>
+  </data>
+  <data name="btn_editunit" xml:space="preserve">
+    <value>Edit Unit</value>
+  </data>
+  <data name="btn_emptycart" xml:space="preserve">
+    <value>Empty</value>
+  </data>
+  <data name="btn_filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="btn_generatepayment" xml:space="preserve">
+    <value>Generate Payment</value>
+  </data>
+  <data name="" xml:space="preserve">
+    <value>Get PDF</value>
+  </data>
+  <data name="btn_get_photographic" xml:space="preserve">
+    <value>Get Photographic Report</value>
+  </data>
+  <data name="btn_get_tarja" xml:space="preserve">
+    <value>Get Tally Report</value>
+  </data>
+  <data name="btn_get_zipphotos" xml:space="preserve">
+    <value>Get Zip File of the Photographs</value>
+  </data>
+  <data name="btn_logout" xml:space="preserve">
+    <value>Log Out</value>
+  </data>
+  <data name="btn_open_whatsapp" xml:space="preserve">
+    <value>Support</value>
+  </data>
+  <data name="btn_quotations" xml:space="preserve">
+    <value>Quotations</value>
+  </data>
+  <data name="btn_quote" xml:space="preserve">
+    <value>Get a Quotation</value>
+  </data>
+  <data name="btn_reject" xml:space="preserve">
+    <value>Reject</value>
+  </data>
+  <data name="btn_return" xml:space="preserve">
+    <value>Go Back</value>
+  </data>
+  <data name="btn_save_booking" xml:space="preserve">
+    <value>Save Booking</value>
+  </data>
+  <data name="btn_save_quotation" xml:space="preserve">
+    <value>Save Quotation</value>
+  </data>
+  <data name="btn_see_more" xml:space="preserve">
+    <value>Learn More</value>
+  </data>
+  <data name="btn_update_booking" xml:space="preserve">
+    <value>Update Booking</value>
+  </data>
+  <data name="btn_upload_bl" xml:space="preserve">
+    <value>UPLOAD BL DOCUMENT</value>
+  </data>
+  <data name="btn_upload_document" xml:space="preserve">
+    <value>Upload Document</value>
+  </data>
+  <data name="btn_upload_payment" xml:space="preserve">
+    <value>UPLOAD PAYMENT RECEIPT</value>
+  </data>
+  <data name="btn_upload_paymentfile" xml:space="preserve">
+    <value>Upload Payment File</value>
+  </data>
+  <data name="btn_upload_temporary" xml:space="preserve">
+    <value>UPLOAD TEMPORARY DOCUMENT</value>
+  </data>
+  <data name="btn_view" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="cart_summary" xml:space="preserve">
+    <value>Summary</value>
+  </data>
+  <data name="coins_spent" xml:space="preserve">
+    <value>CIMA Coins Discount</value>
+  </data>
+  <data name="com_log_login" xml:space="preserve">
+    <value>Log In</value>
+  </data>
+  <data name="com_log_noaccount" xml:space="preserve">
+    <value>Don't have an account?</value>
+  </data>
+  <data name="com_log_or" xml:space="preserve">
+    <value>OR</value>
+  </data>
+  <data name="com_log_passwordforget" xml:space="preserve">
+    <value>Forgot your password?</value>
+  </data>
+  <data name="com_packageitem_package" xml:space="preserve">
+    <value>Package</value>
+  </data>
+  <data name="com_packsuggest_0" xml:space="preserve">
+    <value>We suggest you buy</value>
+  </data>
+  <data name="com_packsuggest_1" xml:space="preserve">
+    <value>which already has the following services:</value>
+  </data>
+  <data name="com_packsuggest_2" xml:space="preserve">
+    <value>In addition to others.</value>
+  </data>
+  <data name="com_packsuggest_tip" xml:space="preserve">
+    <value>Tip</value>
+  </data>
+  <data name="com_pager_items" xml:space="preserve">
+    <value>Items per page</value>
+  </data>
+  <data name="com_quotbadge_complete" xml:space="preserve">
+    <value>Complete Data</value>
+  </data>
+  <data name="com_quotbadge_incomplete" xml:space="preserve">
+    <value>Missing Data</value>
+  </data>
+  <data name="com_reg_birthday" xml:space="preserve">
+    <value>Date of birth</value>
+  </data>
+  <data name="com_reg_businessname" xml:space="preserve">
+    <value>Business Name</value>
+  </data>
+  <data name="com_reg_businessrfc" xml:space="preserve">
+    <value>Business RFC</value>
+  </data>
+  <data name="com_reg_businessrfc_fisica" xml:space="preserve">
+    <value>RFC</value>
+  </data>
+  <data name="com_reg_businesstype" xml:space="preserve">
+    <value>Business Type</value>
+  </data>
+  <data name="com_reg_businesszip" xml:space="preserve">
+    <value>Business Zip Code</value>
+  </data>
+  <data name="com_reg_country" xml:space="preserve">
+    <value>Country/Region</value>
+  </data>
+  <data name="com_reg_email" xml:space="preserve">
+    <value>Email address</value>
+  </data>
+  <data name="com_reg_haveacc" xml:space="preserve">
+    <value>Already have an account?</value>
+  </data>
+  <data name="com_reg_lastname" xml:space="preserve">
+    <value>Last Name</value>
+  </data>
+  <data name="com_reg_mobilephone" xml:space="preserve">
+    <value>Mobile Phone Number</value>
+  </data>
+  <data name="com_reg_month" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="com_reg_name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="com_reg_password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="com_reg_position" xml:space="preserve">
+    <value>Position/Role</value>
+  </data>
+  <data name="com_reg_privacynotice" xml:space="preserve">
+    <value>By clicking on the Register button you agree and consent to the User Agreement and its policies, and the Privacy Policy.</value>
+  </data>
+  <data name="com_reg_register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="com_reg_year" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="com_serviceitem_service" xml:space="preserve">
+    <value>Service</value>
+  </data>
+  <data name="com_shopping_packagesbadge" xml:space="preserve">
+    <value>Packages</value>
+  </data>
+  <data name="com_shopping_servicesbadge" xml:space="preserve">
+    <value>Services</value>
+  </data>
+  <data name="com_ticketheader_cimacoins" xml:space="preserve">
+    <value>to win on this operation</value>
+  </data>
+  <data name="com_ticketheader_comdiscounts" xml:space="preserve">
+    <value>Commercial Discount</value>
+  </data>
+  <data name="com_ticketheader_discountedsubtotal" xml:space="preserve">
+    <value>Subtotal with Discount</value>
+  </data>
+  <data name="com_ticketheader_packdiscount" xml:space="preserve">
+    <value>Packages Discount</value>
+  </data>
+  <data name="com_ticketheader_paycoins" xml:space="preserve">
+    <value>Pay with CIMA Coin</value>
+  </data>
+  <data name="com_ticketheader_taxes" xml:space="preserve">
+    <value>Taxes Total</value>
+  </data>
+  <data name="com_ticket_discount" xml:space="preserve">
+    <value>Discount</value>
+  </data>
+  <data name="com_ticket_tariffnotfound" xml:space="preserve">
+    <value>Tariff Not Found</value>
+  </data>
+  <data name="document_accepted" xml:space="preserve">
+    <value>Document Accepted</value>
+  </data>
+  <data name="document_inprocess" xml:space="preserve">
+    <value>Document in Validation</value>
+  </data>
+  <data name="document_rejected" xml:space="preserve">
+    <value>Document Rejected</value>
+  </data>
+  <data name="EDocumentRejections_1" xml:space="preserve">
+    <value>Unreadable Document</value>
+  </data>
+  <data name="EDocumentRejections_2" xml:space="preserve">
+    <value>Incorrect Document</value>
+  </data>
+  <data name="EDocumentRejections_3" xml:space="preserve">
+    <value>Expired Document</value>
+  </data>
+  <data name="enum_EStatusFactura_ACTIVE" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="enum_EStatusFactura_ACTIVE_CANCELLATION" xml:space="preserve">
+    <value>Active with Cancellation</value>
+  </data>
+  <data name="enum_EStatusFactura_CANCELED" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="enum_EStatusFactura_PAID" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="enum_EStatusFactura_PARTIAL_PAYMENT" xml:space="preserve">
+    <value>Partially Paid</value>
+  </data>
+  <data name="errmsg_required" xml:space="preserve">
+    <value>Field is Required</value>
+  </data>
+  <data name="error_bademail" xml:space="preserve">
+    <value>Error, invalid Email address.</value>
+  </data>
+  <data name="error_chat_message_empty" xml:space="preserve">
+    <value>Error, cannot send empty message</value>
+  </data>
+  <data name="error_container_partition_missing" xml:space="preserve">
+    <value>Partition is missing</value>
+  </data>
+  <data name="error_container_serial_invalid" xml:space="preserve">
+    <value>Invalid container serial.</value>
+  </data>
+  <data name="error_container_serial_repeated" xml:space="preserve">
+    <value>Error, cannot repeat container serial.</value>
+  </data>
+  <data name="error_container_shippingc_missing" xml:space="preserve">
+    <value>Container shipping company is missing</value>
+  </data>
+  <data name="error_container_shipvoyage_missing" xml:space="preserve">
+    <value>Container voyage ship is missing</value>
+  </data>
+  <data name="error_container_sizetype_missing" xml:space="preserve">
+    <value>Container size/type is missing</value>
+  </data>
+  <data name="error_container_size_missing" xml:space="preserve">
+    <value>Container size is missing.</value>
+  </data>
+  <data name="error_container_temperature_missing" xml:space="preserve">
+    <value>Container temperatures are missing</value>
+  </data>
+  <data name="error_container_type_missing" xml:space="preserve">
+    <value>Container type is missing.</value>
+  </data>
+  <data name="error_emptyemail" xml:space="preserve">
+    <value>Error, Email cannot be empty.</value>
+  </data>
+  <data name="error_merch_gweight_missing" xml:space="preserve">
+    <value>Merchandise gross weight is missing</value>
+  </data>
+  <data name="error_merch_invoice_missing" xml:space="preserve">
+    <value>Merchandise fiscal UUID is missing</value>
+  </data>
+  <data name="error_merch_measurement_missing" xml:space="preserve">
+    <value>Merchandise measurement is missing</value>
+  </data>
+  <data name="error_merch_missing" xml:space="preserve">
+    <value>Merchandise is missing</value>
+  </data>
+  <data name="error_merch_nweight_missing" xml:space="preserve">
+    <value>Merchandise net weight is missing</value>
+  </data>
+  <data name="error_merch_packaging_missing" xml:space="preserve">
+    <value>Merchandise packaging is missing</value>
+  </data>
+  <data name="error_merch_price_missing" xml:space="preserve">
+    <value>Merchandise price is missing</value>
+  </data>
+  <data name="error_merch_quantity_max" xml:space="preserve">
+    <value>Error, merchandise exceeds the maximum amount of pallets</value>
+  </data>
+  <data name="error_merch_quantity_missing" xml:space="preserve">
+    <value>Merchandise quantity is missing</value>
+  </data>
+  <data name="error_merch_request_missing" xml:space="preserve">
+    <value>Merchandise request is missing</value>
+  </data>
+  <data name="error_merch_tariff_missing" xml:space="preserve">
+    <value>Merchandise tariff fraction is missing</value>
+  </data>
+  <data name="error_merch_unit_missing" xml:space="preserve">
+    <value>Merchandise weight unit is missing</value>
+  </data>
+  <data name="error_not_implemented" xml:space="preserve">
+    <value>Format Not Implemented</value>
+  </data>
+  <data name="error_saving" xml:space="preserve">
+    <value>An error occurred while saving, try again or contact support.</value>
+  </data>
+  <data name="error_saving_documents" xml:space="preserve">
+    <value>An error occurred while saving the documents, try again or contact support.</value>
+  </data>
+  <data name="err_client_already_exists" xml:space="preserve">
+    <value>The client is already registered, please contact your CIMA executive.</value>
+  </data>
+  <data name="err_client_creation" xml:space="preserve">
+    <value>An error occurred when registering the client, try again or contact support.</value>
+  </data>
+  <data name="err_contact_creation" xml:space="preserve">
+    <value>An error occurred when assigning the user as the client's contact, try again or contact support.</value>
+  </data>
+  <data name="err_container_no_merch" xml:space="preserve">
+    <value>Container has no merchandise assigned</value>
+  </data>
+  <data name="err_container_serial_repeated" xml:space="preserve">
+    <value>Container serial cannot be repeated</value>
+  </data>
+  <data name="err_docempty" xml:space="preserve">
+    <value>Missing upload Payment Receipt</value>
+  </data>
+  <data name="err_docreg_fail" xml:space="preserve">
+    <value>It was not possible to register the payment document, please try again or contact support</value>
+  </data>
+  <data name="err_duplicated_vehicle_vin" xml:space="preserve">
+    <value>A duplicate VIN is detected on the vehicles submitted in the Excel</value>
+  </data>
+  <data name="err_email_nonbusiness" xml:space="preserve">
+    <value>Error, email must be a business email.</value>
+  </data>
+  <data name="err_existed_vehicle_vin" xml:space="preserve">
+    <value>The VIN submitted has already been previously registered</value>
+  </data>
+  <data name="err_format_invalid" xml:space="preserve">
+    <value>Invalid Format</value>
+  </data>
+  <data name="err_form_incomplete" xml:space="preserve">
+    <value>Form incomplete.</value>
+  </data>
+  <data name="err_invalid_container_assignment" xml:space="preserve">
+    <value>Error, the container goes over the unit's maximum capacity</value>
+  </data>
+  <data name="err_invalid_container_serial" xml:space="preserve">
+    <value>Container serial is invalid</value>
+  </data>
+  <data name="err_invalid_container_sizetype" xml:space="preserve">
+    <value>Container size or type is invalid</value>
+  </data>
+  <data name="err_invalid_contract" xml:space="preserve">
+    <value>An unknown error happened while cloning the booking</value>
+  </data>
+  <data name="err_invalid_document" xml:space="preserve">
+    <value>There has been a change in the required documents, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_elements" xml:space="preserve">
+    <value>There has been a change in the required data for the quotation or booking, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_maxcelsiustemp" xml:space="preserve">
+    <value>Container maximum Celsius temperature is invalid</value>
+  </data>
+  <data name="err_invalid_maxfahrentemp" xml:space="preserve">
+    <value>Container maximum Fahrenheit temperature is invalid</value>
+  </data>
+  <data name="err_invalid_merch" xml:space="preserve">
+    <value>Merchandise is invalid</value>
+  </data>
+  <data name="err_invalid_merch_grossweight" xml:space="preserve">
+    <value>Merchandise gross weight is invalid</value>
+  </data>
+  <data name="err_invalid_merch_linesroll" xml:space="preserve">
+    <value>Merchandise lines by roll is invalid</value>
+  </data>
+  <data name="err_invalid_merch_measurement" xml:space="preserve">
+    <value>Merchandise measurement is invalid</value>
+  </data>
+  <data name="err_invalid_merch_netweight" xml:space="preserve">
+    <value>Merchandise net weight is invalid</value>
+  </data>
+  <data name="err_invalid_merch_packaging" xml:space="preserve">
+    <value>Merchandise packaging is invalid</value>
+  </data>
+  <data name="err_invalid_merch_price" xml:space="preserve">
+    <value>Merchandise price is invalid</value>
+  </data>
+  <data name="err_invalid_merch_satmeasurement" xml:space="preserve">
+    <value>Merchandise SAT measurement is invalid</value>
+  </data>
+  <data name="err_invalid_merch_satpackaging" xml:space="preserve">
+    <value>Merchandise SAT packaging is invalid</value>
+  </data>
+  <data name="err_invalid_merch_satweightunit" xml:space="preserve">
+    <value>Merchandise SAT weight unit is invalid</value>
+  </data>
+  <data name="err_invalid_metadata" xml:space="preserve">
+    <value>There has been a change in the required metadata for documents, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_mincelsiustemp" xml:space="preserve">
+    <value>Container minimum Celsius temperature is invalid</value>
+  </data>
+  <data name="err_invalid_minfahrentemp" xml:space="preserve">
+    <value>Container minimum Fahrenheit temperature is invalid</value>
+  </data>
+  <data name="err_invalid_number_trips" xml:space="preserve">
+    <value>Error, the number of partitions/trips is invalid</value>
+  </data>
+  <data name="err_invalid_number_vehicles" xml:space="preserve">
+    <value>The number of vehicles submitted doesn't match the number of vehicles quoted</value>
+  </data>
+  <data name="err_invalid_package" xml:space="preserve">
+    <value>A package in your quotation has changed, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_parts_number" xml:space="preserve">
+    <value>Invalid number of van boxes</value>
+  </data>
+  <data name="err_invalid_quote" xml:space="preserve">
+    <value>An unknown error happened while cloning the quotation</value>
+  </data>
+  <data name="err_invalid_section" xml:space="preserve">
+    <value>There has been a change in the required sections for the booking, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_service" xml:space="preserve">
+    <value>A service in your quotation has changed, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_shipping_company" xml:space="preserve">
+    <value>Container shipping company is invalid</value>
+  </data>
+  <data name="err_invalid_tariffs" xml:space="preserve">
+    <value>There has been a pricing change, cloning is no longer possible</value>
+  </data>
+  <data name="err_invalid_trip_id" xml:space="preserve">
+    <value>Invalid partition/trip number</value>
+  </data>
+  <data name="err_invalid_vehicle_color" xml:space="preserve">
+    <value>The vehicle color is not valid with the specified brand</value>
+  </data>
+  <data name="err_invalid_vehicle_model" xml:space="preserve">
+    <value>The vehicle model is not valid with the specified brand</value>
+  </data>
+  <data name="err_invoicegen_fail" xml:space="preserve">
+    <value>It was not possible to generate an invoice number, contact support and provide the Business Unit and Location of the Invoices</value>
+  </data>
+  <data name="err_location_creation" xml:space="preserve">
+    <value>An error occurred when assigning a location to the user, try again or contact support.</value>
+  </data>
+  <data name="err_missing_container_id" xml:space="preserve">
+    <value>Container is not enumerated</value>
+  </data>
+  <data name="err_missing_container_serial" xml:space="preserve">
+    <value>Container serial is missing</value>
+  </data>
+  <data name="err_missing_container_size" xml:space="preserve">
+    <value>Container size is missing</value>
+  </data>
+  <data name="err_missing_container_type" xml:space="preserve">
+    <value>Container type is missing</value>
+  </data>
+  <data name="err_missing_max_temp" xml:space="preserve">
+    <value>Maximum temperature should be specified in at least Celsius or Fahrenheit</value>
+  </data>
+  <data name="err_missing_merch" xml:space="preserve">
+    <value>Merchandise is missing</value>
+  </data>
+  <data name="err_missing_merch_fiscaluuid" xml:space="preserve">
+    <value>Merchandise fiscal invoice UUID is missing</value>
+  </data>
+  <data name="err_missing_merch_grossweight" xml:space="preserve">
+    <value>Merchandise gross weight is missing</value>
+  </data>
+  <data name="err_missing_merch_netweight" xml:space="preserve">
+    <value>Merchandise net weight is missing</value>
+  </data>
+  <data name="err_missing_merch_packaging" xml:space="preserve">
+    <value>Merchandise packaging is missing</value>
+  </data>
+  <data name="err_missing_merch_price" xml:space="preserve">
+    <value>Merchandise price is missing</value>
+  </data>
+  <data name="err_missing_merch_quantity" xml:space="preserve">
+    <value>Merchandise quantity is missing</value>
+  </data>
+  <data name="err_missing_merch_request" xml:space="preserve">
+    <value>Merchandise request is missing</value>
+  </data>
+  <data name="err_missing_merch_satmeasurement" xml:space="preserve">
+    <value>Merchandise SAT measurement is missing</value>
+  </data>
+  <data name="err_missing_merch_satpackaging" xml:space="preserve">
+    <value>Merchandise SAT packaging is missing</value>
+  </data>
+  <data name="err_missing_merch_satweightunit" xml:space="preserve">
+    <value>Merchandise SAT weight unit is missing</value>
+  </data>
+  <data name="err_missing_merch_tariff_fraction" xml:space="preserve">
+    <value>Merchandise tariff fraction is missing</value>
+  </data>
+  <data name="err_missing_min_temp" xml:space="preserve">
+    <value>Minimum temperature should be specified in at least Celsius or Fahrenheit</value>
+  </data>
+  <data name="err_missing_shipping_company" xml:space="preserve">
+    <value>Container shipping company is missing</value>
+  </data>
+  <data name="err_missing_shipping_line" xml:space="preserve">
+    <value>It is necessary to select the shipping company to submit the document</value>
+  </data>
+  <data name="err_missing_unit_id" xml:space="preserve">
+    <value>Unit number is missing</value>
+  </data>
+  <data name="err_missing_unit_part" xml:space="preserve">
+    <value>Unit box number is missing</value>
+  </data>
+  <data name="err_missing_vehicle_bl" xml:space="preserve">
+    <value>BL folio is missing</value>
+  </data>
+  <data name="err_missing_vehicle_brand" xml:space="preserve">
+    <value>Vehicle brand is missing</value>
+  </data>
+  <data name="err_missing_vehicle_color" xml:space="preserve">
+    <value>Vehicle color is missing</value>
+  </data>
+  <data name="err_missing_vehicle_model" xml:space="preserve">
+    <value>Vehicle model is missing</value>
+  </data>
+  <data name="err_missing_vehicle_vin" xml:space="preserve">
+    <value>Vehicle VIN is missing</value>
+  </data>
+  <data name="err_non_controlled" xml:space="preserve">
+    <value>An error has occurred, try again or contact support</value>
+  </data>
+  <data name="err_noperms_createpayment" xml:space="preserve">
+    <value>Does not have permission to Generate Payments</value>
+  </data>
+  <data name="err_parseinvoice" xml:space="preserve">
+    <value>It was not possible to parse the data, please try again</value>
+  </data>
+  <data name="err_permissions_creation" xml:space="preserve">
+    <value>An error occurred when assigning permissions to the user, try again or contact support.</value>
+  </data>
+  <data name="err_person_creation" xml:space="preserve">
+    <value>An error occurred when registering the person, try again or contact support.</value>
+  </data>
+  <data name="err_register_incomplete" xml:space="preserve">
+    <value>To be able to contract you must contact CIMA and complete your registration.</value>
+  </data>
+  <data name="err_rfc_invalid" xml:space="preserve">
+    <value>The RFC is invalid.</value>
+  </data>
+  <data name="err_unitpart_no_merch" xml:space="preserve">
+    <value>Unit box has no merchandise assigned</value>
+  </data>
+  <data name="err_user_already_exists" xml:space="preserve">
+    <value>There is already an existing account with the provided email.</value>
+  </data>
+  <data name="err_user_creation" xml:space="preserve">
+    <value>An error occurred when registering the user, try again or contact support.</value>
+  </data>
+  <data name="err_validation_email" xml:space="preserve">
+    <value>An error occurred when sending the validation email, try again or contact support.</value>
+  </data>
+  <data name="EStatus_form_approved" xml:space="preserve">
+    <value>Approved Booking</value>
+  </data>
+  <data name="EStatus_form_assigned" xml:space="preserve">
+    <value>Assigned Booking</value>
+  </data>
+  <data name="EStatus_form_canceled" xml:space="preserve">
+    <value>Booking Canceled</value>
+  </data>
+  <data name="EStatus_form_completed" xml:space="preserve">
+    <value>Form Completed</value>
+  </data>
+  <data name="EStatus_form_finalized" xml:space="preserve">
+    <value>Service Finalized</value>
+  </data>
+  <data name="EStatus_form_locked" xml:space="preserve">
+    <value>Form Saved</value>
+  </data>
+  <data name="EStatus_form_observed" xml:space="preserve">
+    <value>Rejected Documents</value>
+  </data>
+  <data name="EStatus_form_process" xml:space="preserve">
+    <value>Form in Filling Process</value>
+  </data>
+  <data name="EStatus_form_progress" xml:space="preserve">
+    <value>Service in Process</value>
+  </data>
+  <data name="EStatus_service_completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="EStatus_service_pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="EStatus_service_progress" xml:space="preserve">
+    <value>In Progress</value>
+  </data>
+  <data name="footer_address" xml:space="preserve">
+    <value>Located at:</value>
+  </data>
+  <data name="footer_allrights_CG" xml:space="preserve">
+    <value>CIMA Group. All Rights Reserved.</value>
+  </data>
+  <data name="footer_allrights_CP" xml:space="preserve">
+    <value>CargoPi. All Rights Reserved.</value>
+  </data>
+  <data name="footer_allrights_CS" xml:space="preserve">
+    <value>CIMA Shipping. All Rights Reserved.</value>
+  </data>
+  <data name="footer_allrights_EG" xml:space="preserve">
+    <value>Evergreen. All Rights Reserved.</value>
+  </data>
+  <data name="footer_allrights_GB" xml:space="preserve">
+    <value>Grupo Bafar. All Rights Reserved.</value>
+  </data>
+  <data name="footer_allrights_SG" xml:space="preserve">
+    <value>SmarGo. All Rights Reserved.</value>
+  </data>
+  <data name="footer_allrights_TS" xml:space="preserve">
+    <value>The Sharks. All Rights Reserved.</value>
+  </data>
+  <data name="footer_call" xml:space="preserve">
+    <value>Call us:</value>
+  </data>
+  <data name="footer_careers" xml:space="preserve">
+    <value>Careers</value>
+  </data>
+  <data name="footer_touch" xml:space="preserve">
+    <value>Get in touch:</value>
+  </data>
+  <data name="footer_write" xml:space="preserve">
+    <value>Write us:</value>
+  </data>
+  <data name="global_info_language" xml:space="preserve">
+    <value>EN</value>
+  </data>
+  <data name="idx_packages" xml:space="preserve">
+    <value>Packages</value>
+  </data>
+  <data name="idx_searchbar" xml:space="preserve">
+    <value>Search for a package or service</value>
+  </data>
+  <data name="idx_search_title" xml:space="preserve">
+    <value>Search Results</value>
+  </data>
+  <data name="idx_services" xml:space="preserve">
+    <value>Services</value>
+  </data>
+  <data name="idx_slogan_0" xml:space="preserve">
+    <value>IF YOU</value>
+  </data>
+  <data name="idx_slogan_1" xml:space="preserve">
+    <value>IMPORT</value>
+  </data>
+  <data name="idx_slogan_2" xml:space="preserve">
+    <value>OR</value>
+  </data>
+  <data name="idx_slogan_3" xml:space="preserve">
+    <value>EXPORT</value>
+  </data>
+  <data name="idx_slogan_4" xml:space="preserve">
+    <value>WE ARE YOUR BEST</value>
+  </data>
+  <data name="idx_slogan_5" xml:space="preserve">
+    <value>OPTION</value>
+  </data>
+  <data name="idx_slogan_6" xml:space="preserve">
+    <value>We are an international group with more than two decades of experience, dedicated to offering integral logistics services simplifying our customers import and export needs.</value>
+  </data>
+  <data name="idx_slogan_bafar_1" xml:space="preserve">
+    <value>FEEDING</value>
+  </data>
+  <data name="idx_slogan_bafar_2" xml:space="preserve">
+    <value>THE</value>
+  </data>
+  <data name="idx_slogan_bafar_3" xml:space="preserve">
+    <value>PROGRESS</value>
+  </data>
+  <data name="idx_slogan_bafar_4" xml:space="preserve">
+    <value>OF MEXICO</value>
+  </data>
+  <data name="idx_slogan_bafar_5" xml:space="preserve">
+    <value>We are a company committed to the present and the future of our country, generating more and better opportunities through the benefits that our land offers us.</value>
+  </data>
+  <data name="idx_slogan_sharks_1" xml:space="preserve">
+    <value>IN</value>
+  </data>
+  <data name="idx_slogan_sharks_2" xml:space="preserve">
+    <value>LOGISTICS</value>
+  </data>
+  <data name="idx_slogan_sharks_3" xml:space="preserve">
+    <value>WE ARE</value>
+  </data>
+  <data name="idx_slogan_sharks_4" xml:space="preserve">
+    <value>UNBEATABLE</value>
+  </data>
+  <data name="idx_slogan_sharks_5" xml:space="preserve">
+    <value>A different team that bets on the simplicity that technology offers us to connect with the world.</value>
+  </data>
+  <data name="idx_slogan_shipping_1" xml:space="preserve">
+    <value>BEYOND</value>
+  </data>
+  <data name="idx_slogan_shipping_2" xml:space="preserve">
+    <value>YOUR</value>
+  </data>
+  <data name="idx_slogan_shipping_3" xml:space="preserve">
+    <value>FRONTIERS</value>
+  </data>
+  <data name="label_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="label_amount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="label_amountmoney" xml:space="preserve">
+    <value>Payment Amount</value>
+  </data>
+  <data name="label_append_to_booking" xml:space="preserve">
+    <value>Add to Previous Booking</value>
+  </data>
+  <data name="label_arrivaldate" xml:space="preserve">
+    <value>Arrival Date</value>
+  </data>
+  <data name="label_at_cell" xml:space="preserve">
+    <value>At Cell</value>
+  </data>
+  <data name="label_balance" xml:space="preserve">
+    <value>Balance</value>
+  </data>
+  <data name="label_bank" xml:space="preserve">
+    <value>Bank</value>
+  </data>
+  <data name="label_billing_type" xml:space="preserve">
+    <value>Billing Type</value>
+  </data>
+  <data name="label_bl" xml:space="preserve">
+    <value>Bill of Lading</value>
+  </data>
+  <data name="label_booking" xml:space="preserve">
+    <value>Booking</value>
+  </data>
+  <data name="label_brand" xml:space="preserve">
+    <value>Brand</value>
+  </data>
+  <data name="label_brweight" xml:space="preserve">
+    <value>Gross Weight</value>
+  </data>
+  <data name="label_businessunit" xml:space="preserve">
+    <value>Business Unit</value>
+  </data>
+  <data name="label_business_name" xml:space="preserve">
+    <value>Business Name</value>
+  </data>
+  <data name="label_cfdi" xml:space="preserve">
+    <value>CFDI Usage</value>
+  </data>
+  <data name="label_city" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="label_coin" xml:space="preserve">
+    <value>Coin</value>
+  </data>
+  <data name="label_considerations" xml:space="preserve">
+    <value>Considerations</value>
+  </data>
+  <data name="label_container" xml:space="preserve">
+    <value>Container</value>
+  </data>
+  <data name="label_containers" xml:space="preserve">
+    <value>Containers</value>
+  </data>
+  <data name="label_containerserial" xml:space="preserve">
+    <value>Container Serial</value>
+  </data>
+  <data name="label_containersize" xml:space="preserve">
+    <value>Container Size</value>
+  </data>
+  <data name="label_containersizetype" xml:space="preserve">
+    <value>Size/Type</value>
+  </data>
+  <data name="label_containertype" xml:space="preserve">
+    <value>Container Type</value>
+  </data>
+  <data name="label_country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="label_date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="label_description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="label_documents" xml:space="preserve">
+    <value>Documents</value>
+  </data>
+  <data name="label_dragunit" xml:space="preserve">
+    <value>Drag Unit</value>
+  </data>
+  <data name="label_extnumber" xml:space="preserve">
+    <value>Exterior Number</value>
+  </data>
+  <data name="label_file" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="label_folio_transaction" xml:space="preserve">
+    <value>Transaction Folio</value>
+  </data>
+  <data name="label_fractiontariff" xml:space="preserve">
+    <value>Tariff Fraction</value>
+  </data>
+  <data name="label_from" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="label_handling" xml:space="preserve">
+    <value>Handling</value>
+  </data>
+  <data name="label_handlingdate" xml:space="preserve">
+    <value>Handling Date</value>
+  </data>
+  <data name="label_imoclass" xml:space="preserve">
+    <value>IMO Class</value>
+  </data>
+  <data name="label_imosecurity" xml:space="preserve">
+    <value>Security Datasheet</value>
+  </data>
+  <data name="label_importer" xml:space="preserve">
+    <value>Importer</value>
+  </data>
+  <data name="label_instructions" xml:space="preserve">
+    <value>Instructions</value>
+  </data>
+  <data name="label_insurancedocument" xml:space="preserve">
+    <value>Insurance Document</value>
+  </data>
+  <data name="label_intnumber" xml:space="preserve">
+    <value>Interior Number</value>
+  </data>
+  <data name="label_invoice" xml:space="preserve">
+    <value>Invoice</value>
+  </data>
+  <data name="label_invoices" xml:space="preserve">
+    <value>Invoices</value>
+  </data>
+  <data name="label_invoiceuuid" xml:space="preserve">
+    <value>Fiscal UUID</value>
+  </data>
+  <data name="label_isinsured" xml:space="preserve">
+    <value>Insured</value>
+  </data>
+  <data name="label_issader" xml:space="preserve">
+    <value>Opening by SADER</value>
+  </data>
+  <data name="label_linesbyroll" xml:space="preserve">
+    <value>Lines by Roll</value>
+  </data>
+  <data name="label_location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="label_measurement" xml:space="preserve">
+    <value>Measurement</value>
+  </data>
+  <data name="label_measurementSAT" xml:space="preserve">
+    <value>Measurement SAT</value>
+  </data>
+  <data name="label_merch" xml:space="preserve">
+    <value>Merchandise</value>
+  </data>
+  <data name="label_merchcode" xml:space="preserve">
+    <value>Merchandise Code</value>
+  </data>
+  <data name="label_merchprice" xml:space="preserve">
+    <value>Merchandise Price</value>
+  </data>
+  <data name="label_merchSAT" xml:space="preserve">
+    <value>Merchandise SAT</value>
+  </data>
+  <data name="label_model" xml:space="preserve">
+    <value>MODEL</value>
+  </data>
+  <data name="label_moralperson" xml:space="preserve">
+    <value>Moral Person</value>
+  </data>
+  <data name="label_neighborhood" xml:space="preserve">
+    <value>Neighborhood</value>
+  </data>
+  <data name="label_netweight" xml:space="preserve">
+    <value>Net Weight</value>
+  </data>
+  <data name="label_packaging" xml:space="preserve">
+    <value>Packaging</value>
+  </data>
+  <data name="label_packagingSAT" xml:space="preserve">
+    <value>Packaging SAT</value>
+  </data>
+  <data name="label_paid" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="label_partial" xml:space="preserve">
+    <value>Partial</value>
+  </data>
+  <data name="label_partition" xml:space="preserve">
+    <value>Partition</value>
+  </data>
+  <data name="label_patent" xml:space="preserve">
+    <value>Patent</value>
+  </data>
+  <data name="label_payments" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="label_payment_form" xml:space="preserve">
+    <value>Payment Form</value>
+  </data>
+  <data name="label_payment_method" xml:space="preserve">
+    <value>Payment Method</value>
+  </data>
+  <data name="label_paytype" xml:space="preserve">
+    <value>Payment</value>
+  </data>
+  <data name="label_photographic" xml:space="preserve">
+    <value>Photographic Report</value>
+  </data>
+  <data name="label_photographs" xml:space="preserve">
+    <value>Photographs</value>
+  </data>
+  <data name="label_physicalperson" xml:space="preserve">
+    <value>Physical Person</value>
+  </data>
+  <data name="label_plate" xml:space="preserve">
+    <value>License Plate</value>
+  </data>
+  <data name="label_postcode" xml:space="preserve">
+    <value>Zip Code</value>
+  </data>
+  <data name="label_preloaded_address_1" xml:space="preserve">
+    <value>CIMA Addresses</value>
+  </data>
+  <data name="label_preloaded_address_2" xml:space="preserve">
+    <value>Saved Addresses</value>
+  </data>
+  <data name="label_quotation" xml:space="preserve">
+    <value>Quotation</value>
+  </data>
+  <data name="label_reference" xml:space="preserve">
+    <value>Reference</value>
+  </data>
+  <data name="label_regime" xml:space="preserve">
+    <value>Tax Regime</value>
+  </data>
+  <data name="label_remteus" xml:space="preserve">
+    <value>Remaining TEUS</value>
+  </data>
+  <data name="label_request" xml:space="preserve">
+    <value>Request</value>
+  </data>
+  <data name="label_requestnumber" xml:space="preserve">
+    <value>Request Number</value>
+  </data>
+  <data name="label_requirementsdocument" xml:space="preserve">
+    <value>Requirements Datasheet</value>
+  </data>
+  <data name="label_seal" xml:space="preserve">
+    <value>Seal</value>
+  </data>
+  <data name="label_select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="label_service_unit" xml:space="preserve">
+    <value>Unit Code</value>
+  </data>
+  <data name="label_shippingcompany" xml:space="preserve">
+    <value>Shipping Company</value>
+  </data>
+  <data name="label_shipvoyage" xml:space="preserve">
+    <value>Ship Voyage</value>
+  </data>
+  <data name="label_state" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="label_status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="label_street" xml:space="preserve">
+    <value>Street</value>
+  </data>
+  <data name="label_tallyreport" xml:space="preserve">
+    <value>Tally Report</value>
+  </data>
+  <data name="label_tempcelsiusmax" xml:space="preserve">
+    <value>Maximum Celsius Temperature</value>
+  </data>
+  <data name="label_tempcelsiusmin" xml:space="preserve">
+    <value>Minimum Celsius Temperature</value>
+  </data>
+  <data name="label_tempfahrenheitmax" xml:space="preserve">
+    <value>Maximum Fahrenheit Temperature</value>
+  </data>
+  <data name="label_tempfahrenheitmin" xml:space="preserve">
+    <value>Minimum Fahrenheit Temperature</value>
+  </data>
+  <data name="label_to" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="label_value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="label_weightunit" xml:space="preserve">
+    <value>Weight Unit</value>
+  </data>
+  <data name="label_weightunitSAT" xml:space="preserve">
+    <value>Weight Unit SAT</value>
+  </data>
+  <data name="lbl_all_GPS" xml:space="preserve">
+    <value>All GPS</value>
+  </data>
+  <data name="lbl_all_units" xml:space="preserve">
+    <value>All Units</value>
+  </data>
+  <data name="lbl_full" xml:space="preserve">
+    <value>Full</value>
+  </data>
+  <data name="lbl_invoice_data" xml:space="preserve">
+    <value>Invoicing Data</value>
+  </data>
+  <data name="lbl_reports" xml:space="preserve">
+    <value>Reports</value>
+  </data>
+  <data name="lbl_single" xml:space="preserve">
+    <value>Single</value>
+  </data>
+  <data name="lbl_subclient" xml:space="preserve">
+    <value>Select Subclient</value>
+  </data>
+  <data name="landing_slogan" xml:space="preserve">
+    <value>Your logistics just one click away!</value>
+  </data>
+  <data name="landing_card_title_1" xml:space="preserve">
+    <value>Quotation</value>
+  </data>
+  <data name="landing_card_title_2" xml:space="preserve">
+    <value>Booking your services</value>
+  </data>
+  <data name="landing_card_title_3" xml:space="preserve">
+    <value>Tracking</value>
+  </data>
+  <data name="landing_card_desc_1" xml:space="preserve">
+    <value>Instant rates</value>
+  </data>
+  <data name="landing_card_desc_2" xml:space="preserve">
+    <value>Fast hiring</value>
+  </data>
+  <data name="landing_card_desc_3" xml:space="preserve">
+    <value>Logistics tracking</value>
+  </data>
+  <data name="login_error_invalid_entity" xml:space="preserve">
+    <value>User with no client assigned.</value>
+  </data>
+  <data name="login_error_invalid_user" xml:space="preserve">
+    <value>Invalid username or password.</value>
+  </data>
+  <data name="login_error_no_locations" xml:space="preserve">
+    <value>Client has no locations, please contact support</value>
+  </data>
+  <data name="login_error_no_privileges" xml:space="preserve">
+    <value>User with no privileges.</value>
+  </data>
+  <data name="login_error_unhandled" xml:space="preserve">
+    <value>Unhandled exception while logging in.</value>
+  </data>
+  <data name="month_april" xml:space="preserve">
+    <value>April</value>
+  </data>
+  <data name="month_august" xml:space="preserve">
+    <value>August</value>
+  </data>
+  <data name="month_december" xml:space="preserve">
+    <value>December</value>
+  </data>
+  <data name="month_february" xml:space="preserve">
+    <value>February</value>
+  </data>
+  <data name="month_january" xml:space="preserve">
+    <value>January</value>
+  </data>
+  <data name="month_july" xml:space="preserve">
+    <value>July</value>
+  </data>
+  <data name="month_june" xml:space="preserve">
+    <value>June</value>
+  </data>
+  <data name="month_march" xml:space="preserve">
+    <value>March</value>
+  </data>
+  <data name="month_may" xml:space="preserve">
+    <value>May</value>
+  </data>
+  <data name="month_november" xml:space="preserve">
+    <value>November</value>
+  </data>
+  <data name="month_october" xml:space="preserve">
+    <value>October</value>
+  </data>
+  <data name="month_september" xml:space="preserve">
+    <value>September</value>
+  </data>
+  <data name="msg_clone_contract" xml:space="preserve">
+    <value>Are you sure you want to clone </value>
+  </data>
+  <data name="msg_clone_within" xml:space="preserve">
+    <value>Clone within the same booking</value>
+  </data>
+  <data name="msg_editquot" xml:space="preserve">
+    <value>Editing another quotation will also empty your cart and delete the current active quotation if it has not yet been saved.</value>
+  </data>
+  <data name="msg_emptycart" xml:space="preserve">
+    <value>Emptying your cart will also delete the associated quotation if it has not yet been saved.</value>
+  </data>
+  <data name="msg_information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="msg_register_success" xml:space="preserve">
+    <value>Registration successful, please check the provided email to activate your CIMA account.</value>
+  </data>
+  <data name="msg_save_booking" xml:space="preserve">
+    <value>By saving this Booking, the corresponding charge will be generated in your CIMA account. Do you want to continue?</value>
+  </data>
+  <data name="msg_select_client" xml:space="preserve">
+    <value>Select the client to use</value>
+  </data>
+  <data name="msg_update_booking" xml:space="preserve">
+    <value>This Booking is going to be updated. Do you want to continue?</value>
+  </data>
+  <data name="msg_warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="nav_about" xml:space="preserve">
+    <value>About Us</value>
+  </data>
+  <data name="nav_contact" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="nav_gallery" xml:space="preserve">
+    <value>Gallery</value>
+  </data>
+  <data name="nav_login" xml:space="preserve">
+    <value>Log In</value>
+  </data>
+  <data name="nav_news" xml:space="preserve">
+    <value>News</value>
+  </data>
+  <data name="nav_register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="nav_services" xml:space="preserve">
+    <value>Services</value>
+  </data>
+  <data name="nav_start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="option_handling" xml:space="preserve">
+    <value>Handling</value>
+  </data>
+  <data name="option_service_arriveexpo" xml:space="preserve">
+    <value>Export Arrival</value>
+  </data>
+  <data name="option_service_arriveimpo" xml:space="preserve">
+    <value>Import Arrival</value>
+  </data>
+  <data name="option_service_conso" xml:space="preserve">
+    <value>Consolidation</value>
+  </data>
+  <data name="option_service_deconso" xml:space="preserve">
+    <value>Deconsolidation</value>
+  </data>
+  <data name="option_service_depexpo" xml:space="preserve">
+    <value>Export Departure</value>
+  </data>
+  <data name="option_service_depimpo" xml:space="preserve">
+    <value>Import Departure</value>
+  </data>
+  <data name="option_service_trasp" xml:space="preserve">
+    <value>Transloading</value>
+  </data>
+  <data name="option_service_warehouse" xml:space="preserve">
+    <value>Warehousing</value>
+  </data>
+  <data name="pc_contracted_by" xml:space="preserve">
+    <value>Contracted through Port Capital</value>
+  </data>
+  <data name="pc_contract_succes" xml:space="preserve">
+    <value>Contracting through Port Capital successful.</value>
+  </data>
+  <data name="pc_contract_unsuccessful" xml:space="preserve">
+    <value>An issue occurred while attempting to contract with Port Capital. Please try again later or contact support</value>
+  </data>
+  <data name="pc_general_error" xml:space="preserve">
+    <value>An issue occurred while attempting to process the contract through Port Capital.</value>
+  </data>
+  <data name="pc_not_register_error" xml:space="preserve">
+    <value>The engagement was canceled through Port Capital.</value>
+  </data>
+  <data name="pc_paymentexpiry" xml:space="preserve">
+    <value>Expiry {0}</value>
+  </data>
+  <data name="pc_paymentplandays" xml:space="preserve">
+    <value>{0} days plan</value>
+  </data>
+  <data name="pc_payments" xml:space="preserve">
+    <value>PAYMENT PLANS</value>
+  </data>
+  <data name="pc_payments_offer" xml:space="preserve">
+    <value>We offer you the option of PAYMENT INSTALLMENTS</value>
+  </data>
+  <data name="pc_question_contract" xml:space="preserve">
+    <value>By saving this contract with Port Capital, the corresponding charge will be applied to your Port Capital account, and the booking will be saved. Do you wish to continue?</value>
+  </data>
+  <data name="pc_question_register_customer" xml:space="preserve">
+    <value>You are currently not registered with Port Capital. Would you like to register?</value>
+  </data>
+  <data name="pc_selected_payment" xml:space="preserve">
+    <value>Selected Term</value>
+  </data>
+  <data name="pc_weoffer" xml:space="preserve">
+    <value>We offer</value>
+  </data>
+  <data name="pc_weoffer2" xml:space="preserve">
+    <value>payment plans</value>
+  </data>
+  <data name="pc_weoffer3" xml:space="preserve">
+    <value>in contracting your services.</value>
+  </data>
+  <data name="placeholder_input" xml:space="preserve">
+    <value>Input</value>
+  </data>
+  <data name="placeholder_select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="placeholder_set" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="portcapital_msg_hire" xml:space="preserve">
+    <value>Contratar por PortCapital</value>
+  </data>
+  <data name="quot_cargoty_bulk" xml:space="preserve">
+    <value>Bulk Cargo</value>
+  </data>
+  <data name="quot_cargoty_consolidated" xml:space="preserve">
+    <value>Consolidated Cargo (LCL)</value>
+  </data>
+  <data name="quot_cargoty_container" xml:space="preserve">
+    <value>Full Container (FCL)</value>
+  </data>
+  <data name="quot_cargoty_danger" xml:space="preserve">
+    <value>Dangerous Cargo (IMO)</value>
+  </data>
+  <data name="quot_cargoty_overdimensional" xml:space="preserve">
+    <value>Oversized Cargo</value>
+  </data>
+  <data name="quot_container_20ft" xml:space="preserve">
+    <value>20 feet Container</value>
+  </data>
+  <data name="quot_container_40ft" xml:space="preserve">
+    <value>40 feet Container</value>
+  </data>
+  <data name="quot_container_40hc" xml:space="preserve">
+    <value>40 feet High Cube Container</value>
+  </data>
+  <data name="quot_container_dry" xml:space="preserve">
+    <value>Dry</value>
+  </data>
+  <data name="quot_container_flat" xml:space="preserve">
+    <value>Flat Rack</value>
+  </data>
+  <data name="quot_container_isotank" xml:space="preserve">
+    <value>ISO Tank</value>
+  </data>
+  <data name="quot_container_open" xml:space="preserve">
+    <value>Open Top</value>
+  </data>
+  <data name="quot_container_reefer" xml:space="preserve">
+    <value>Refrigerated</value>
+  </data>
+  <data name="quot_container_size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="quot_container_type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="quot_drag_chassis20" xml:space="preserve">
+    <value>20ft Chassis</value>
+  </data>
+  <data name="quot_drag_chassis40" xml:space="preserve">
+    <value>40ft Chassis</value>
+  </data>
+  <data name="quot_drag_chassisfull" xml:space="preserve">
+    <value>Full Chassis</value>
+  </data>
+  <data name="quot_drag_platform" xml:space="preserve">
+    <value>Platform</value>
+  </data>
+  <data name="quot_drag_platform3axle" xml:space="preserve">
+    <value>3-Axle Platform</value>
+  </data>
+  <data name="quot_drag_platformfull" xml:space="preserve">
+    <value>Full Platform</value>
+  </data>
+  <data name="quot_fromto_from" xml:space="preserve">
+    <value>Origin</value>
+  </data>
+  <data name="quot_fromto_to" xml:space="preserve">
+    <value>Destination</value>
+  </data>
+  <data name="quot_location_location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="quot_operation_export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="quot_operation_import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="quot_pack_bulk" xml:space="preserve">
+    <value>Bulk</value>
+  </data>
+  <data name="quot_pack_pallet" xml:space="preserve">
+    <value>Palletized</value>
+  </data>
+  <data name="quot_subservices_subservices" xml:space="preserve">
+    <value>Subservices</value>
+  </data>
+  <data name="reports_photographic" xml:space="preserve">
+    <value>Photographic</value>
+  </data>
+  <data name="reports_photographic_desc" xml:space="preserve">
+    <value>Photographic report generated in an PDF file</value>
+  </data>
+  <data name="reports_warehousecontainerized" xml:space="preserve">
+    <value>Containerized Stock</value>
+  </data>
+  <data name="reports_warehousecontainerized_desc" xml:space="preserve">
+    <value>Containerized cargo stock report generated in an Excel file</value>
+  </data>
+  <data name="reports_warehouseloose" xml:space="preserve">
+    <value>Loose Cargo Stock</value>
+  </data>
+  <data name="reports_warehouseloose_desc" xml:space="preserve">
+    <value>Loose cargo stock report generated in an Excel file</value>
+  </data>
+  <data name="snackbar_error_no_perms" xml:space="preserve">
+    <value>You do not have the required permissions to perform the attempted operation</value>
+  </data>
+  <data name="snackbar_err_apicomm" xml:space="preserve">
+    <value>An error occurred when contacting the API, try again or contact support</value>
+  </data>
+  <data name="snackbar_err_exception" xml:space="preserve">
+    <value>A non controlled error occurred, try again or contact support</value>
+  </data>
+  <data name="snackbar_err_invoice_unitloc" xml:space="preserve">
+    <value>Error, Business Unit and Location must be the same</value>
+  </data>
+  <data name="snackbar_err_selectlocationbusiness" xml:space="preserve">
+    <value>Location and business unit must be selected</value>
+  </data>
+  <data name="snackbar_login_empty" xml:space="preserve">
+    <value>Error, User and Password must not be empty.</value>
+  </data>
+  <data name="snackbar_login_error" xml:space="preserve">
+    <value>Error, User and/or Password incorrect.</value>
+  </data>
+  <data name="snackbar_packageserror" xml:space="preserve">
+    <value>It is not possible to add two identical packages.</value>
+  </data>
+  <data name="snackbar_packageserviceserror_1" xml:space="preserve">
+    <value>The service</value>
+  </data>
+  <data name="snackbar_packageserviceserror_2" xml:space="preserve">
+    <value>is already in the cart, remove it to add the package.</value>
+  </data>
+  <data name="snackbar_packagesserviceerror_1" xml:space="preserve">
+    <value>It is not possible to add two packages that share services, your package</value>
+  </data>
+  <data name="snackbar_packagesserviceerror_2" xml:space="preserve">
+    <value>already contains a service from the one you are trying to add.</value>
+  </data>
+  <data name="snackbar_serviceincompatible" xml:space="preserve">
+    <value>The service is incompatible with the ones already in your cart.</value>
+  </data>
+  <data name="snackbar_serviceserror" xml:space="preserve">
+    <value>It is not possible to add two identical services.</value>
+  </data>
+  <data name="snackbar_servicespackageerror_1" xml:space="preserve">
+    <value>Your package</value>
+  </data>
+  <data name="snackbar_servicespackageerror_2" xml:space="preserve">
+    <value>already contains the service you are trying to add.</value>
+  </data>
+  <data name="tracking_allgood" xml:space="preserve">
+    <value>There is no stages that require your attention</value>
+  </data>
+  <data name="tracking_critical" xml:space="preserve">
+    <value>One or more stages require your attention</value>
+  </data>
+  <data name="tracking_default" xml:space="preserve">
+    <value>Tracking not yet started</value>
+  </data>
+  <data name="tracking_warning" xml:space="preserve">
+    <value>One or more stages have important information</value>
+  </data>
+  <data name="ubook_bookings_status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ubook_noitems" xml:space="preserve">
+    <value>There is no bookings, finalize a quotation first to generate a new booking</value>
+  </data>
+  <data name="uinvoices_noitems" xml:space="preserve">
+    <value>There are no invoices with the selected filters</value>
+  </data>
+  <data name="uquot_noitems" xml:space="preserve">
+    <value>There is no quotations, make one first to see it here</value>
+  </data>
+  <data name="uquot_quotation" xml:space="preserve">
+    <value>Quotation</value>
+  </data>
+  <data name="uquot_quotations" xml:space="preserve">
+    <value>Quotations</value>
+  </data>
+  <data name="uquot_quotation_create" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="uquot_quotation_expired" xml:space="preserve">
+    <value>Quotation Expired</value>
+  </data>
+  <data name="uquot_quotation_modified" xml:space="preserve">
+    <value>Last Modified Date</value>
+  </data>
+  <data name="uquot_quotation_until" xml:space="preserve">
+    <value>Valid Until</value>
+  </data>
+  <data name="ureports_noitems" xml:space="preserve">
+    <value>There are no reports with the selected filters</value>
+  </data>
+  <data name="agreement-accept-3" xml:space="preserve">
+    <value>has been accepted</value>
+  </data>
+  <data name="label_travelsin" xml:space="preserve">
+    <value>in which the load travels</value>
+  </data>
+  <data name="label_boxnumber" xml:space="preserve">
+    <value>Box Number</value>
+  </data>
+  <data name="label_other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="snackbar_err_selectbookingserial" xml:space="preserve">
+    <value>Booking, container or plate must be entered.</value>
+  </data>
+  <data name="snackbar_err_photographicreport" xml:space="preserve">
+    <value>No photographic report was found with the filters submitted.</value>
+  </data>
+  <data name="placeholder_email" xml:space="preserve">
+    <value>Separate email accounts with a semicolon (;)</value>
+  </data>
+  <data name="error_invalid_bl" xml:space="preserve">
+    <value>BL submitted is invalid with the selected shipping company.</value>
+  </data>
+  <data name="label_quality" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="label_booking_type" xml:space="preserve">
+    <value>Booking Type</value>
+  </data>
+  <data name="label_payment_receipt" xml:space="preserve">
+    <value>Payment Receipt</value>
+  </data>
+  <data name="label_temporary" xml:space="preserve">
+    <value>Temporary</value>
+  </data>
+  <data name="error_container_quality_missing" xml:space="preserve">
+    <value>Containers quality is missing.</value>
+  </data>
+  <data name="error_container_bookingtype_missing" xml:space="preserve">
+    <value>Containers Booking type is missing.</value>
+  </data>
+  <data name="error_container_booking_missing" xml:space="preserve">
+    <value>Containers Booking is missing.</value>
+  </data>
+  <data name="btn_upload_excel" xml:space="preserve">
+    <value>UPLOAD EXCEL</value>
+  </data>
+  <data name="btn_remove" xml:space="preserve">
+    <value>REMOVE</value>
+  </data>
+  <data name="btn_download" xml:space="preserve">
+    <value>DOWNLOAD</value>
+  </data>
+  <data name="error_container_bl_missing" xml:space="preserve">
+    <value>Container BL is missing.</value>
+  </data>
+  <data name="pc_register_customer_error_general" xml:space="preserve">
+    <value>It was not possible to register the user in PortCapital.</value>
+  </data>
+  <data name="btn_upload_assignment" xml:space="preserve">
+    <value>UPLOAD ASSIGNMENT LETTER</value>
+  </data>
+  <data name="label_assignmentletter" xml:space="preserve">
+    <value>Assignmente Letter</value>
+  </data>
+  <data name="error_container_quantity_missing" xml:space="preserve">
+    <value>Containers quantity is missing.</value>
+  </data>
+  <data name="label_accountnumber" xml:space="preserve">
+    <value>Account Number</value>
+  </data>
+  <data name="label_contractingdata" xml:space="preserve">
+    <value>Contracting Data</value>
+  </data>
+  <data name="label_servicedata" xml:space="preserve">
+    <value>Service Data</value>
+  </data>
+  <data name="label_vessel" xml:space="preserve">
+    <value>Vessel</value>
+  </data>
+  <data name="label_servicedate" xml:space="preserve">
+    <value>Service Date</value>
+  </data>
+  <data name="label_notificationemail" xml:space="preserve">
+    <value>Notification Emails</value>
+  </data>
+  <data name="label_internalreference" xml:space="preserve">
+    <value>Internal Reference</value>
+  </data>
+  <data name="error_invalid_sizedocument" xml:space="preserve">
+    <value>The document must have a maximum size of 2MB.</value>
+  </data>
+  <data name="error_invalid_booking" xml:space="preserve">
+    <value>Booking submitted is invalid with the selected shipping company.</value>
+  </data>
+  <data name="lbl_simplex_maneuver_expo" xml:space="preserve">
+    <value>Maneuver Impo</value>
+  </data>
+  <data name="lbl_simplex_maneuver_impo" xml:space="preserve">
+    <value>Maneuver Expo</value>
+  </data>
+  <data name="lbl_maneuver" xml:space="preserve">
+    <value>Maneuver</value>
+  </data>
+  <data name="lbl_servicedata" xml:space="preserve">
+    <value>Service Date</value>
+  </data>
+  <data name="lbl_client" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="lbl_shippingline" xml:space="preserve">
+    <value>Shipping Linne</value>
+  </data>
+  <data name="lbl_update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="snackbar_err_is_not_possible_download_zip" xml:space="preserve">
+    <value>It was not possible to download the zip</value>
+  </data>
+  <data name="snackbar_err_is_was_not_possible_edit_contract" xml:space="preserve">
+    <value>Failed to open the contract</value>
+  </data>
+  <data name="error_invalidlength_bl" xml:space="preserve">
+    <value>The BL inserted with the selected shipping company must be 10 characters long.</value>
+  </data>
+  <data name="label_request_for_unloadingempty_containers" xml:space="preserve">
+    <value>Empty Container Unloading Requests</value>
+  </data>
+  <data name="requests_for_loading_empty_containers" xml:space="preserve">
+    <value>Empty Container Load Requests</value>
+  </data>
+  <data name="error_missing_regime" xml:space="preserve">
+    <value>The selected Company Name does not haver a registered Regime.</value>
+  </data>
+  <data name="error_invalid_email" xml:space="preserve">
+    <value>One or more emails are invalid.</value>
+  </data>
+  <data name="error_invalid_endemail" xml:space="preserve">
+    <value>The text entered must not end in a semicolon (;).</value>
+  </data>
+  <data name="error_notstamped_invoice" xml:space="preserve">
+    <value>The invoice has not been stamped.</value>
+  </data>
+  <data name="msg_booking_successfully_saved" xml:space="preserve">
+    <value>Booking successfully saved</value>
+  </data>
+  <data name="error_missing_companyname" xml:space="preserve">
+    <value>Select a company name to get field.</value>
+  </data>
+  <data name="error_missing_coin" xml:space="preserve">
+    <value>The selected company name does not have a registered coin.</value>
+  </data>
+  <data name="err_invalid_container_shipvoyage" xml:space="preserve">
+    <value>Ship voyage is invalid</value>
+  </data>
+  <data name="label_maneuvers_invoices" xml:space="preserve">
+    <value>Maneuver Invoices</value>
+  </data>
+  <data name="placeholder_search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="label_antiquity" xml:space="preserve">
+    <value>Antiquity</value>
+  </data>
+  <data name="umaneuverinvoices_noitems" xml:space="preserve">
+    <value>There are no invoices.</value>
+  </data>
+  <data name="btn_get_xml" xml:space="preserve">
+    <value>Get XML</value>
+  </data>
+  <data name="label_totalpayment" xml:space="preserve">
+    <value>Total Payment</value>
+  </data>
+  <data name="label_partialpayment" xml:space="preserve">
+    <value>Partial Payment</value>
+  </data>
+  <data name="btn_openpay" xml:space="preserve">
+    <value>Paying by SPEI with Openpay</value>
+  </data>
+  <data name="label_amount_due" xml:space="preserve">
+    <value>Amount Due</value>
+  </data>
+  <data name="label_parcialpayment_title" xml:space="preserve">
+    <value>Enter the amount to pay</value>
+  </data>
+  <data name="msg_paymentamount" xml:space="preserve">
+    <value>Amount Due: $</value>
+  </data>
+  <data name="msg_ofinvoice" xml:space="preserve">
+    <value>of the Invoice</value>
+  </data>
+  <data name="msg_referencespei_title" xml:space="preserve">
+    <value>SPEI Payment Form</value>
+  </data>
+  <data name="label_customsbroker" xml:space="preserve">
+    <value>Customs Broker</value>
+  </data>
+  <data name="label_referenceinvoices" xml:space="preserve">
+    <value>Invoices Reference</value>
+  </data>
+  <data name="label_payment_deadline" xml:space="preserve">
+    <value>Payment Deadline</value>
+  </data>
+  <data name="label_stepspayment" xml:space="preserve">
+    <value>Steps to Make the Payment</value>
+  </data>
+  <data name="msg_selectioninstruction" xml:space="preserve">
+    <value>Select the “Services” option from the “Pay” menu and enter the following information.</value>
+  </data>
+  <data name="label_cienumber" xml:space="preserve">
+    <value>CIE Agreement Number</value>
+  </data>
+  <data name="label_registerdata" xml:space="preserve">
+    <value>Information to be Registered</value>
+  </data>
+  <data name="msg_registerinfo" xml:space="preserve">
+    <value>Enter the registration information to continue with the operation.</value>
+  </data>
+  <data name="label_concept" xml:space="preserve">
+    <value>Concept</value>
+  </data>
+  <data name="label_warehousing" xml:space="preserve">
+    <value>Warehousing</value>
+  </data>
+  <data name="label_otherbanks" xml:space="preserve">
+    <value>All Other Banks</value>
+  </data>
+  <data name="msg_otherbanks" xml:space="preserve">
+    <value>Open the “Transfers and Payments” or “Payments to Other Banks” section and provide the transfer information.</value>
+  </data>
+  <data name="label_destinationbank" xml:space="preserve">
+    <value>Destination Bank</value>
+  </data>
+  <data name="msg_payment_openpay" xml:space="preserve">
+    <value>Thank you, we are looking forward to your next payment</value>
+  </data>
+  <data name="msg_reminderreference" xml:space="preserve">
+    <value>We remind you that your payment date is valid until</value>
+  </data>
+  <data name="msg_openpay_email" xml:space="preserve">
+    <value>You will receive the interbank payment reference form in your e-mail or you can download it by clicking on the “Download Payment Form” button.</value>
+  </data>
+  <data name="btn_sendemail" xml:space="preserve">
+    <value>SEND BY MAIL</value>
+  </data>
+  <data name="btn_download_payment" xml:space="preserve">
+    <value>Download Payment Form</value>
+  </data>
+  <data name="label_termsconditions" xml:space="preserve">
+    <value>Terms &amp; Conditions</value>
+  </data>
+  <data name="label_privacypolicy" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="label_phonenumber" xml:space="preserve">
+    <value>Phone Number</value>
+  </data>
+  <data name="col_color_attachedpayment" xml:space="preserve">
+    <value>Records with payment vouchers attached awaiting application.</value>
+  </data>
+  <data name="label_deletereference" xml:space="preserve">
+    <value>Delete Last Reference</value>
+  </data>
+  <data name="msg_deletereference" xml:space="preserve">
+    <value>The last reference of the selected invoice and related ones will be deleted.</value>
+  </data>
+  <data name="msg_infodeletereference" xml:space="preserve">
+    <value>Before deleting the reference, make sure that it has not been paid. If it has been paid, it cannot be applied in the reconciliation process.</value>
+  </data>
+  <data name="btn_deletereference" xml:space="preserve">
+    <value>Delete Reference</value>
+  </data>
+  <data name="btn_delete" xml:space="preserve">
+    <value>DELETE</value>
+  </data>
+  <data name="label_of" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="label_statusreference" xml:space="preserve">
+    <value>Reference S.</value>
+  </data>
+  <data name="err_delete_reference" xml:space="preserve">
+    <value>An error ocurred when deleting the last reference.</value>
+  </data>
+  <data name="msg_reference_successfully_deleted" xml:space="preserve">
+    <value>Reference successfully deleted.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.tarifaNotFound" xml:space="preserve">
+    <value>An error occurred, the fare was not found.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.invalidAgentRequest" xml:space="preserve">
+    <value>An error occurred, the session agent does not match the client agent.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.invalidPaymentFormRequest" xml:space="preserve">
+    <value>An error occurred, the payment method is not valid.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.invalidUserTypeRequest" xml:space="preserve">
+    <value>An error occurred, the user type is not valid as it must be a shipping line or customs broker.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.invalidCustomerRequest" xml:space="preserve">
+    <value>An error occurred, invalid customer.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.invalidServiceUnitReques" xml:space="preserve">
+    <value>An error occurred, invalid service unit.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.invalidCfdiUseRequest" xml:space="preserve">
+    <value>An error occurred, invalid CFDI usage.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.blPathFileIsRequired" xml:space="preserve">
+    <value>An error occurred, the path to the BL file is required.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.tmpFileRequired" xml:space="preserve">
+    <value>An error occurred, the temporary file is required.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.catLineaNotFound" xml:space="preserve">
+    <value>An error occurred, the shipping line was not found.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.catUsuarioNotFound" xml:space="preserve">
+    <value>An error occurred, the user was not found.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.catClienteNotFound" xml:space="preserve">
+    <value>An error occurred, the customer was not found.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.save.relAgenteEmpresaNotFound" xml:space="preserve">
+    <value>An error occurred, the relationship between the agent and the company was not found.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.blPathRequired" xml:space="preserve">
+    <value>An error occurred, the path to the BL file is required.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.invalidDigit" xml:space="preserve">
+    <value>An error occurred, the verification digit of one or more containers is invalid.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.containerAlreadyScheduled" xml:space="preserve">
+    <value>An error occurred, one or more containers are already scheduled.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.containerAlreadyInYard" xml:space="preserve">
+    <value>An error occurred, one or more containers are already in the yard.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.containerAlreadyBlocked" xml:space="preserve">
+    <value>An error occurred, one or more containers are blocked.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.serieAlreadyBlocked" xml:space="preserve">
+    <value>An error occurred, one or more container serial numbers are blocked.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.blAlreadyBlocked" xml:space="preserve">
+    <value>An error occurred, one or more BL of the containers are blocked.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.packingTypeInvalid" xml:space="preserve">
+    <value>An error occurred, one or more container sizes are invalid.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.containerNotAllowed" xml:space="preserve">
+    <value>An error occurred, one or more containers are not allowed.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.invalidB" xml:space="preserve">
+    <value>An error occurred, one or more BL of the containers are invalid.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.invalidBlFormat" xml:space="preserve">
+    <value>An error occurred, one or more BL of the containers does not have a valid format.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.blMustBe10DigitLength" xml:space="preserve">
+    <value>An error occurred, one or more BL of the containers does not have the required length of 10 characters.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.relAgentesEmpresasNotFound" xml:space="preserve">
+    <value>An error occurred, the relationship between agents and companies was not found.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.store.containerBlocked" xml:space="preserve">
+    <value>An error occurred, the SLSU804747 container is blocked.</value>
+  </data>
+  <data name="label_payment_reference_generation_in_progress" xml:space="preserve">
+    <value>Payment reference in progress</value>
+  </data>
+  <data name="label_send_voucherpayment" xml:space="preserve">
+    <value>Send Voucher Payment</value>
+  </data>
+  <data name="error_send_voucherpayment" xml:space="preserve">
+    <value>An error occurred and it was not possible to resend the payment reference.</value>
+  </data>
+  <data name="msg_voucher_successfully_send" xml:space="preserve">
+    <value>Payment voucher successfully send.</value>
+  </data>
+  <data name="msg_save_voucherpayment" xml:space="preserve">
+    <value>After saving the maneuver, a payment form will be sent to your e-mail address for you to make the deposit. Please make the payment before the deadline.</value>
+  </data>
+  <data name="btn_dontshow" xml:space="preserve">
+    <value>DO NOT SHOW AGAIN</value>
+  </data>
+  <data name="label_show_message" xml:space="preserve">
+    <value>Show message again</value>
+  </data>
+  <data name="msg_voucher_successfully_downloaded" xml:space="preserve">
+    <value>Payment voucher successfully downloaded.</value>
+  </data>
+  <data name="error_download_voucherpayment" xml:space="preserve">
+    <value>An error occurred and it was not possible to download the payment voucher.</value>
+  </data>
+  <data name="msg_savedbooking_sendingpayment" xml:space="preserve">
+    <value>The payment form was sent by e-mail.</value>
+  </data>
+  <data name="simplexCustomers.maneuvers.loadRegister.store.bookingFdfIsExisting" xml:space="preserve">
+    <value>An error occurred, the Booking is already in existence in a maneuver.</value>
+  </data>
+  <data name="label_businessname_consulting" xml:space="preserve">
+    <value>My Clients</value>
+  </data>
+  <data name="label_detail_businessname" xml:space="preserve">
+    <value>Business Name Detail</value>
+  </data>
+  <data name="label_satfile" xml:space="preserve">
+    <value>File SAT</value>
+  </data>
+  <data name="error_save_voucherpayment" xml:space="preserve">
+    <value>An error occurred when generating the payment reference.</value>
+  </data>
+  <data name="label_reasontype" xml:space="preserve">
+    <value>Reason Type</value>
+  </data>
+  <data name="btn_upload_csf" xml:space="preserve">
+    <value>Upload Tax Status Certificate</value>
+  </data>
+  <data name="label_email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="label_website" xml:space="preserve">
+    <value>Web Site</value>
+  </data>
+  <data name="label_taxaddress" xml:space="preserve">
+    <value>Active Tax Address</value>
+  </data>
+  <data name="label_town" xml:space="preserve">
+    <value>Town</value>
+  </data>
+  <data name="label_typeroad" xml:space="preserve">
+    <value>Type Road</value>
+  </data>
+  <data name="label_roadname" xml:space="preserve">
+    <value>Name Road</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="label_invoicemaneuver_data" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="label_contact_data" xml:space="preserve">
+    <value>Contact Data</value>
+  </data>
+  <data name="label_contact" xml:space="preserve">
+    <value>Contact</value>
+  </data>
+  <data name="label_agency" xml:space="preserve">
+    <value>Agency</value>
+  </data>
+  <data name="label_collections" xml:space="preserve">
+    <value>Collections</value>
+  </data>
+  <data name="label_national" xml:space="preserve">
+    <value>National</value>
+  </data>
+  <data name="label_foreign" xml:space="preserve">
+    <value>Foreign</value>
+  </data>
+  <data name="placeholder_date" xml:space="preserve">
+    <value>DD/MM/YYYY</value>
+  </data>
+  <data name="msg_saving_booking" xml:space="preserve">
+    <value>Saving Booking</value>
+  </data>
+  <data name="label_payment_reference_regeneration_in_progress" xml:space="preserve">
+    <value>Payment reference regeneration in progress</value>
+  </data>
+  <data name="label_saving_booking_in_progress" xml:space="preserve">
+    <value>Booking saving in progress</value>
+  </data>
+  <data name="label_the_process_may_takes_a _few_minutes" xml:space="preserve">
+    <value>The process may takes a few minutes</value>
+  </data>
+  <data name="msg_businessname_successfully_save" xml:space="preserve">
+    <value>Business Name successfully saved.</value>
+  </data>
+  <data name="error_businessname_saved" xml:space="preserve">
+    <value>An error occurred when saving the business name.</value>
+  </data>
+  <data name="err_missing_data" xml:space="preserve">
+    <value>Missing information, please check that all required fields are complete.</value>
+  </data>
+  <data name="label_commercial_name" xml:space="preserve">
+    <value>Commercial Name</value>
+  </data>
+  <data name="btn_get_invoice" xml:space="preserve">
+    <value>Get Invoice</value>
+  </data>
+  <data name="msg_zip_successfully_downloaded" xml:space="preserve">
+    <value>ZIP file successfully downloaded.</value>
+  </data>
+  <data name="error_zip_downloaded" xml:space="preserve">
+    <value>An error occurred and it was not possible to download the ZIP file.</value>
+  </data>
+  <data name="businessname_noitems" xml:space="preserve">
+    <value>There are no business names</value>
+  </data>
+  <data name="msg_generating_paymentreference" xml:space="preserve">
+    <value>Generating Payment Reference</value>
+  </data>
+  <data name="label_containers_empty" xml:space="preserve">
+    <value>EMPTY CONTAINERS</value>
+  </data>
+  <data name="label_client_with_credit" xml:space="preserve">
+    <value>Customer With Credit</value>
+  </data>
+  <data name="lbl_simplex_maneuver" xml:space="preserve">
+    <value>Loading Maneuver</value>
+  </data>
+  <data name="lbl_unloading_maneuver" xml:space="preserve">
+    <value>Unloading Maneuver</value>
+  </data>
+  <data name="lbl_bill_payment" xml:space="preserve">
+    <value>Bill Payment</value>
+  </data>
+  <data name="lbl_customer_without_credir" xml:space="preserve">
+    <value>Customers Without Credit</value>
+  </data>
+  <data name="lbl_load_without_credit" xml:space="preserve">
+    <value>Load Without Credit</value>
+  </data>
+  <data name="lbl_download_without_credit" xml:space="preserve">
+    <value>Download Without Credit</value>
+  </data>
+  <data name="lbl_all" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="lbl_customer_management" xml:space="preserve">
+    <value>Customer Management</value>
+  </data>
+  <data name="lbl_helpcenter" xml:space="preserve">
+    <value>HelpCenter</value>
+  </data>
+  <data name="lbl_title_carga_sc" xml:space="preserve">
+    <value>Loading Maneuver Without Credit</value>
+  </data>
+  <data name="lbl_title_descarga_sc" xml:space="preserve">
+    <value>Unloading Maneuver Without Credit</value>
+  </data>
+  <data name="lbl_unloading_cc" xml:space="preserve">
+    <value>Unloading Maneuver With Credit</value>
+  </data>
+  <data name="lbl_seleccion_contenido_help" xml:space="preserve">
+    <value>Select a menu option to view its content.</value>
+  </data>
+  <data name="lbl_help" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="btn_grabar" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="snackbar_err_download_invoice" xml:space="preserve">
+    <value>It was not possible to download the invoice</value>
+  </data>
+  <data name="snackbar_succ_download_invoice" xml:space="preserve">
+    <value>Invoice downloaded successfully</value>
+  </data>
+  <data name="lbl_eliminar_csf" xml:space="preserve">
+    <value>Delet Company Name</value>
+  </data>
+  <data name="lbl_edit_csf" xml:space="preserve">
+    <value>Edit Company Name</value>
+  </data>
+  <data name="btn_download_comprobant" xml:space="preserve">
+    <value>Download Proof of Payment</value>
+  </data>
+  <data name="btn_view_razon" xml:space="preserve">
+    <value>See Company Name</value>
+  </data>
+  <data name="lbl_maneuvers_expo" xml:space="preserve">
+    <value>Loading Maneuvers</value>
+  </data>
+  <data name="lbl_maneuvers_impo" xml:space="preserve">
+    <value>Maneuvers Expo</value>
+  </data>
+  <data name="lbl_consultar_info_contenedor" xml:space="preserve">
+    <value>Container Information</value>
+  </data>
+  <data name="btn_editar" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="lbl_fecha_elaboracion" xml:space="preserve">
+    <value>Created Date</value>
+  </data>
+  <data name="snackbar_limitoneservice" xml:space="preserve">
+    <value />
+  </data>
+  <data name="label_status_maniuver" xml:space="preserve">
+    <value>Maneuver Status</value>
+  </data>
+  <data name="lbl_status_reference_bank" xml:space="preserve">
+    <value>Bank Reference Status</value>
+  </data>
+  <data name="label_general_info" xml:space="preserve">
+    <value>General Data</value>
+  </data>
+  <data name="snackbar_err_download_eir" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lbl_error_download_containereir" xml:space="preserve">
+    <value>Does not contain an EIR in the container.</value>
+  </data>
+  <data name="lbl_succes_EIR" xml:space="preserve">
+    <value>EIR downloaded successfully.</value>
+  </data>
+</root>

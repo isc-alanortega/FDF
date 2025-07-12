@@ -1,0 +1,162 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using Syncfusion.Blazor.SplitButtons
+@using Microsoft.JSInterop
+@inject GlobalLocalizer localize
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject GlobalBreakpointService BreakpointService
+
+
+<SfDropDownButton class="ayuda-menu e-dropdown-btn"
+                  CssClass="@($"e-custom {(BreakpointService.GetIsMobile() ? "e-caret-hide ayuda-icon-mobile" : "")}")"
+                  IconCss="fal fa-life-ring"
+                  style="color: #ffffff"
+                  Content="">
+    <DropDownButtonEvents ItemSelected="@ItemSelected"></DropDownButtonEvents>
+    <DropDownMenuItems>
+        <DropDownMenuItem Text="@localize.Get("lbl_help")" Disabled="true" class="cima-booking"></DropDownMenuItem>
+        <DropDownMenuItem Text="@localize.Get("label_containers_empty")" Disabled="true" class="contenedores-vacios"></DropDownMenuItem>
+        <DropDownMenuItem Text="@localize.Get("label_client_with_credit")" Disabled="true" class="titulo-seccion"></DropDownMenuItem>
+        <DropDownMenuItem Id="customer-credit" Text="@localize.Get("lbl_simplex_maneuver")" class="enlace-activo"></DropDownMenuItem>
+        <DropDownMenuItem Id="customer-credit-discharge" Text="@localize.Get("lbl_unloading_maneuver")" class="enlace-activo"></DropDownMenuItem>
+        <DropDownMenuItem Id="custom-invoice" Text="@localize.Get("lbl_bill_payment")" class="enlace-activo"></DropDownMenuItem>
+        <DropDownMenuItem Text="@localize.Get("lbl_customer_without_credir")" Disabled="true" class="titulo-seccion"></DropDownMenuItem>
+        <DropDownMenuItem Id="load-without-credit" Text="@localize.Get("lbl_simplex_maneuver")" class="enlace-activo"></DropDownMenuItem>
+        <DropDownMenuItem Id="download-without-credit" Text="@localize.Get("lbl_unloading_maneuver")" class="enlace-activo"></DropDownMenuItem>
+        <DropDownMenuItem Text="@localize.Get("lbl_all")" Disabled="true" class="titulo-seccion"></DropDownMenuItem>
+        <DropDownMenuItem Id="customers" Text="@localize.Get("lbl_customer_management")" class="enlace-activo"></DropDownMenuItem>
+    </DropDownMenuItems>
+</SfDropDownButton>
+@code{
+    private void ItemSelected(MenuEventArgs args)
+    {
+        string? sectionId = args.Item.Id switch
+        {
+            "customer-credit" => "customer-credit",
+            "load-without-credit" => "load-without-credit",
+            "customer-credit-discharge" => "customer-credit-discharge",
+            "download-without-credit" => "download-without-credit",
+            "custom-invoice" => "custom-invoice",
+            "customers" => "customers",
+
+            _ => null
+        };
+
+        if (sectionId is not null)
+        {
+            NavigationManager.NavigateTo($"/help/{sectionId}");
+        }
+    }
+
+    private async Task OpenInNewWindow(string url)
+    {
+        await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+    }
+}
+
+<style>
+    .e-dropdown-popup {
+        border-radius: 12px !important;
+    }
+    
+    .e-dropdown-menu {
+        border-radius: 12px !important;
+        padding-top: 0 !important;
+    }
+
+    /* Estilo para el botón principal */
+    .cima-booking {
+        text-align: center !important;
+        font-weight: 700 !important;
+        color: #0045ac !important;
+        position: relative !important;
+        justify-content: center;
+        background-color: transparent !important;
+        opacity: 1 !important;
+    }
+
+        .cima-booking::after {
+            position: absolute !important;
+            right: 16px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            font-size: 12px !important;
+        }
+
+    /* Contenedores vacíos */
+    .contenedores-vacios {
+        font-weight: bold !important;
+        background-color: #0045ac !important;
+        color: #fff !important;
+        border-bottom: 1px solid #4d94ff !important;
+        border-top: 1px solid #4d94ff !important;
+        opacity: 1 !important;
+    }
+
+    /* Títulos de secciones */
+    .titulo-seccion {
+        color: #0045ac !important;
+        font-weight: bold !important;
+        opacity: 1 !important;
+        background-color: #f9f9f9 !important;
+        border-top: 1px solid #e0e0e0 !important;
+    }
+
+    /* Elementos con enlaces */
+    .enlace-activo {
+        color: black !important;
+    }
+
+        .enlace-activo:hover {
+            background-color: #e3f2fd !important;
+            color: #0056b3 !important;
+        }
+
+    /* Estilo del botón principal */
+    .ayuda-menu .e-dropdown-btn {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 1.2rem;
+        color: aqua;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+
+    /* Ícono */
+
+    .ayuda-menu .fal.fa-life-ring {
+        font-size: 2rem !important;
+        font-weight: 100 !important;
+    }
+
+
+    .ayuda-icon-mobile .fal.fa-life-ring {
+        font-size: 2.8rem !important;
+    }
+
+     /*Flechita*/
+    .ayuda-menu .e-caret::before {
+        color: white !important;
+    }
+    /* Menú desplegable */
+    .ayuda-menu .e-dropdown-popup {
+        background-color: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Asegurar que el contenedor principal no tengan márgenes */
+    .ayuda-menu, .ayuda-menu * {
+        background-color: transparent !important;
+        background: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+</style>

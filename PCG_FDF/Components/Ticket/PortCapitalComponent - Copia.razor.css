@@ -1,0 +1,143 @@
+:root {
+  --color-primary: #222B3E;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #FF4C29;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #222B3E;
+  --color-nav-info: #FFFFFF;
+  --color-package-subtitle: #0EB4F1;
+}
+
+::deep .port-capital {
+  padding: 24px;
+  border: 3px solid #222B3E;
+  border-radius: 15px;
+}
+
+::deep .mud-paper.mud-elevation-0.port-capital * {
+  font-family: "Montserrat" !important;
+}
+
+::deep .finance-options-group .mud-radio-group {
+  display: flex;
+  flex-direction: column;
+}
+
+::deep .portcapital-text.text-pc-green {
+  color: #309D4D;
+}
+::deep .portcapital-text.text-pc-grey {
+  color: #8F8F8F;
+}
+::deep .portcapital-text.text-pc-white {
+  color: white;
+}
+
+::deep .portcapital-lighthouse {
+  fill: white !important;
+}
+
+::deep .portcapital-contract-button {
+  background-color: #309D4D;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+::deep .portcapital-contract-button .progress {
+  width: 1.8rem;
+  height: 1.8rem;
+  background: repeating-conic-gradient(rgba(0, 0, 0, 0) 0 90deg, var(--color-global-fullwhite) 0 180deg), repeating-conic-gradient(var(--color-global-fullwhite) 0 90deg, rgba(0, 0, 0, 0) 0 180deg);
+  background-size: 10.9px 10.9px;
+  background-position: 0 0;
+  animation: hypnotic-60mq8qmd 1.2s infinite;
+}
+::deep .portcapital-contract-button .progress.resize-it {
+  width: 3rem !important;
+  height: 3rem !important;
+}
+@keyframes hypnotic-60mq8qmd {
+  100% {
+    background-position: 0px 28.8px, 10.9px 0px;
+  }
+}
+
+::deep .portcapital-contract-button:hover {
+  background-color: #2B8D45;
+}
+
+::deep .portcapital-contract-button:active {
+  background-color: #267D3D;
+}
+
+::deep .portcapital-calendar {
+  color: white;
+  font-size: 3rem;
+}
+
+::deep .finance-radiobutton {
+  margin-bottom: 8px;
+}
+
+::deep .portcapital-poweredby {
+  margin-left: auto;
+  font-size: 12rem;
+  height: fit-content;
+}
+
+@media (min-width: 400px) and (max-width: 959px) {
+  ::deep .portcapitalcomponent-custom-dialo-showmessageboxg + .mud-message-box .mud-dialog-title h6 {
+    font-size: 2.4em;
+  }
+  ::deep .portcapitalcomponent-custom-dialog-showmessagebox + .mud-message-box .mud-dialog-content {
+    font-size: 2em;
+  }
+  ::deep .portcapitalcomponent-custom-dialog-showmessagebox + .mud-message-box span {
+    font-size: 1.8em;
+  }
+}
+@media (min-width: 960px) {
+  ::deep .portcapitalcomponent-custom-dialog-showmessagebox + .mud-message-box .mud-dialog-title h6 {
+    font-size: 2em;
+  }
+  ::deep .portcapitalcomponent-custom-dialog-showmessagebox + .mud-message-box .mud-dialog-content {
+    font-size: 1.5em;
+  }
+  ::deep .portcapitalcomponent-custom-dialog-showmessagebox + .mud-message-box span {
+    font-size: 1.3em;
+  }
+}
+
+/*# sourceMappingURL=PortCapitalComponent%20-%20Copia.razor.css.map */

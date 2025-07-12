@@ -1,0 +1,28 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+::deep .nav-info-text {
+    color: css-color-var(primary);
+}
+
+::deep .nav-info-icon {
+    fill: css-color-var(secondary) !important;
+}
+
+.info-container.first {
+    padding-left: 50px;
+}
+
+.info-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+::deep .vertical-divider {
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+    height: 80% !important;
+    background-color: css-color-var(primary) !important;
+    opacity: 1;
+}

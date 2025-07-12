@@ -1,0 +1,150 @@
+﻿@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.Comparers;
+@using PCG_FDF.Data.DataAccess;
+@inherits BookingElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <div class="chipset-wrapper">
+            <MudChipSet Class="chip-set-selector" MudChipEqualityComparer="@Comparer"
+                        ValueExpression="@(() => TryGetStorageValue())"
+                        SelectedChip="@TryGetStorageValue()"
+                        SelectedChipChanged="@(async (args) => await TryWriteStorageValue(args))"
+                        ReadOnly="@GetElementReadonly()"
+                        Mandatory="true">
+                <SimpleChip IconCSS="extra-large-plus unconstrain"
+                            Default="ShouldPreselect(Options[0])"
+                            ChipIcon="@Options[0].Icon"
+                            IconViewBox="@Options[0].ViewBox"
+                            ChipTag="@Options[0].Value_UUID"
+                            ChipText="@Options[0].Value"></SimpleChip>
+                <SimpleChip IconCSS="extra-large-plus unconstrain"
+                            Default="ShouldPreselect(Options[1])"
+                            ChipIcon="@Options[1].Icon"
+                            Disabled="@Full_Disabled"
+                            IconViewBox="@Options[1].ViewBox"
+                            ChipTag="@Options[1].Value_UUID"
+                            ChipText="@Options[1].Value"></SimpleChip>
+            </MudChipSet>
+        </div>
+    </MudStack>
+</div>
+
+@code {
+    private ChipUUIDComparer Comparer { get; } = new();
+    private bool Initialized { get; set; } = false;
+    private bool Full_Disabled { get; set; } = true;
+    private OptionBox[] Options;
+
+    protected override void OnInitialized()
+    {
+        Full_Disabled = ((int)ElementData.Complex_Data["INITVALUE"].Preloaded_Value) % 2 != 0;
+        Options = new OptionBox[] {
+            new OptionBox() {
+                Icon = CustomIcons.Single.GetIcon(),
+                ViewBox = CustomIcons.Single.GetViewBox(),
+                Value_UUID = Guid.Parse("3FE44FE3-86CC-4850-A0CB-6CCA17FFEF21"),
+                Value = Localize.Get("lbl_single")
+            },
+            new OptionBox() {
+                Icon = CustomIcons.Full.GetIcon(),
+                ViewBox = CustomIcons.Full.GetViewBox(),
+                Value_UUID = Guid.Parse("73AAFE6A-504E-4EFD-BC6D-A92E4A1D5FE2"),
+                Value = Localize.Get("lbl_full")
+            },
+    };
+        // Unshared
+        if (IsCollection)
+        {
+            BookingData.TryBindUnsharedChipset(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            BookingData.TryBindSharedChipset(ElementData.Element_ID);
+        }
+        base.OnInitialized();
+        Initialized = true;
+    }
+
+    private bool ShouldPreselect(OptionBox data)
+    {
+        var guid = TryGetStorageUUID();
+        if (guid.HasValue)
+        {
+            if (guid == data.Value_UUID)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private MudChip? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedChip(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedChip(ElementData.Element_ID);
+        }
+    }
+
+    private Guid? TryGetStorageUUID()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<Guid?>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedElementValueAs<Guid?>(ElementData.Element_ID);
+        }
+    }
+
+    private async Task TryWriteStorageValue(MudChip? value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            if (value is not null)
+            {
+                await BookingData.WriteUnsharedElementValue((Guid)value.Tag!, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            else
+            {
+                await BookingData.WriteUnsharedElementValue(null, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            BookingData.WriteUnsharedChip(value, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            if (value is not null)
+            {
+                await BookingData.WriteSharedElementValue((Guid)value.Tag!, ElementData.Element_ID);
+            }
+            else
+            {
+                await BookingData.WriteSharedElementValue(null, ElementData.Element_ID);
+            }
+            BookingData.WriteSharedChip(value, ElementData.Element_ID);
+        }
+    }
+}

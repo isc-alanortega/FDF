@@ -1,0 +1,34 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+@font-face {
+    font-family: 'FDF-Icons';
+    src: url("/fonts/FDF-Icons.ttf") format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+::deep .e-dropdown-btn.e-custom {
+    height: 60px;
+    margin-left: 20px;
+    padding: 0px;
+    background: none;
+    border: none;
+    box-shadow: none !important;
+
+    .icon {
+        font-family: 'FDF-Icons' !important;
+        margin: 0px;
+        padding: 8px;
+        width: unset;
+        font-size: 22px;
+    }
+}
+
+::deep .e-dropdown-btn.e-custom .sf-icon-location-02-wf::before {
+    content: "\e703";
+    color: css-color-var(global-fullwhite);
+}
+
+::deep .t-white {
+    color: white !important;
+}

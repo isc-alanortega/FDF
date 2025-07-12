@@ -1,0 +1,79 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+
+
+.quotations_wrapper {
+    padding-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+::deep .paper-grey {
+    border-radius: 15px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .list-actions {
+    margin-left: auto;
+}
+
+::deep .list-row {
+    padding: 8px;
+    display: flex;
+
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+.inner-row {
+    width: 80.35%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+::deep .pager-header-wrapper {
+    padding: 8px;
+    width: 80.5%;
+}
+
+.pager-header {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+::deep .grid-item {
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+$generic-text-size: 2.1em;
+
+.UserQuotation-date-picker-mobil input {
+    input, label, svg {
+        font-size: $generic-text-size !important;
+    }
+}
+
+
+.UserQuotation-select-mobil {
+    input {
+        font-size: $generic-text-size !important;
+    }
+
+    svg {
+        font-size: 1.9em !important;
+    }
+}
+
+.UserQuotation-select-item-mobil p{
+    font-size: 1.9em !important
+}

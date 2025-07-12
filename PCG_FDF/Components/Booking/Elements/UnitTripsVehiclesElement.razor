@@ -1,0 +1,269 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Utility;
+@inject ApplicationState AppState
+@inherits BookingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@implements IAsyncDisposable
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+
+        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@DisableDownload()" OnClick="@DownloadForm">
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="button-inner-row" Row="true">
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)">@Localize.Get("btn_download_form")</MudText>
+                    <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Filled.FileDownload"></MudIcon>
+                </MudStack>
+            </MudButton>
+            <MudFileUpload Class="form-upload-button" T="IBrowserFile" FilesChanged="@OnFileChanged" Accept=".xlsx" Disabled="@DisableForm()">
+                <ButtonTemplate>
+                    <MudButton HtmlTag="label"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                               for="@context">@Localize.Get("btn_upload_document")
+                    </MudButton>
+                </ButtonTemplate>
+            </MudFileUpload>
+        </MudStack> 
+        <MudDivider Class="my-2"></MudDivider>
+
+        @*VEHICLES GRID - READONLY*@
+        <MudStack>
+            <MudTable Items="@GetVehicles()" T="UnitDataVehicle" Hover="true" Breakpoint="Breakpoint.Sm" MultiSelection="false">
+                <HeaderContent>
+                    <MudTh>NO.</MudTh>
+                    <MudTh>VIN</MudTh>
+                    <MudTh>@Localize.Get("label_brand").ToUpper()</MudTh>
+                    <MudTh>@Localize.Get("label_model")</MudTh>
+                    <MudTh>COLOR</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="No.">@context.Vehicle_ID</MudTd>
+                    <MudTd DataLabel="VIN">@context.VIN</MudTd>
+                    <MudTd DataLabel="@Localize.Get("label_brand")">@context.Brand</MudTd>
+                    <MudTd DataLabel="@Localize.Get("label_model")">@context.Model</MudTd>
+                    <MudTd DataLabel="Color">@context.Color</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudStack>
+    </MudStack>
+</div>
+
+@code {
+    private Func<KeyValue, string> KeyValueConverter = kvp => kvp?.Value!;
+    private UnitGroupVehicles Vehicles_Data { get; set; }
+
+    private bool Download_In_Progress { get; set; } = false;
+    private bool Form_In_Progress { get; set; } = false;
+
+    private IJSObjectReference? module_download;
+
+    private async Task OnFileChanged(IBrowserFile file)
+    {
+        try
+        {
+            if (!Form_In_Progress)
+            {
+                Form_In_Progress = true;
+                var upload_result = await DATA_ACCESS.PostUploadExcel<UnitGroupVehicles?>(file, ElementData.Data_Type_ID, Vehicles_Data.Quantity, AppState.GetCurrentLocation());
+
+                if (upload_result is null)
+                {
+                    ShowError("error_not_implemented");
+                }
+                else
+                {
+                    if (upload_result.Operation_Succeeded)
+                    {
+                        foreach (var vehicle_key in upload_result.Result!.Result!.Vehicles.Keys)
+                        {
+                            upload_result.Result!.Result!.Vehicles[vehicle_key].Vehicle_ID = vehicle_key;
+                        }
+                        Vehicles_Data = upload_result.Result!.Result!;
+                        await TryWriteStorageValue();
+                    }
+                    else
+                    {
+                        if (upload_result.Error_Message == "err_format_invalid")
+                        {
+                            ShowError("err_format_invalid");
+                        }
+                        else
+                        {
+                            if (upload_result.Errors is not null && upload_result.Errors.Any())
+                            {
+                                ShowError("err_non_controlled");
+                            }
+                            else
+                            {
+                                var parameters = new DialogParameters();
+                                parameters.Add("Error_Message", upload_result.Error_Message);
+                                parameters.Add("Additional_Data", upload_result?.Result?.Additional_Error_Data);
+                                parameters.Add("Additional_Value", upload_result?.Result?.Error_Value);
+                                var dialog = await DialogService.ShowAsync<ErrorDialog>("Error", parameters);
+                                var result = await dialog.Result;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            Form_In_Progress = false;
+        }
+    }
+
+    private IEnumerable<UnitDataVehicle> GetVehicles()
+    {
+        if (!Vehicles_Data.Vehicles.Values.Any(vehicle => !string.IsNullOrEmpty(vehicle.VIN)))
+        {
+            return Enumerable.Empty<UnitDataVehicle>();
+        }
+        return Vehicles_Data.Vehicles.Values;
+    }
+
+    private bool DisableForm()
+    {
+        return Form_In_Progress || GetElementReadonly();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private bool DisableDownload()
+    {
+        return Download_In_Progress || GetElementReadonly();
+    }
+
+    private async Task DownloadForm()
+    {
+        try
+        {
+            if (!Download_In_Progress)
+            {
+                Download_In_Progress = true;
+                var FILESTREAM = await DATA_ACCESS.PostDownloadExcelForm(ElementData.Data_Type_ID);
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"{ElementData.Element_Name}.xlsx";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            Download_In_Progress = false;
+        }
+    }
+
+    private bool ValidateElement()
+    {
+        if (Vehicles_Data.Vehicles.Values.Any(vehicle => string.IsNullOrEmpty(vehicle.VIN)))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Vehicles_Data = GetSource();
+        if (Vehicles_Data is null)
+        {
+            Vehicles_Data = (UnitGroupVehicles)ElementData.Complex_Data["INITIALIZER"].Preloaded_Value;
+        }
+
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID] is null)
+            {
+                await SetComplexElementValid(ValidateElement());
+                await BookingData.WriteUnsharedElementValue(Vehicles_Data, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+        }
+        else
+        {
+            if (BookingData.GetSharedStorage()[ElementData.Element_ID] is null)
+            {
+                await SetComplexElementValid(ValidateElement());
+                await BookingData.WriteSharedElementValue(Vehicles_Data, ElementData.Element_ID);
+            }
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task TryWriteStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteUnsharedElementValue(Vehicles_Data, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteSharedElementValue(Vehicles_Data, ElementData.Element_ID);
+        }
+    }
+
+    private UnitGroupVehicles? GetSource()
+    {
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<UnitGroupVehicles>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            return BookingData.GetSharedElementValueAs<UnitGroupVehicles>(ElementData.Element_ID);
+        }
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

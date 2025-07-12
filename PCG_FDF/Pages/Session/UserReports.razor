@@ -1,0 +1,119 @@
+﻿@page "/reports"
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility
+@inject WhiteLabelManager WhiteLabel
+@inject GlobalBreakpointService BreakpointService
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer Localize
+@inject IDialogService DialogService
+@implements IDisposable
+@attribute [Authorize]
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="reports-wrapper">
+    <MudPaper MinHeight="90%" Width="90%" Elevation="5" Class="paper-grey">
+        <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())" Class="title-text"><strong>@Localize.Get("lbl_reports")</strong></MudText>
+        <MudGrid Class="reports-grid" Style="margin-top: 2px;" Spacing="6" Justify="Justify.FlexStart">
+            <MudItem md="3" sm="6" xs="12">
+                <MudCard Class="grid-item">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_warehousecontainerized")</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_warehousecontainerized_desc")</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudStack Class="list-actions" Row="true">
+                                <MudIconButton Class="@ResponsiveUtil.GetMobileClass("download-button", BreakpointService.GetIsMobile())" OnClick="OnContainerizedClick" Color="@Color.Primary" Icon="@Icons.Material.Rounded.Download" Size="@Size.Large" />
+                            </MudStack>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+                <MudItem md="3" sm="6" xs="12">
+                    <MudCard Class="grid-item">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_warehouseloose")</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_warehouseloose_desc")</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudStack Class="list-actions" Row="true">
+                                <MudIconButton Class="@ResponsiveUtil.GetMobileClass("download-button", BreakpointService.GetIsMobile())" OnClick="OnLooseClick" Color="@Color.Primary" Icon="@Icons.Material.Rounded.Download" Size="@Size.Large" />
+                            </MudStack>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+                <MudItem md="3" sm="6" xs="12">
+                    <MudCard Class="grid-item">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_photographic")</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="@ResponsiveUtil.GetMobileVersionOf(Typo.h5, BreakpointService.GetIsMobile())">@Localize.Get("reports_photographic_desc")</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudStack Class="list-actions" Row="true">
+                                <MudIconButton Class="@ResponsiveUtil.GetMobileClass("download-button", BreakpointService.GetIsMobile())" OnClick="OnPhotographicClick" Color="@Color.Primary" Icon="@Icons.Material.Rounded.Download" Size="@Size.Large" />
+                            </MudStack>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </div>
+
+    @code {
+    private async Task InitServices()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await InitServices();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OnContainerizedClick()
+    {
+        var dialog = await DialogService.ShowAsync<ContainerizedStockReportDialog>();
+        var result = await dialog.Result;
+    }
+
+    private async Task OnLooseClick()
+    {
+        var dialog = await DialogService.ShowAsync<LooseStockReportDialog>();
+        var result = await dialog.Result;
+    }
+
+    private async void OnPhotographicClick()
+    {
+        var dialog = await DialogService.ShowAsync<PhotographicReportDialog>();
+        var result = await dialog.Result;
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

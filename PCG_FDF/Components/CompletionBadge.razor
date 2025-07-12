@@ -1,0 +1,27 @@
+﻿@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@inject GlobalLocalizer localize
+
+@if (Complete)
+{
+    <div class="info-badge badge-ok">
+        <span>@localize.Get("com_quotbadge_complete")</span>
+        <div class="inner-badge">
+            <MudIcon Class="badge-icon icon-ok" Icon="@Icons.Material.Filled.Check"></MudIcon>
+        </div>
+    </div>
+}
+else
+{
+    <div class="info-badge badge-need-info">
+        <span>@localize.Get("com_quotbadge_incomplete")</span>
+        <div class="inner-badge">
+            <MudIcon Class="badge-icon icon-error" Icon="@CustomIcons.errorbadge.GetIcon()" ViewBox="@CustomIcons.errorbadge.GetViewBox()"></MudIcon>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public bool Complete { get; set; }
+}

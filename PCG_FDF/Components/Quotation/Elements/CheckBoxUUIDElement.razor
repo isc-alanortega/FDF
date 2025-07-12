@@ -1,0 +1,46 @@
+﻿@using PCG_FDF.Utility;
+@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudCheckBox Class="@(Breakpoint_Service.GetIsMobile() ? "resize-it" : "")"
+                         T="Guid" Checked="TryGetStorageValue()"
+                         Converter="@UUID_Converter"
+                         CheckedChanged="@(async (args) => await TryWriteStorageValue(args))"
+                         Color="Color.Tertiary"
+                         ReadOnly="@GetElementReadonly()"
+                         Disabled="@GetElementReadonly()"
+                         Required="true"
+                         RequiredError="@Localize.Get("errmsg_required")">
+            </MudCheckBox>
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+        </MudStack>
+    </MudStack>
+</div>
+
+@code {
+    private readonly Guid UUID_FALSE = new Guid("8F73EA5A-EF91-4AAC-B4AE-B7C8A7BFD288");
+    private readonly Guid UUID_TRUE = new Guid("0E5D41FA-F32C-401E-A2F7-53FFF414BE28");
+    private CustomUUIDToBoolConverter UUID_Converter { get; set; }
+
+    protected override void OnInitialized()
+    {
+        UUID_Converter = new CustomUUIDToBoolConverter(UUID_TRUE, UUID_FALSE);
+        base.OnInitialized();
+    }
+
+    private Guid TryGetStorageValue()
+    {
+        return Quotation_Data.GetElementValueAs<Guid?>(Card.Card_ID, ElementData.Element_ID) ?? UUID_FALSE;
+    }
+
+    private async Task TryWriteStorageValue(Guid value)
+    {
+        await Quotation_Data.WriteSharedElementValue(value, Card.Card_ID, ElementData.Element_ID);
+    }
+}

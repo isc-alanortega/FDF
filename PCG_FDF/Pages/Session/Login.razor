@@ -1,0 +1,78 @@
+﻿@page "/login"
+@page "/login/{Redirect}"
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.DataAccess
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer localize
+@inject WhiteLabelManager WhiteLabel
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="carousel-internal">
+    <MudCarousel Class="mud-width-full main-carousel" EnableSwipeGesture="false" ShowArrows="false" ShowBullets="false" AutoCycle="false" TData="object">
+        <MudCarouselItem Transition="@transition" CustomTransitionEnter="bounceInDown">
+            <div class="waves-header">
+                <!--Waves Container-->
+                <div class="content-wrapper">
+                    <MudStack class="@($"main-content {(BreakpointService.GetIsMobile() ? "is-mobile" : "")}")">
+                        <MudButton Class="@($"button-go-back {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" OnClick="@navigateToStart" Variant="Variant.Filled" Color="Color.Secondary">
+                            <MudIcon Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s3" : "")" Icon="@Icons.Material.Rounded.ArrowBackIos"></MudIcon>
+                            @localize.Get("btn_return")
+                        </MudButton>
+                        <LoginComponent Redirect="@Redirect" Class="@($"login-component {(BreakpointService.GetIsMobile() ? "is-mobile" : "")}")"></LoginComponent>
+                    </MudStack>
+                </div>
+                <div class="waves-container">
+                    <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+                        <defs>
+                            <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+                        </defs>
+                        <g class="parallax">
+                            <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.7" />
+                            <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.5)" />
+                            <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.3)" />
+                            <use xlink:href="#gentle-wave" x="48" y="7" fill="#fff" />
+                        </g>
+                    </svg>
+                </div>
+                <!--Waves end-->
+            </div>
+        </MudCarouselItem>
+    </MudCarousel>
+</div>
+
+@code {
+    [Parameter]
+    public string? Redirect { get; set; }
+    private Transition transition = Transition.Custom;
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    private void navigateToStart()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

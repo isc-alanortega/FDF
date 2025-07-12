@@ -1,0 +1,29 @@
+.complex-chipset-wrapper {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+::deep .complex-chipset {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+::deep .complex-chipset .complex-chip-wrapper:last-of-type .complex-chip {
+  border-end-end-radius: 50px !important;
+  border-start-end-radius: 50px !important;
+}
+::deep .complex-chipset .complex-chip-wrapper:last-of-type .complex-chip.is-mobile {
+  border-end-end-radius: 8px !important;
+  border-start-end-radius: 8px !important;
+}
+::deep .complex-chipset .complex-chip-wrapper:first-of-type .complex-chip {
+  border-start-start-radius: 50px !important;
+  border-end-start-radius: 50px !important;
+}
+::deep .complex-chipset .complex-chip-wrapper:first-of-type .complex-chip.is-mobile {
+  border-start-start-radius: 8px !important;
+  border-end-start-radius: 8px !important;
+}
+::deep .complex-chipset:has(.actionable-chip) {
+  gap: 20px;
+}

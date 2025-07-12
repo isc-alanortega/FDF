@@ -1,0 +1,168 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+
+.shopping-cart-wrapper {
+    flex-grow: 1;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 4rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+::deep .cart-title-text {
+    padding-left: 10px;
+}
+
+.cart-title {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
+    align-items: center;
+    color: css-color-var(primary) !important;
+
+    .mud-primary-text {
+        color: css-color-var(primary);
+    }
+}
+
+::deep .stack-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    background-color: css-color-var(complex-chip);
+    border-radius: 20px;
+    box-shadow: none !important;
+    transition: all ease 0.3s;
+
+    &:hover {
+        background-color: css-color-var(badge-ok);
+        opacity: .8;
+    }
+}
+
+::deep .service-trace {
+    gap: 20px 0;
+    padding: 35px;
+
+    li:last-child {
+        font-weight: 600!important;
+        font-size: 1.25rem !important;
+    }
+
+    &.resize-it {
+        .mud-breadcrumb-item {
+            font-size: 2rem !important;
+        }
+
+        .mud-breadcrumb-separator {
+            .mud-icon-root {
+                font-size: 2rem;
+            }
+        }
+    }
+}
+
+::deep .breadcrumb-icon {
+    fill: css-color-var(tertiary) !important;
+}
+
+::deep .mud-breadcrumb-item.mud-disabled > a {
+    color: css-color-var(global-fullblack) !important;
+}
+
+::deep .mud-breadcrumb-item.mud-disabled {
+    font-size: 1rem !important;
+}
+
+::deep .btn-trash {
+    justify-self: flex-end;
+    border-radius: 100px;
+    margin-left: auto;
+    margin-right: 24px;
+    height: fit-content;
+    background-color: css-color-var(global-fullwhite);
+
+    &.resize-it {
+        .mud-icon-root {
+            font-size: 3.4rem;
+        }
+    }
+}
+
+::deep .btn-actions {
+    margin-top: 4rem;
+
+    button {
+        border-radius: 50px;
+        padding: 16px 0;
+        background-color: css-color-var(primary)
+    }
+}
+
+::deep .btn-action-empty {
+    margin-top: 1rem;
+
+    button {
+        border-radius: 50px;
+        background-color: transparent;
+        padding: 16px 0;
+        border: 1px solid css-color-var(tertiary);
+        transition: all ease 0.2s;
+        color: css-color-var(tertiary);
+
+        &:hover {
+            background-color: css-color-var(tertiary);
+            color: css-color-var(global-fullwhite)
+        }
+    }
+}
+
+::deep .service-item-badge {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    background-color: transparent;
+    box-shadow: none !important;
+    padding: 8px;
+    margin-top: 2rem;
+
+    h5 {
+        font-weight: 700;
+    }
+}
+
+::deep .package-item-badge {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    background-color: transparent;
+    box-shadow: none !important;
+    padding: 8px;
+    margin-top: 2rem;
+
+    h5 {
+        font-weight: 700;
+    }
+}
+
+@include keyframes(card-popup) {
+    @include anim-popup-center-frames();
+}
+
+::deep .package-panel {
+    background-color: transparent;
+}
+
+::deep .package-suggestion {
+    margin-top: 20px;
+}
+
+::deep .services-stack {
+    background-color: transparent;
+}
+
+::deep .button-inner-row {
+    align-items: center;
+}

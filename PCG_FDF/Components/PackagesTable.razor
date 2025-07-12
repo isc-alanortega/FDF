@@ -1,0 +1,141 @@
+﻿@typeparam TItem
+@using PCG_FDF.Data
+@using PCG_FDF.Data.ComponentDI;
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+
+<div>
+    <div class="ext-grid-container">
+        @*ASSERT: There is 6 TItems per page*@
+        @if (ListQuery is not null)
+        {
+            @if (!BreakpointService.GetIsMobile()) {
+                <div class="@($"button-container {(BreakpointService.GetIsMobile() ? "move-right" : "")}")">
+                    <MudButton Disabled="@AtFirstPage()" OnClick="@MoveBack" Class="grid-button" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Rounded.ArrowBackIos" Class="carousel-button-icon" Size="Size.Small"></MudIcon>
+                    </MudButton>
+                </div>
+                <MudGrid Class="packages-grid" Spacing="2" Justify="Justify.FlexStart">
+                    @foreach (TItem item in CurrentDisplay)
+                    {                                    
+                        @ItemDisplay(item)               
+                    }                                    
+                </MudGrid>   
+                <div class="@($"button-container {(BreakpointService.GetIsMobile() ? "move-right" : "")}")">
+                    <MudButton Disabled="@AtLastPage()" OnClick="@MoveNext" Class="grid-button" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Rounded.ArrowForwardIos" Class="carousel-button-icon" Size="Size.Small"></MudIcon>
+                    </MudButton>
+                </div>
+            } else
+            {
+                <MudGrid Class="packages-grid" Spacing="2" Justify="Justify.FlexStart">
+                    @foreach (TItem item in CurrentDisplay)
+                    {                                    
+                        @ItemDisplay(item)               
+                    }                                    
+                </MudGrid> 
+                <div class="mobile-btns">
+                    <div class="@($"button-container {(BreakpointService.GetIsMobile() ? "move-right" : "")}")">
+                        <MudButton Disabled="@AtFirstPage()" OnClick="@MoveBack" Class="grid-button" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Rounded.ArrowBackIos" Class="carousel-button-icon" Size="Size.Small"></MudIcon>
+                        </MudButton>
+                    </div>
+                      <div class="@($"button-container {(BreakpointService.GetIsMobile() ? "move-right" : "")}")">
+                        <MudButton Disabled="@AtLastPage()" OnClick="@MoveNext" Class="grid-button" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Rounded.ArrowForwardIos" Class="carousel-button-icon" Size="Size.Small"></MudIcon>
+                        </MudButton>
+                    </div>
+                </div>
+            }
+        }                                            
+        else                                         
+        {                                            
+            <MudGrid Class="packages-grid" Spacing="2" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudItem xs="4">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<TItem> ListQuery { get; set; }
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> ItemDisplay { get; set; }
+    [Parameter, EditorRequired]
+    public int TotalCount { get; set; }
+    [Parameter, EditorRequired]
+    public EventCallback<int> UpdatePage { get; set; }
+    [Parameter]
+    public int ItemsPerPage { get; set; } = 6;
+
+    public int CurrentPage = 1;
+    private IEnumerable<TItem> CurrentDisplay;
+
+    protected override void OnParametersSet()
+    {
+        UpdateDisplay();
+    }
+
+    private void UpdateDisplay()
+    {
+        CurrentDisplay = ListQuery.ToList();
+    }
+
+    private bool AtFirstPage()
+    {
+        return CurrentPage == 1;
+    }
+
+    private bool AtLastPage()
+    {
+        return CurrentPage >= TotalPages();
+    }
+
+    private int TotalPages()
+    {
+        return Convert.ToInt32(Math.Ceiling(TotalCount / Convert.ToDecimal(ItemsPerPage)));
+    }
+
+    private async void MoveBack()
+    {
+        CurrentPage--;
+        await UpdatePage.InvokeAsync(CurrentPage);
+        UpdateDisplay();
+    }
+
+    private async void MoveNext()
+    {
+        CurrentPage++;
+        await UpdatePage.InvokeAsync(CurrentPage);
+        UpdateDisplay();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+    ﻿
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

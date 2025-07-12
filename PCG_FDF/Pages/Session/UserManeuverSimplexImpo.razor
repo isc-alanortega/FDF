@@ -1,0 +1,476 @@
+﻿@page "/user_maneuvers/impo"
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.Constants.CimaSimplex;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.ComponentDI.CimaSimlexUserManeuvers
+@using PCG_FDF.Data.ComponentDI.Tracking
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@inject GlobalBreakpointService breakpointService
+@inject CimaSimlexUserManeuverServices cimaSimlexUserManeuverServices
+@inject PCG_FDF_DB dataAccessService
+@inject GlobalLocalizer localizeService
+@inject NavigationManager navigationManager
+@inject WhiteLabelManager whiteLabelServices
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@using Newtonsoft.Json
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities
+@inject AuthenticationStateProvider AuthProvider
+@inject ApplicationState AppState
+@attribute [Authorize]
+
+<PageTitle>@(whiteLabelServices.GetPageName())</PageTitle>
+
+<div class="user-maneuver-simplex quotations_wrapper">
+	<MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+		<MudText Typo="Typo.h4" Style="padding-bottom: 15px">@localizeService.Get("label_request_for_unloadingempty_containers")</MudText>
+
+		<ProgresAlertDialog Title="@(cimaSimlexUserManeuverServices.ShowLoading() ? cimaSimlexUserManeuverServices.GetMessageModal() :localizeService.Get("label_payment_reference_generation_in_progress"))"
+							Message="@localizeService.Get("label_the_process_may_takes_a _few_minutes")"
+							ShowProgressCircular="true"
+							IsVisible="@(IsGeneratePaymentReferece || cimaSimlexUserManeuverServices.ShowLoading())" />
+
+		<GridListPager @ref="@PagerReference" DisplayItem="ManeuversCustomsImpoData" ItemQueryResult="@ManeuversCustoms" TotalCount="@TotalManeuvers" UpdatePage="@UpdateSourceAsync" InitialItemsPerPage="50">
+			<ControlsDisplay>
+				<MudGrid Class="filtros-grid" Style="align-items: flex-end;">
+					@* FILTRO DE BÚSQUEDA *@
+					<MudItem xs="12" sm="6" md="3">
+						<MudTextField T="string"
+									  Style="width: 100%;"
+									  MaxLength="500"
+									  DebounceInterval="1500"
+									  Variant="Variant.Outlined"
+									  Value="@Request.Query"
+									  ValueChanged="@((string arg) => OnValueChange(arg, "QUERY"))"
+									  Clearable="true"
+									  Placeholder="@($"{localizeService.Get("placeholder_search")} {localizeService.Get("label_container")}, Booking, {localizeService.Get("label_shippingcompany")}, {localizeService.Get("label_status")}, Folio")" />
+					</MudItem>
+
+					@* CHECKBOX Y RADIOGROUP *@
+					<MudItem xs="12" sm="6" md="1">
+						<MudCheckBox Value="FiltrarPorFechas"
+									 ValueChanged="@((bool value) => OnFiltrarPorFechasChanged(value))"
+									 Label="Filtrar por Fechas"
+									 Color="Color.Primary" />
+					</MudItem>
+
+					<MudItem xs="12" sm="6" md="2">
+						<MudRadioGroup @bind-Value="TipoFechaSeleccionada" Class="mt-2" Style="min-height: 64px;">
+							@if (FiltrarPorFechas)
+							{
+								<MudRadio Value="@("created_date")" Color="Color.Primary">Fecha de Elaboración</MudRadio>
+								<MudRadio Value="@("service_date")" Color="Color.Primary">Fecha de Servicio</MudRadio>
+							}
+						</MudRadioGroup>
+					</MudItem>
+
+					<MudItem xs="6" sm="3" md="2">
+						@if (FiltrarPorFechas)
+						{
+							<MudDatePicker Editable="true"
+										   Disabled="@(string.IsNullOrEmpty(TipoFechaSeleccionada))"
+										   Mask="@(new DateMask("dd/MM/yyyy"))"
+										   MaxDate="@(TipoFechaSeleccionada == "created_date" ? DateTime.Today : null)"
+										   DateFormat="dd/MM/yyyy"
+										   Date="@Request.FromDate"
+										   DateChanged="@((args) => OnValueChange(args, "FROMDATE"))"
+										   Label="@localizeService.Get("label_from")"
+										   Clearable="true"
+										   Placeholder="@localizeService.Get("placeholder_date")" />
+						}
+					</MudItem>
+
+					<MudItem xs="6" sm="3" md="2">
+						@if (FiltrarPorFechas)
+						{
+							<MudDatePicker Editable="true"
+										   Disabled="@(string.IsNullOrEmpty(TipoFechaSeleccionada))"
+										   Mask="@(new DateMask("dd/MM/yyyy"))"
+										   MaxDate="@(TipoFechaSeleccionada == "created_date" ? DateTime.Today : null)"
+										   DateFormat="dd/MM/yyyy"
+										   Date="@Request.ToDate"
+										   DateChanged="@((args) => OnValueChange(args, "TODATE"))"
+										   Label="@localizeService.Get("label_to")"
+										   Clearable="true"
+										   Placeholder="@localizeService.Get("placeholder_date")" />
+						}
+					</MudItem>
+
+					@* BOTÓN ACTUALIZAR: Siempre visible y a la derecha *@
+					<MudItem xs="12" sm="12" md="2" Class="d-flex justify-end">
+						<MudButton Style="width: 100%;"
+								   HtmlTag="label"
+								   Variant="Variant.Filled"
+								   Color="Color.Primary"
+								   StartIcon="@Icons.Material.Filled.Refresh"
+								   OnClick="OnClickBtnRefresh">
+							@localizeService.Get("lbl_update")
+						</MudButton>
+					</MudItem>
+				</MudGrid>
+			</ControlsDisplay>
+
+
+			<NoItemsDisplay>
+				<MudText>@localizeService.Get("uinvoices_noitems")</MudText>
+			</NoItemsDisplay>
+
+			<InvoiceTotal />
+
+			<HeaderDisplay>
+				<MudStack Class="pager-header-wrapper">
+					<div class="pager-header" style="background-color: #f5f5f5; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); align-items: flex-start; justify-content: space-between; gap: 16px; padding: 16px 12px; margin-bottom: 8px;">
+						<MudItem>
+							<MudText Align="Align.Center" Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("No.")</MudText>
+						</MudItem>
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("Booking.")</MudText>
+						</MudItem>
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("lbl_fecha_elaboracion")</MudText>
+						</MudItem>
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("lbl_servicedata")</MudText>
+						</MudItem>
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("lbl_client")</MudText>
+						</MudItem>
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("lbl_shippingline")</MudText>
+						</MudItem>
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("label_status_maniuver")</MudText>
+						</MudItem>
+
+						@if (!IsCreditCustomer)
+						{
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("label_reference")</MudText>
+							</MudItem>
+
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("lbl_status_reference_bank")</MudText>
+							</MudItem>
+
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("label_amount_due")</MudText>
+							</MudItem>
+						}
+
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.h6" Style="font-weight: 700; color: #1976d2;">@localizeService.Get("label_actions")</MudText>
+						</MudItem>
+					</div>
+				</MudStack>
+			</HeaderDisplay>
+
+			<GridItemDisplay>
+				<MudItem>
+					<MudCard Class="grid-item" Style="@GetColorsByStatus(context.Status)">
+						<MudCardContent>
+							<MudItem Class="narrow-column">
+								<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+									<!-- 1) Flechita a la izquierda -->
+									<MudTooltip Text="@localizeService.Get("lbl_consultar_info_contenedor")"
+												Arrow="true" Placement="Placement.Top">
+										<MudIconButton Icon="@(ExpandedCardStates.ContainsKey(context.WebRequestId) && ExpandedCardStates[context.WebRequestId] ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+													   OnClick="@(() => ToggleExpandedCard(context.WebRequestId, "impo"))"
+													   Class="icon-button-no-hover" />
+									</MudTooltip>
+
+									<!-- 2) Número y chip a la derecha de la flechita -->
+									<MudStack Row="false" AlignItems="AlignItems.Start">
+										<MudText Color="Color.Dark" Typo="Typo.h6">
+											@context.WebRequestId
+										</MudText>
+
+										<!-- chip según el Status -->
+										@if (context.Status == "Suspendida")
+										{
+											<MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">
+												Susp
+											</MudChip>
+										}
+										else if (context.Status == "Autorizada")
+										{
+											<MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">
+												Aut
+											</MudChip>
+										}
+										else if (context.Status == "Pendiente de revisión")
+										{
+											<MudChip T="string" Variant="Variant.Outlined">
+												Pend
+											</MudChip>
+										}
+										else if (context.Status == "Revisado OK")
+										{
+											<MudChip T="string" Variant="Variant.Outlined">
+												Pend
+											</MudChip>
+										}
+									</MudStack>
+								</MudStack>
+							</MudItem>
+							<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("Booking"): @context.BookingFdf.ToString() </MudText>
+							<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("lbl_fecha_elaboracion"): @context.FechaElaboracion.ToString("dd/MM/yyyy") </MudText>
+							<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("lbl_servicedata"): @context.ServiceDate.ToString("dd/MM/yyyy") </MudText>
+							<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("lbl_client"): @context.Client </MudText>
+							<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("lbl_shippingline"): @context.ShippingLine </MudText>
+							@if (context.Status == "Suspendida")
+							{
+								<MudTooltip Text="@(string.IsNullOrEmpty(context.Motivo_Suspension) ? "Motivo de suspensión no disponible" : context.Motivo_Suspension)"
+											Arrow="true" Placement="Placement.Top">
+									<MudText Color="Color.Error" Typo="Typo.h6">@localizeService.Get("label_status"): @context.Status</MudText>
+								</MudTooltip>
+							}
+							else
+							{
+								<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("label_status"): @context.Status </MudText>
+
+							}
+							@if (!IsCreditCustomer)
+							{
+								<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("label_reference"): @(context.PaymentReference is null ? "-" : context.PaymentReference) </MudText>
+								<MudText Color="Color.Dark" Typo="Typo.h6">@localizeService.Get("Estatus de la Referencia"): @(context.ReferenceStatusName is null ? "-" : context.ReferenceStatusName) </MudText>
+								<MudText Color="Color.Dark" Typo="Typo.h6">
+									@localizeService.Get("label_amount_due"): @(context.Total is not null
+								? Convert.ToDecimal(context.Total).ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-MX"))
+								: "-")
+								</MudText>
+							}
+							<MudItem>
+								<MudStack Row="false" Spacing="1" AlignItems="AlignItems.Center">
+									<!-- Contenedor principal con dos columnas -->
+									<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start" Justify="Justify.Center">
+
+										<!-- Columna izquierda: Botones de acción en 2 filas de 3 -->
+										<MudStack Row="false" Spacing="1" AlignItems="AlignItems.Center">
+											<!-- Fila superior: 3 botones principales -->
+											<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.Center">
+												@if (!IsCreditCustomer)
+												{
+													<MudTooltip Text="@localizeService.Get("btn_openpay")" Arrow="true" Placement="Placement.Top">
+														<MudIconButton Variant="Variant.Outlined" Color="Color.Primary" Icon="@Icons.Material.Outlined.ArrowForward"
+																	   Disabled="@(context.Total == null || context.ReferenceStatusId != "4")"
+																	   OnClick="@(() => OnClickOpenPay(context))" />
+													</MudTooltip>
+
+													<MudTooltip Text="Descargar Referencia de Pago" Arrow="true" Placement="Placement.Top">
+														<MudIconButton Variant="Variant.Outlined" Color="Color.Primary" Icon="@Icons.Material.Rounded.ReceiptLong"
+																	   Disabled="@(context.PaymentReferenceFileId is null && context.ReferenceStatusId == "4")"
+																	   OnClick="@(() => cimaSimlexUserManeuverServices.DownloadReference(context.PaymentReferenceFileId!.Value, context.BookingFdf))" />
+													</MudTooltip>
+												}
+
+												<MudTooltip Text="@localizeService.Get("btn_editar")" Arrow="true" Placement="Placement.Top">
+													<MudIconButton Variant="Variant.Outlined" Color="Color.Success" Icon="@Icons.Material.Rounded.Edit"
+																   Disabled="!ManeuverStatusConstants.GetStatusIsSuspended(context.Status)"
+																   OnClick="@(() => cimaSimlexUserManeuverServices.EditBooking(context.BookingFdf))" />
+												</MudTooltip>
+											</MudStack>
+
+											<!-- Fila inferior: 3 botones alineados debajo de los anteriores -->
+											<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.Center">
+												<MudTooltip Text="@localizeService.Get("Descargar maniobra")" Arrow="true" Placement="Placement.Top">
+													<MudIconButton Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Rounded.Download"
+																   Disabled="!ManeuverStatusConstants.GetStatusIsAuthorized(context.Status)"
+																   OnClick="@(() => cimaSimlexUserManeuverServices.DownloadZip(context.WebRequestId.ToString(), "impo"))" />
+												</MudTooltip>
+
+												@if (!IsCreditCustomer)
+												{
+													<MudTooltip Text="Descargar Factura" Arrow="true" Placement="Placement.Top">
+														<MudIconButton Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Rounded.RequestQuote"
+																	   Disabled="@(context.ReferenceStatusId != "1" && context.ReferenceStatusId != "5")"
+																	   OnClick="@(() => cimaSimlexUserManeuverServices.DownloadInvoice(context.WebRequestId.ToString(), "impo"))" />
+													</MudTooltip>
+
+													<MudTooltip Text="Descargar Complemento de Pago" Arrow="true" Placement="Placement.Top">
+														<MudIconButton Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Filled.Newspaper" Disabled="true" />
+													</MudTooltip>
+												}
+											</MudStack>
+										</MudStack>
+
+									</MudStack>
+								</MudStack>
+							</MudItem>
+						</MudCardContent>
+					</MudCard>
+				</MudItem>
+				<MudGrid>
+					<MudItem sm="12">
+
+						@if (ExpandedCardStates.ContainsKey(context.WebRequestId) && ExpandedCardStates[context.WebRequestId])
+						{
+							<TableContainers Containers="ContainerInfoStates[context.WebRequestId].Containers" TipoFacturacion="ContainerInfoStates[context.WebRequestId].TipoFacturacion" />
+
+						}
+					</MudItem>
+				</MudGrid>
+			</GridItemDisplay>
+
+			<ListItemDisplay>
+				<MudPaper Class="list-row" Style="@GetColorsByStatus(context.Status)">
+					<div class="inner-row" style="align-items: flex-start; justify-content: space-between; gap: 16px; padding: 8px 12px;">
+						<MudItem Class="narrow-column">
+							<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+								<!-- 1) Flechita a la izquierda -->
+								<MudTooltip Text="@localizeService.Get("lbl_consultar_info_contenedor")"
+											Arrow="true" Placement="Placement.Top">
+									<MudIconButton Icon="@(ExpandedCardStates.ContainsKey(context.WebRequestId) && ExpandedCardStates[context.WebRequestId] ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+												   OnClick="@(() => ToggleExpandedCard(context.WebRequestId, "impo"))"
+												   Class="icon-button-no-hover" />
+								</MudTooltip>
+
+								<!-- 2) Número y chip a la derecha de la flechita -->
+								<MudStack Row="false" AlignItems="AlignItems.Start">
+									<MudText Color="Color.Dark" Typo="Typo.h6">
+										@context.WebRequestId
+									</MudText>
+
+									<!-- chip según el Status -->
+									@if (context.Status == "Suspendida")
+									{
+										<MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">
+											Susp
+										</MudChip>
+									}
+									else if (context.Status == "Autorizada")
+									{
+										<MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">
+											Aut
+										</MudChip>
+									}
+									else if (context.Status == "Pendiente de revisión")
+									{
+										<MudChip T="string" Variant="Variant.Outlined">
+											Pend
+										</MudChip>
+									}
+									else if (context.Status == "Revisado OK")
+									{
+										<MudChip T="string" Variant="Variant.Outlined">
+											Pend
+										</MudChip>
+									}
+								</MudStack>
+							</MudStack>
+						</MudItem>
+						<MudText Color="Color.Dark" Typo="Typo.h6"> @(context.BookingFdf ?? "-") </MudText>
+						<MudText Color="Color.Dark" Typo="Typo.h6">@context.FechaElaboracion.ToString("dd/MM/yyyy") </MudText>
+						<MudText Color="Color.Dark" Typo="Typo.h6"> @context.ServiceDate.ToString("dd/MM/yyyy") </MudText>
+						<MudText Color="Color.Dark" Typo="Typo.h6"> @context.Client </MudText>
+						<MudText Color="Color.Dark" Typo="Typo.h6"> @context.ShippingLine </MudText>
+						@if (context.Status == "Suspendida")
+						{
+							<MudTooltip Text="@(string.IsNullOrEmpty(context.Motivo_Suspension) ? "Motivo de suspensión no disponible" : context.Motivo_Suspension)"
+										Arrow="true" Placement="Placement.Top">
+								<MudText Color="Color.Error" Typo="Typo.h6">@context.Status</MudText>
+							</MudTooltip>
+						}
+						else
+						{
+							<MudText Color="Color.Dark" Typo="Typo.h6"> @context.Status </MudText>
+
+						}
+						@if (!IsCreditCustomer)
+						{
+							<MudText Color="Color.Dark" Typo="Typo.h6"> @(context.PaymentReference is null ? "-" : context.PaymentReference) </MudText>
+							<MudText Color="Color.Dark" Typo="Typo.h6"> @(context.ReferenceStatusName is null ? "-" : context.ReferenceStatusName) </MudText>
+							<MudText Color="Color.Dark" Typo="Typo.h6">
+								@(context.Total is not null
+															? Convert.ToDecimal(context.Total).ToString("C", System.Globalization.CultureInfo.GetCultureInfo("es-MX"))
+															: "-")
+							</MudText>
+						}
+						<MudItem>
+							<MudStack Row="false" Spacing="1" AlignItems="AlignItems.Center">
+								<!-- Contenedor principal con dos columnas -->
+								<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start" Justify="Justify.Center">
+
+									<!-- Columna izquierda: Botones de acción en 2 filas de 3 -->
+									<MudStack Row="false" Spacing="1" AlignItems="AlignItems.Center">
+										<!-- Fila superior: 3 botones principales -->
+										<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.Center">
+											@if (!IsCreditCustomer)
+											{
+												<MudTooltip Text="Re-Generar Referencia Bancaria Spei" Arrow="true" Placement="Placement.Top">
+													<MudIconButton Variant="Variant.Outlined" Color="Color.Primary" Icon="@Icons.Material.Outlined.ArrowForward"
+																   Disabled="@(context.Total == null || context.ReferenceStatusId != "4")"
+																   OnClick="@(() => OnClickOpenPay(context))" />
+												</MudTooltip>
+
+												<MudTooltip Text="Descargar Referencia de Pago" Arrow="true" Placement="Placement.Top">
+													<MudIconButton Variant="Variant.Outlined" Color="Color.Primary" Icon="@Icons.Material.Rounded.ReceiptLong"
+																   Disabled="@(context.PaymentReferenceFileId is null && context.ReferenceStatusId == "4")"
+																   OnClick="@(() => cimaSimlexUserManeuverServices.DownloadReference(context.PaymentReferenceFileId!.Value, context.BookingFdf))" />
+												</MudTooltip>
+											}
+
+											<MudTooltip Text="@localizeService.Get("btn_editar")" Arrow="true" Placement="Placement.Top">
+												<MudIconButton Variant="Variant.Outlined" Color="Color.Success" Icon="@Icons.Material.Rounded.Edit"
+															   Disabled="!ManeuverStatusConstants.GetStatusIsSuspended(context.Status)"
+															   OnClick="@(() => cimaSimlexUserManeuverServices.EditBooking(context.BookingFdf))" />
+											</MudTooltip>
+										</MudStack>
+
+										<!-- Fila inferior: 3 botones alineados debajo de los anteriores -->
+										<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.Center">
+											<MudTooltip Text="@localizeService.Get("Descargar maniobra")" Arrow="true" Placement="Placement.Top">
+												<MudIconButton Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Rounded.Download"
+															   Disabled="!ManeuverStatusConstants.GetStatusIsAuthorized(context.Status)"
+															   OnClick="@(() => cimaSimlexUserManeuverServices.DownloadZip(context.WebRequestId.ToString(), "impo"))" />
+											</MudTooltip>
+
+											@if (!IsCreditCustomer)
+											{
+												<MudTooltip Text="Descargar Factura" Arrow="true" Placement="Placement.Top">
+													<MudIconButton Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Rounded.RequestQuote"
+																   Disabled="@(context.ReferenceStatusId != "1" && context.ReferenceStatusId != "5")"
+																   OnClick="@(() => cimaSimlexUserManeuverServices.DownloadInvoice(context.WebRequestId.ToString(), "impo"))" />
+												</MudTooltip>
+
+												<MudTooltip Text="Descargar Complemento de Pago" Arrow="true" Placement="Placement.Top">
+													<MudIconButton Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Filled.Newspaper" Disabled="true" />
+												</MudTooltip>
+											}
+										</MudStack>
+									</MudStack>
+								</MudStack>
+							</MudStack>
+						</MudItem>
+
+					</div>
+				</MudPaper>
+				<MudGrid>
+					<MudItem sm="12">
+
+						@if (ExpandedCardStates.ContainsKey(context.WebRequestId) && ExpandedCardStates[context.WebRequestId])
+						{
+							<TableContainers Containers="ContainerInfoStates[context.WebRequestId].Containers" TipoFacturacion="@context.BillingType" />
+
+						}
+					</MudItem>
+				</MudGrid>
+			</ListItemDisplay>
+		</GridListPager>
+	</MudPaper>
+</div>

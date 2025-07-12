@@ -1,0 +1,582 @@
+﻿@page "/user_handling"
+@using Newtonsoft.Json
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Utility
+@inject GlobalBreakpointService BreakpointService
+@inject GlobalLocalizer Localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject WhiteLabelManager WhiteLabel
+@inject AuthenticationStateProvider AuthProvider
+@inject ApplicationState AppState
+@inject IJSRuntime JS
+@implements IDisposable
+@implements IAsyncDisposable
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+	<div class="photographic_wrapper">
+		<MudPaper Height="90%" Width="90%" Elevation="5" Class="paper-grey">
+			<MudText Style="margin-bottom: 15px" Typo="Typo.h4">@Localize.Get("label_handling")</MudText>
+			<GridListPager @ref="@Pager_Reference" DisplayItem="SimplePhotographicReport" ItemQueryResult="@ListQuery" TotalCount="@Total_Items" UpdatePage="@UpdateHandling">
+				<ControlsDisplay>
+					@if (BreakpointService.GetIsExtraSmall())
+					{
+						<MudStack Style="width: 100%">
+							<MudDatePicker Editable="true"
+										   Mask="@(new DateMask("dd/MM/yyyy"))"
+										   DateFormat="dd/MM/yyyy"
+										   Date="@DateFrom"
+										   MaxDate="@DateTime.Now.Date"
+										   DateChanged="@(async(args) => await DateFromChanged(args))"
+										   Label="@Localize.Get("label_from")" />
+							<MudDatePicker Editable="true"
+										   Mask="@(new DateMask("dd/MM/yyyy"))"
+									       DateFormat="dd/MM/yyyy"
+										   Date="@DateTo"
+										   MaxDate="@DateTime.Now.Date"
+										   DateChanged="@(async(args) => await DateToChanged(args))"
+										   Label="@Localize.Get("label_to")" />
+							<MudTextField MaxLength="18"
+										  Clearable="@true"
+										  DebounceInterval="1500"
+										  T="string"
+										  Value="@Booking"
+										  ValueChanged="@(async(args) => await BookingChanged(args))"
+										  Variant="Variant.Outlined"
+										  Placeholder="@($"{Localize.Get("placeholder_input")} Booking")" />
+							<MudTextField Required="@false"
+										  MaxLength="13"
+										  Clearable="@true"
+										  RequiredError="@Localize.Get("errmsg_required")"
+										  Disabled="@false"
+										  DebounceInterval="1500"
+										  T="string"
+										  Value="@Serial"
+										  ValueChanged="@(async(args) => await SerialChanged(args))"
+										  Variant="Variant.Outlined"
+										  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_container")}/{Localize.Get("label_plate")}")" />
+							<MudSelect T="KeyValue"
+									   ToStringFunc="@CustomConverter"
+									   AnchorOrigin="Origin.BottomCenter"
+									   Variant="Variant.Outlined"
+									   Value="@Service"
+									   ValueChanged="@(async(args) => await ServiceChanged(args))"
+									   Clearable="true"
+									   Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("option_handling")}")">
+
+										@foreach (var option in OptionsService)
+										{
+											<MudSelectItem Value="option" />
+										}
+							</MudSelect>
+							<MudSelect T="KeyValue"
+									   ToStringFunc="@CustomConverter"
+									   AnchorOrigin="Origin.BottomCenter"
+									   Variant="Variant.Outlined"
+									   Value="@Status_Service"
+									   ValueChanged="@(async(args) => await StatusServiceChanged(args))"
+									   Clearable="true"
+									   Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_status")}")">
+
+										@foreach (var option in OptionsStatus)
+										{
+											<MudSelectItem Value="option" />
+										}
+							</MudSelect>
+						</MudStack>
+					}
+					else 
+					{
+						<MudStack Row="true" Style="width: 100%">
+							<MudStack Justify="@Justify.Center" Style="width: 20%">
+								<MudDatePicker Style="padding-bottom: 8px"
+											   Editable="true"
+											   Mask="@(new DateMask("dd/MM/yyyy"))"
+											   DateFormat="dd/MM/yyyy"
+											   Date="@DateFrom"
+											   MaxDate="@DateTime.Now.Date"
+											   DateChanged="@(async(args) => await DateFromChanged(args))"
+											   Label="@Localize.Get("label_from")" />
+								<MudTextField Required="@false"
+											  MaxLength="13"
+											  Clearable="@true"
+											  RequiredError="@Localize.Get("errmsg_required")"
+											  Disabled="@false"
+											  DebounceInterval="1500"
+											  T="string"
+											  Value="@Serial"
+											  ValueChanged="@(async(args) => await SerialChanged(args))"
+											  Variant="Variant.Outlined"
+											  Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_container")}/{Localize.Get("label_plate")}")" />
+
+							</MudStack>
+							<MudStack Justify="@Justify.Center" Style="width: 20%">
+								<MudDatePicker Style="padding-bottom: 8px"
+											   Editable="true"
+											   Mask="@(new DateMask("dd/MM/yyyy"))"
+											   DateFormat="dd/MM/yyyy"
+											   Date="@DateTo"
+											   MaxDate="@DateTime.Now.Date"
+											   DateChanged="@(async(args) => await DateToChanged(args))"
+											   Label="@Localize.Get("label_to")" />
+								<MudSelect T="KeyValue"
+										   ToStringFunc="@CustomConverter"
+										   AnchorOrigin="Origin.BottomCenter"
+										   Variant="Variant.Outlined"
+										   Value="@Service"
+										   ValueChanged="@(async(args) => await ServiceChanged(args))"
+										   Clearable="true"
+										   Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("option_handling")}")">
+
+										@foreach (var option in OptionsService)
+										{
+											<MudSelectItem Value="option" />
+										}
+								</MudSelect>
+							</MudStack>
+							<MudStack Justify="@Justify.Center" Style="width: 20%">
+								<MudTextField MaxLength="18"
+											  Clearable="@true"
+											  DebounceInterval="1500"
+											  T="string"
+											  Value="@Booking"
+											  ValueChanged="@(async(args) => await BookingChanged(args))"
+											  Variant="Variant.Outlined"
+											  Placeholder="@($"{Localize.Get("placeholder_input")} Booking")" />
+								<MudSelect T="KeyValue"
+										   ToStringFunc="@CustomConverter"
+										   AnchorOrigin="Origin.BottomCenter"
+										   Variant="Variant.Outlined"
+										   Value="@Status_Service"
+										   ValueChanged="@(async(args) => await StatusServiceChanged(args))"
+										   Clearable="true"
+										   Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_status")}")">
+
+									@foreach (var option in OptionsStatus)
+									{
+										<MudSelectItem Value="option" />
+									}
+								</MudSelect>
+							</MudStack>
+						</MudStack>
+					}
+				</ControlsDisplay>
+				<NoItemsDisplay>
+					<MudText>@Localize.Get("ureports_noitems")</MudText>
+				</NoItemsDisplay>
+				<InvoiceTotal />
+				<HeaderDisplay>
+					<MudStack Class="pager-header-wrapper">
+						<div class="pager-header">
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">Booking</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("quot_fromto_from")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("option_handling")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("label_date")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("label_arrivaldate")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("label_handlingdate")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("label_packaging")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("label_merch")</MudText>
+							</MudItem>
+							<MudItem>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("ubook_bookings_status")</MudText>
+							</MudItem>
+						</div>
+					</MudStack>
+				</HeaderDisplay>
+				<GridItemDisplay>
+					<MudItem>
+						<MudCard Class="@($"grid-item {context.Status_Maniobra}")">
+							<MudCardHeader>
+								<CardHeaderContent>
+									<MudText Typo="Typo.h5">@($"Booking {context.Folio}")</MudText>
+								</CardHeaderContent>
+							</MudCardHeader>
+							<MudCardContent>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@Localize.Get("label_date") @context.Fecha_Contratacion.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@context.Origen</MudText>
+								<MudText Color="Color.Primary" Typo="Typo.h6">@context.Maniobra</MudText>
+								<MudChip T="string"
+										 Class="item-status"
+										 Color="(context.Status_Maniobra.Equals(EStatusManiobra.PENDING) ? Color.Info : context.Status_Maniobra.Equals(EStatusManiobra.IN_PROGRESS) ? Color.Warning : Color.Success)"
+										 Size="Size.Small"
+										 Label="true"> @GetStatusAsText(context.Status_Maniobra)
+								</MudChip>
+							</MudCardContent>
+							<MudCardActions>
+								<MudStack Class="list-actions" Row="@true">
+									@if (context.Status_Maniobra == EStatusManiobra.IN_PROGRESS)
+									{
+										<MudTooltip Text="@Localize.Get("btn_get_zipphotos")" Arrow="true" Placement="Placement.Top">
+										<MudIconButton Icon="@Icons.Material.Rounded.FolderZip" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => DownloadPhotographsZip(context.IdWebDetCarga, context.Origen))" />
+										</MudTooltip>
+									}
+									@if (context.Status_Maniobra == EStatusManiobra.COMPLETED)
+									{
+										<MudTooltip Text="@Localize.Get("btn_get_tarja")" Arrow="true" Placement="Placement.Top">
+											<MudIconButton Icon="@Icons.Material.Rounded.PictureAsPdf" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(() => DownloadTallyReport(context.IdWebDetCarga, context.Origen_Maniobra))" />
+										</MudTooltip>
+										<MudTooltip Text="@Localize.Get("btn_get_photographic")" Arrow="true" Placement="Placement.Top">
+											<MudIconButton Icon="@Icons.Material.Rounded.Collections" Variant="Variant.Filled" Color="Color.Info" OnClick="@(() => DownloadPhotographicReport(context.IdWebDetCarga, context.Origen_Maniobra))" />
+										</MudTooltip>
+										<MudTooltip Text="@Localize.Get("btn_get_zipphotos")" Arrow="true" Placement="Placement.Top">
+											<MudIconButton Icon="@Icons.Material.Rounded.FolderZip" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => DownloadPhotographsZip(context.IdWebDetCarga, context.Origen))" />
+										</MudTooltip>
+									}
+								</MudStack>
+							</MudCardActions>
+						</MudCard>
+					</MudItem>
+				</GridItemDisplay>
+				<ListItemDisplay>
+					<MudPaper Class="@($"list-row {context.Status_Maniobra}")">
+						<div class="inner-row">
+							<MudText Color="Color.Primary">@context.Folio</MudText>
+							<MudText Color="Color.Primary">@context.Origen</MudText>
+							<MudText Color="Color.Primary">@context.Maniobra</MudText>
+							<MudText Color="Color.Primary">@context.Fecha_Contratacion.ToLocalTime().ToString("dd/MM/yyyy")</MudText>
+							<MudText Color="Color.Primary">@context.Fecha_Entrada?.ToString("dd/MM/yyyy")</MudText>
+							<MudText Color="Color.Primary">@context.Fecha_Maniobra?.ToString("dd/MM/yyyy HH:mm")</MudText>
+							<MudText Color="Color.Primary">@context.Embalaje</MudText>
+							<MudText Color="Color.Primary">@context.Mercancia</MudText>
+							<MudChip T="string"
+									 Class="item-status-list"
+									 Color="(context.Status_Maniobra.Equals(EStatusManiobra.PENDING) ? Color.Info : context.Status_Maniobra.Equals(EStatusManiobra.IN_PROGRESS) ? Color.Warning : Color.Success)"
+									 Size="Size.Small"> @GetStatusAsText(context.Status_Maniobra)
+							</MudChip>
+						</div>
+						<MudStack Class="list-actions" Row="true">
+							@if (context.Status_Maniobra == EStatusManiobra.IN_PROGRESS)
+							{
+								<MudTooltip Text="@Localize.Get("btn_get_zipphotos")" Arrow="true" Placement="Placement.Top">
+								<MudIconButton Icon="@Icons.Material.Rounded.FolderZip" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => DownloadPhotographsZip(context.IdWebDetCarga, context.Origen))" />
+								</MudTooltip>
+							}
+							@if (context.Status_Maniobra == EStatusManiobra.COMPLETED)
+							{
+								<MudTooltip Text="@Localize.Get("btn_get_tarja")" Arrow="true" Placement="Placement.Top">
+									<MudIconButton Icon="@Icons.Material.Rounded.PictureAsPdf" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(() => DownloadTallyReport(context.IdWebDetCarga, context.Origen_Maniobra))" />
+								</MudTooltip>
+								<MudTooltip Text="@Localize.Get("btn_get_photographic")" Arrow="true" Placement="Placement.Top">
+									<MudIconButton Icon="@Icons.Material.Rounded.Collections" Variant="Variant.Filled" Color="Color.Info" OnClick="@(() => DownloadPhotographicReport(context.IdWebDetCarga, context.Origen_Maniobra))" />
+								</MudTooltip>
+								<MudTooltip Text="@Localize.Get("btn_get_zipphotos")" Arrow="true" Placement="Placement.Top">
+									<MudIconButton Icon="@Icons.Material.Rounded.FolderZip" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => DownloadPhotographsZip(context.IdWebDetCarga, context.Origen))" />
+								</MudTooltip>
+							}
+						</MudStack>
+					</MudPaper>
+				</ListItemDisplay>
+			</GridListPager>
+		</MudPaper>
+	</div>
+
+
+@code {
+	private GridListPager<SimplePhotographicReport> Pager_Reference { get; set; }
+	private IEnumerable<KeyValue> OptionsService { get; set; } = Enumerable.Empty<KeyValue>();
+	private IEnumerable<KeyValue> OptionsStatus { get; set; } = Enumerable.Empty<KeyValue>();
+	private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+	private IEnumerable<SimplePhotographicReport>? ListQuery { get; set; }
+	private int Total_Items { get; set; } = 0;
+
+	private KeyValue Location { get; set; } = null;
+	private string? Serial { get; set; } = null;
+	private KeyValue? Service { get; set; } = null;
+	private KeyValue? Status_Service { get; set; } = null;
+	private string? Booking { get; set; } = null;
+	private DateTime DateFrom { get; set; } = DateTime.Now.AddMonths(-1).Date;
+	private DateTime DateTo { get; set; } = DateTime.Now.Date.AddDays(1).AddTicks(-1);
+
+	private IJSObjectReference? module_download;
+	private IJSObjectReference? module_open;
+
+	private async Task DateFromChanged(DateTime? value)
+	{
+		if (value.HasValue)
+		{
+			DateFrom = value.Value;
+			await UpdateSource();
+		}
+	}
+
+	private async Task DateToChanged(DateTime? value)
+	{
+		if (value.HasValue)
+		{
+			DateTo = value.Value;
+			await UpdateSource();
+		}
+	}
+
+	private async Task ServiceChanged(KeyValue? value)
+	{
+		Service = value;
+		await UpdateSource();
+	}
+
+	private async Task StatusServiceChanged(KeyValue? value)
+	{
+		Status_Service = value;
+		await UpdateSource();
+	}
+
+	private async Task BookingChanged(string? value)
+	{
+		Booking = value;
+		await UpdateSource();
+	}
+
+	private async Task SerialChanged(string? value)
+	{
+		Serial = value;
+		await UpdateSource();
+	}
+
+	protected async override Task OnInitializedAsync()
+	{
+		if (AppState.GetAvailable_Locations().TryGetValue(AppState.GetCurrentLocation(), out var location))
+		{
+			Location = location;
+		}
+
+		OptionsService = GetServices();
+		OptionsStatus = GetServiceStatus();
+
+		var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+		var result = await DATA_ACCESS.GetUserHandling(new UserReportsRequest()
+		{
+			Client_ID = AppState.GetCurrentClientID() ?? 0,
+			Page_Number = 1,
+			Items_Per_Page = 5,
+			Date_From = DateTime.Now.Date.AddMonths(-1).ToUniversalTime(),
+			Date_To = DateTime.Now.Date.AddTicks(-1).ToUniversalTime(),
+			Booking = Booking,
+			Origin = Serial,
+			Service_ID = Service?.Key,
+			Status_Service = Status_Service?.Key,
+			Location_ID = Location.Key
+		});
+
+		if (result is not null)
+		{
+			if (result.Operation_Succeeded)
+			{
+				ListQuery = result.Result.Reports;
+				Total_Items = result.Result.Total_Items;
+			}
+			else
+			{
+				ListQuery = Enumerable.Empty<SimplePhotographicReport>();
+				Total_Items = 0;
+			}
+		}
+		else
+		{
+			ListQuery = Enumerable.Empty<SimplePhotographicReport>();
+			Total_Items = 0;
+		}
+
+		BreakpointService.OnChange += StateHasChanged;
+		await BreakpointService.InitializeService();
+		await base.OnInitializedAsync();
+	}
+
+	protected async override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+			module_open = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/open_helper.js");
+
+			await base.OnAfterRenderAsync(firstRender);
+		}	
+	}
+
+	private async Task UpdateSource()
+	{
+		await UpdateHandling();
+	}
+
+	private async Task UpdateHandling()
+	{
+		if (AppState.GetAvailable_Locations().TryGetValue(AppState.GetCurrentLocation(), out var location))
+		{
+			Location = location;
+		}
+
+		var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+		var result = await DATA_ACCESS.GetUserHandling(new UserReportsRequest()
+			{
+				Client_ID = AppState.GetCurrentClientID() ?? 0,
+				Items_Per_Page = Pager_Reference.ItemsPerPage,
+				Page_Number = Pager_Reference.CurrentPage,
+				Date_From = DateFrom.Date.ToUniversalTime(),
+				Date_To = DateTo.Date.AddTicks(-1).ToUniversalTime(),
+				Booking = Booking,
+				Origin = Serial,
+				Service_ID = Service?.Key,
+				Status_Service = Status_Service?.Key,
+				Location_ID = Location.Key
+			});
+
+		if (result is not null)
+		{
+			if (result.Operation_Succeeded)
+			{
+				ListQuery = result.Result.Reports;
+				Total_Items = result.Result.Total_Items;
+			}
+			else
+			{
+				// ERROR TODO
+				ListQuery = Enumerable.Empty<SimplePhotographicReport>();
+				Total_Items = 0;
+			}
+		}
+		else
+		{
+			// ERROR TODO
+			ListQuery = Enumerable.Empty<SimplePhotographicReport>();
+			Total_Items = 0;
+		}
+	}
+
+	private async void DownloadPhotographicReport(int? idWebDetCarga, string origen)
+	{
+		var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+		var FILESTREAM = await DATA_ACCESS.DownloadAuthAsync("PCG_FDFTracking/PostGetBookingPhotographicReport", HttpMethod.Post, null, JsonConvert.SerializeObject(new RequestReportData()
+		{
+			IdWebDetCarga = idWebDetCarga.Value,
+			Origen = origen
+		}), null);
+		if (FILESTREAM is not null && module_open is not null)
+		{
+			var fileName = $"{Localize.Get("label_photographic")} - {DateTime.Now.ToString("dd/MM/yyyy - HH:mm")}.pdf";
+			using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+			await module_open!.InvokeVoidAsync("openFileFromStream", streamRef, BreakpointService.GetIsMobile());
+		}
+	}
+
+	private async void DownloadTallyReport(int? idWebDetCarga, string origen)
+	{
+		var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+		var FILESTREAM = await DATA_ACCESS.DownloadAuthAsync("PCG_FDFTracking/PostGetBookingTallyReport", HttpMethod.Post, null, JsonConvert.SerializeObject(new RequestReportData()
+		{
+			IdWebDetCarga = idWebDetCarga.Value,
+			Origen = origen
+		}), null);
+
+		if (FILESTREAM is not null && module_open is not null)
+		{
+			var fileName = $"{Localize.Get("label_tallyreport")} - {DateTime.Now.ToString("dd/MM/yyyy - HH:mm")}.pdf";
+			using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+			await module_open!.InvokeVoidAsync("openFileFromStream", streamRef, BreakpointService.GetIsMobile());
+		}
+	}
+
+	private async void DownloadPhotographsZip(int? idWebDetCarga, string origin)
+	{
+		var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+		var FILESTREAM = await DATA_ACCESS.DownloadAuthAsync("PCG_FDFTracking/PostGetBookingPhotographsZip", HttpMethod.Post, null, JsonConvert.SerializeObject(idWebDetCarga), null);
+
+		if (FILESTREAM is not null && module_download is not null)
+		{
+			var fileName = $"{Localize.Get("label_photographs")}{(string.IsNullOrWhiteSpace(origin) ? "" : $" - {origin}")} - {DateTime.Now.ToString("dd/MM/yyyy - HH:mm")}.zip";
+			using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+			await module_download!.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+		}
+	}
+
+	private string GetStatusAsText(EStatusManiobra status)
+	{
+		switch (status)
+		{
+			case EStatusManiobra.PENDING:
+				{
+					return Localize.Get("EStatus_service_pending").ToUpper();
+				}
+			case EStatusManiobra.IN_PROGRESS:
+				{
+					return Localize.Get("EStatus_service_progress").ToUpper();
+				}
+			case EStatusManiobra.COMPLETED:
+				{
+					return Localize.Get("EStatus_service_completed").ToUpper();
+				}
+			default:
+				{
+					return string.Empty;
+				}
+		}
+	}
+
+	private IEnumerable<KeyValue> GetServices()
+	{
+		List<KeyValue> services = new List<KeyValue>();
+
+		services.Add(new KeyValue() { Key = 3, Value = Localize.Get("option_service_deconso").ToUpper() });
+		services.Add(new KeyValue() { Key = 4, Value = Localize.Get("option_service_conso").ToUpper() });
+		services.Add(new KeyValue() { Key = 11, Value = Localize.Get("option_service_trasp").ToUpper() });
+		services.Add(new KeyValue() { Key = 12, Value = Localize.Get("option_service_warehouse").ToUpper() });
+		services.Add(new KeyValue() { Key = 401, Value = Localize.Get("option_service_arriveimpo").ToUpper() });
+		services.Add(new KeyValue() { Key = 402, Value = Localize.Get("option_service_arriveexpo").ToUpper() });
+		services.Add(new KeyValue() { Key = 491, Value = Localize.Get("option_service_depimpo").ToUpper() });
+		services.Add(new KeyValue() { Key = 492, Value = Localize.Get("option_service_depexpo").ToUpper() });
+
+		return services;
+	}
+
+	private IEnumerable<KeyValue> GetServiceStatus()
+	{
+		List<KeyValue> serviceStatus = new List<KeyValue>();
+
+		serviceStatus.Add(new KeyValue() { Key = 1, Value = Localize.Get("EStatus_service_pending").ToUpper() });
+		serviceStatus.Add(new KeyValue() { Key = 2, Value = Localize.Get("EStatus_service_progress").ToUpper() });
+		serviceStatus.Add(new KeyValue() { Key = 3, Value = Localize.Get("EStatus_service_completed").ToUpper() });
+
+		return serviceStatus;
+	}
+
+	/*
+	* Eliminar los modulos JS cargados al terminar de usar el componente actual
+	*/
+	async ValueTask IAsyncDisposable.DisposeAsync()
+	{
+		if (module_download is not null)
+		{
+			await module_download.DisposeAsync();
+		}
+
+		if (module_open is not null)
+		{
+			await module_open.DisposeAsync();
+		}
+
+		Dispose();
+	}
+
+	public void Dispose()
+	{
+		BreakpointService.OnChange -= StateHasChanged;
+	}
+}

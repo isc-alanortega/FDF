@@ -1,0 +1,268 @@
+﻿:root {
+    --drawer-height: 250px;
+}
+
+@media only screen and (min-width: 200px) {
+    html {
+        font-size: 6px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 2.5em;
+    }
+
+    .mud-snackbar-content-action svg {
+        font-size: 2.1em !important;
+    }
+
+    .mud-snackbar-icon svg {
+        font-size: 1em !important;
+    }
+}
+
+@media only screen and (min-width: 400px) {
+    html {
+        font-size: 7px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 2.2em;
+    }
+
+    .mud-snackbar-icon svg {
+        font-size: 1.05em;
+    }
+}
+
+@media only screen and (min-width: 600px) {
+    html {
+        font-size: 8px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 1.7em;
+    }
+
+    .mud-snackbar-icon svg {
+        font-size: 1.02em;
+    }
+
+    @media(min-width: 559px) {
+        .mud-snackbar-content-action svg {
+            font-size: 1.6em;
+        }
+    }
+}
+
+@media only screen and (min-width: 720px) {
+    html {
+        font-size: 8px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 1.8em;
+    }
+
+    .mud-snackbar-icon svg {
+        font-size: 1.02em;
+    }
+
+    .mud-snackbar-content-action svg {
+        font-size: 1.4em;
+    }
+}
+
+@media only screen and (min-width: 960px) {
+    html {
+        font-size: 10px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 1.3em;
+    }
+
+    .mud-snackbar-icon svg {
+        font-size: 1.02em;
+    }    
+}
+
+@media only screen and (min-width: 1280px) {
+    html {
+        font-size: 12px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 1.3em;
+    }
+}
+
+@media only screen and (min-width: 1920px) {
+    html {
+        font-size: 14px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 1.3em;
+    }
+}
+
+@media only screen and (min-width: 2560px) {
+    html {
+        font-size: 16px;
+    }
+
+    .mud-snackbar-content-message {
+        font-size: 1.3em;
+    }
+}
+
+.icon-rem-s1 {
+    font-size: 1rem !important;
+}
+
+.icon-rem-s2 {
+    font-size: 2rem !important;
+}
+
+.icon-rem-s3 {
+    font-size: 3rem !important;
+}
+
+
+.icon-rem-s3_7 {
+    font-size: 3.7rem !important;
+}
+
+.icon-rem-s4 {
+    font-size: 4rem !important;
+}
+
+.icon-rem-s5 {
+    font-size: 5rem !important;
+}
+
+.icon-rem-s6 {
+    font-size: 6rem !important;
+}
+
+.icon-rem-s7 {
+    font-size: 7rem !important;
+}
+
+.icon-rem-s8 {
+    font-size: 8rem !important;
+}
+
+.icon-rem-s9 {
+    font-size: 9rem !important;
+}
+
+.icon-rem-s10 {
+    font-size: 10rem !important;
+}
+
+.icon-rem-s11 {
+    font-size: 11rem !important;
+}
+
+.icon-rem-s12 {
+    font-size: 12rem !important;
+}
+
+.icon-rem-s13 {
+    font-size: 13rem !important;
+}
+
+.icon-rem-s14 {
+    font-size: 14rem !important;
+}
+
+.icon-rem-s15 {
+    font-size: 15rem !important;
+}
+
+.icon-rem-s16 {
+    font-size: 16rem !important;
+}
+
+.remove-height-em {
+    height: auto !important;
+}
+
+/*I don't like this but whatever works I guess*/
+.location-popover {
+    &.resize-it {
+        .mud-typography {
+            font-size: 1.8rem;
+        }
+    }
+}
+
+.booking-searchbar {
+    &.resize-it {
+        .mud-input.mud-input-text.mud-select-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-label {
+            font-size: 2rem;
+        }
+
+        .mud-icon-root {
+            font-size: 3rem !important;
+        }
+    }
+}
+
+.text-input {
+    &.resize-it {
+        max-width: 100%;
+
+        .mud-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-label {
+            font-size: 2rem !important;
+        }
+    }
+}
+
+.numerical-input {
+    &.increase-it {
+        max-width: 100%;
+
+        .mud-input {
+            font-size: 2rem;
+        }
+
+        .mud-input-label {
+            font-size: 2rem;
+        }
+
+        .mud-input-numeric-spin {
+            flex-direction: row;
+
+            .mud-icon-root {
+                font-size: 6rem;
+            }
+        }
+    }
+}
+
+.current-client-button {
+    font-weight: bold;
+    opacity: 1 !important;
+}
+
+.sf-loc-selected {
+    background-color: #E3E3E3;
+}
+
+.booking-required-information {
+    color: red;
+}
+
+.quotation-required-information {
+    color: red;
+}

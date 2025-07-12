@@ -1,0 +1,74 @@
+﻿<MudDialog @bind-IsVisible="_visible"
+           DisableSidePadding="false"
+           Options="_options">
+    <DialogContent>
+        <div class="text-center p-4">
+            @if (ShowProgressCircular)
+            {
+                <div style="padding: 20px;">
+                    <div class="custom-spinner"></div>
+                </div>
+            }
+            else if (Icon is not null)
+            {
+                @Icon
+            }
+            <MudText Typo="Typo.h6">@Title</MudText>
+            <MudText Typo="Typo.body2">@Message</MudText>
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public bool ShowProgressCircular { get; set; } = false;
+    [Parameter] public RenderFragment? Icon { get; set; } = null;
+
+    private bool _visible;
+
+    [Parameter]
+    public bool IsVisible
+    {
+        get => _visible;
+        set
+        {
+            if (_visible != value)
+            {
+                _visible = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    // Opciones del diálogo inline
+    private readonly DialogOptions _options = new DialogOptions
+        {
+            DisableBackdropClick = true, // Evita cierre por clic fuera
+            CloseOnEscapeKey = false     // Evita cierre con ESC
+        };
+}
+
+<style>
+    .custom-spinner {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>

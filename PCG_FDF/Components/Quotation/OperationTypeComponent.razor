@@ -1,0 +1,93 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Utility
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    @if (elementData is not null)
+    {
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack>
+                @if (elementData.GetChipFields() is not null && elementData.GetGuidFields() is not null)
+                {
+                    var f24_exclusions = elementData.GetFieldExclusions(24);
+                    <div class="chipset-wrapper">
+                        <MudChipSet ReadOnly="@quotationService.GetQuotationLocked()" MudChipEqualityComparer="@Comparer" ValueExpression="@(() => GetSelectedChip(24))" SelectedChip="@GetSelectedChip(24)" SelectedChipChanged="@(async (chip) => await ChipHasChanged(24, chip))" Class="@($"chip-set-selector {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")" Mandatory="true">
+                            @if (!f24_exclusions.Contains(guid_import))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![24] == guid_import)" IconCSS="extra-large unconstrain" ChipTag="guid_import" ChipIcon="@CustomIcons.import.GetIcon()" IconViewBox="@CustomIcons.import.GetViewBox()" ChipText="@localize.Get("quot_operation_import")"></SimpleChip>
+                            }
+                            @if (!f24_exclusions.Contains(guid_export))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![24] == guid_export)" IconCSS="extra-large unconstrain" ChipTag="guid_export" ChipIcon="@CustomIcons.export.GetIcon()" IconViewBox="@CustomIcons.export.GetViewBox()" ChipText="@localize.Get("quot_operation_export")"></SimpleChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                }
+            </MudStack>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Row="true">
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 2; i++)
+                {
+                    <MudItem xs="2">
+                        <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+    }
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 17;
+    private ElementQuotationData? elementData;
+    private ChipUUIDComparer Comparer { get; } = new();
+    private Guid guid_import = new Guid("47C2D3C4-318D-4809-B863-9253F55FC049");
+    private Guid guid_export = new Guid("4FC7C501-0D07-45BA-8FD5-082492329E27");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        elementData.ElementHasChips(new List<int>() { 24 });
+        await base.OnInitializedAsync();
+    }
+
+    private async Task ChipHasChanged(int id, MudChip chip)
+    {
+        await elementData!.SetChipValue(id, chip);
+        await elementData!.SetGuidValue(id, (Guid)chip.Tag);
+    }
+
+    private MudChip? GetSelectedChip(int id)
+    {
+        return elementData!.GetChipFields()![id];
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

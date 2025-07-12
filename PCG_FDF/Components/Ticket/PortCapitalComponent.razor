@@ -1,0 +1,406 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_ENTITIES.Enums
+@using PCG_ENTITIES.Extensions
+@using PCG_ENTITIES.PCG_FDF.PortCapital
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities
+@using PCG_FDF.Utility
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.ComponentDI.Booking
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.ComponentDI.AuthManagement
+@using PCG_FDF.Data.ComponentDI
+@inject ISnackbar Snackbar
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalLocalizer Localize
+@inject ApplicationState AppState
+@inject IDialogService DialogService
+@inject BookingDataCollection BookingData
+@inject AuthenticationStateProvider AuthProvider
+@inject QuotationDataCollection quotationService
+@inject GlobalBreakpointService BreakpointService
+@inject StaticShoppingCart shoppingCartServices
+@implements IDisposable
+
+@if (IsPortCapital())
+{   
+    <div class="portcapital-wrapper">
+        <MudPaper Class="port-capital" Elevation="0">
+            <MudStack>
+                @* Title *@
+                <MudText Class="portcapital-text portcapital-title" Color="Color.Primary" Typo="@Typo.h4">
+                    <strong>
+                        @if (BookingData.GetInstallmentSelected() == null)
+                        {
+                            @(BookingData.GetFormInitialized() ? Localize.Get("pc_payments") : Localize.Get("pc_payments_offer"))
+                        }
+                        else
+                        {
+                            @Localize.Get("pc_contracted_by")
+                        }
+                    </strong>
+                </MudText>
+
+                @* Subtitle *@
+                <div class="d-flex">
+                    @if (BookingData.GetInstallmentSelected() == null)
+                    {
+                        <MudText Class="portcapital-text portcapital-subtitle" Color="Color.Primary">
+                            @Localize.Get("pc_weoffer")&nbsp;
+                        </MudText>
+                        <MudText Class="portcapital-text text-pc-green portcapital-subtitle">
+                            <strong>
+                                @Localize.Get("pc_weoffer2")&nbsp;
+                            </strong>
+                        </MudText>
+                        <MudText Class="portcapital-text portcapital-subtitle" Color="Color.Primary">
+                            @Localize.Get("pc_weoffer3")
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Class="portcapital-text portcapital-subtitle" Color="Color.Primary">
+                            @Localize.Get("pc_selected_payment"):
+                        </MudText>
+                    }
+                </div>
+
+                @* Payment Installments*@
+                <MudStack Row="true">
+                    <MudIcon Class="portcapital-calendar" Icon="@CustomIcons.Calendar_Time.GetIcon()" ViewBox="@CustomIcons.Calendar_Time.GetViewBox()"></MudIcon>
+                    <MudStack>
+                        @if (BookingData.GetInstallmentSelected() != null)
+                        {
+                            <MudStack Class="finance-option" Spacing="0">
+                                <MudStack Class="finance-option-header" Row="true">
+                                    <MudText Typo="@Typo.h6" Class="portcapital-text text-pc-green finance-option-time">
+                                        <strong>
+                                            @string.Format(Localize.Get("pc_paymentplandays"), BookingData.GetInstallmentSelected().Payment_deadline_number)
+                                        </strong>
+                                    </MudText>
+                                    <MudText Typo="@Typo.h6" Class="portcapital-text finance-option-amount" Color="Color.Primary">$@(string.Format("{0:N2}", BookingData.GetInstallmentSelected().Total_amount))</MudText>
+                                </MudStack>
+                                <MudText Class="portcapital-text text-pc-grey finance-option-until">
+                                    @string.Format(Localize.Get("pc_paymentexpiry"), DateTime.Now.AddDays(Convert.ToInt32(BookingData.GetInstallmentSelected().Payment_deadline_number)).ToString("dd-MMM-yyyy"))
+                                </MudText>
+                            </MudStack>
+                        }
+                        else if (BookingData.QuotationPortCapital != null && quotationService.GetPortCapitalCollection().Success && BookingData.QuotationPortCapital.Installment_interests != null && BookingData.QuotationPortCapital.Installment_interests.Any() && BookingData.GetFormInitialized())
+                        {
+                            <MudRadioGroup Class="finance-options-group" @bind-Value="@Selected_Option">
+                                @foreach (var option in BookingData.QuotationPortCapital.Installment_interests.OrderBy(item => item.Payment_deadline_number))
+                                {
+                                    <MudRadio Class="finance-radiobutton" T="InstallmentInterests" Value="option">
+                                        <MudStack Class="finance-option" Spacing="0">
+                                            <MudStack Class="finance-option-header" Row="true">
+                                                <MudText Typo="@Typo.h6" Class="portcapital-text text-pc-green finance-option-time">
+                                                    <strong>
+                                                        @string.Format(Localize.Get("pc_paymentplandays"), option.Payment_deadline_number)
+                                                    </strong>
+                                                </MudText>
+                                                <MudText Typo="@Typo.h6" Class="portcapital-text finance-option-amount" Color="Color.Primary">$@(string.Format("{0:N2}", option.Total_amount))</MudText>
+                                            </MudStack>
+                                            <MudText Class="portcapital-text text-pc-grey finance-option-until">
+                                                @string.Format(Localize.Get("pc_paymentexpiry"), DateTime.Now.AddDays(Convert.ToInt32(option.Payment_deadline_number)).ToString("dd-MMM-yyyy"))
+                                            </MudText>
+                                        </MudStack>
+                                    </MudRadio>
+                                }
+                            </MudRadioGroup>
+                        }
+                        else if (quotationService.GetPortCapitalCollection() != null && quotationService.GetPortCapitalCollection().Success && quotationService.GetPortCapitalCollection().Data.Installment_interests.Any())
+                        {
+                            @foreach (var option in quotationService.GetPortCapitalCollection()!.Data.Installment_interests.OrderBy(item => item.Payment_deadline_number))
+                            {
+                                <MudStack Class="finance-option" Spacing="0">
+                                    <MudStack Class="finance-option-header" Row="true">
+                                        <MudText Typo="@Typo.h6" Class="portcapital-text text-pc-green finance-option-time">
+                                            <strong>
+                                                @string.Format(Localize.Get("pc_paymentplandays"), option.Payment_deadline_number)
+                                            </strong>
+                                        </MudText>
+                                        <MudText Typo="@Typo.h6" Class="portcapital-text finance-option-amount" Color="Color.Primary">$@(string.Format("{0:N2}", option.Total_amount))</MudText>
+                                    </MudStack>
+                                    <MudText Class="portcapital-text text-pc-grey finance-option-until">
+                                        @string.Format(Localize.Get("pc_paymentexpiry"), DateTime.Now.AddDays(option.Payment_deadline_number).ToString("dd-MMM-yyyy"))
+                                    </MudText>
+                                </MudStack>
+                            }
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudStack>
+
+            @* Button Contract *@
+            <div class="d-flex">
+                @if (BookingData.GetInstallmentSelected() == null && BookingData.QuotationPortCapital != null && BookingData.QuotationPortCapital.Installment_interests != null && BookingData.QuotationPortCapital.Installment_interests.Any() && BookingData.GetFormInitialized() && BookingData.GetBookingDataComplete())
+                {
+                    if (!BookingData.GetIsReadonly()) // Si aun no se ha contratado mostramos el boton
+                    {
+                        <MudButton Class="portcapital-contract-button" Disabled="@(BookingData.GetBookingIsSaving() || BookingData.PDF_Ready)" OnClick="@(async () => await TrySaveFinalBooking())">
+                            <MudStack Row="true" AlignItems="@AlignItems.Center" Justify="Justify.Center">
+                                @if (!InProgress)
+                                {
+                                    <MudIcon Class="portcapital-lighthouse" Size="@Size.Large" Icon="@CustomIcons.PortCapital_Lighthouse_White.GetIcon()" ViewBox="@CustomIcons.PortCapital_Lighthouse_White.GetViewBox()"></MudIcon>
+                                }
+
+                                <MudText Class="portcapital-text text-pc-white payment-button">Contratar con Port Capital</MudText>
+
+                                @if (InProgress)
+                                {
+                                    <div class="@(BreakpointService.GetIsMobile() ? "progress resize-it" : "progress")"></div>
+                                }
+                            </MudStack>
+                        </MudButton>
+                    }
+                }
+                <MudIcon Class="portcapital-poweredby" Icon="@CustomIcons.PortCapital_PoweredBy.GetIcon()" ViewBox="@CustomIcons.PortCapital_PoweredBy.GetViewBox()"></MudIcon>
+            </div>
+        </MudPaper>
+    </div>
+}
+
+@code {
+    #region AUTO PROPIEDADES
+    /// <summary>
+    /// Flag contract in progress
+    /// </summary>
+    private bool InProgress { get; set; } = false;
+    /// <summary>
+    /// Checkbox Quotation Option
+    /// </summary>
+    private InstallmentInterests? Selected_Option { get; set; } = null;
+    /// <summary>
+    /// Muestra el boton de contratar
+    /// </summary>
+    private bool ShowBtnContract { get; set; } = true;
+    /// <summary>
+    /// Muestra el componenete de Port Capital
+    /// </summary>
+    private bool ShowComponent { get; set; } = true;
+
+    #endregion
+
+    #region METHODS: LIFE CICLE BLAZOR
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        quotationService.OnChange += StateHasChanged;
+        BookingData.OnChange += StateHasChanged;
+
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }    
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        quotationService.OnChange -= StateHasChanged;
+        BookingData.OnChange -= StateHasChanged;
+    }
+    #endregion
+
+    #region VALIDATIONS SHOW PORT CAPITAL COMPONENT
+    // Verifica que el servicio/paquete sea port capital y que ya contenga la cotizacion port capital
+    private bool IsPortCapital()
+    {
+        bool Ban = false;
+        try
+        {
+            Ban = (
+                quotationService.GetIsPortCapital() &&
+                quotationService.GetPortCapitalCollection() != null &&
+                quotationService.GetPortCapitalCollection().Success// Revisa que la base url acepte contrataciones port capital
+                && (
+                    (
+                      quotationService.AllReady() // revisa que los servicios esten listos
+                      && !quotationService.GetQuotationIsCalculating() // Revisa que ya este calculado el costo
+                      && quotationService.GetQuotationFullyValid() // Revisa que la cotizacion sea valida
+                      && !quotationService.Block_Quotation) || (BookingData.GetFormInitialized()
+                      )
+                    )
+                && quotationService.GetHasDataPortCapital() // Revisa que el obhjeto port capital ya este inicializado
+                && quotationService.GetPortCapitalCollection() != null // Revisa que el objeto de los plazos de pago tenga datos
+                && quotationService.AllItemsPortCapital() // Revisa que los servicios esten habilitados con port capital
+                && ShowComponent
+            ) 
+            || 
+            BookingData.GetInstallmentSelected() != null; 
+        }
+        catch (Exception ex)
+        {
+            string x = ex.Message;
+        }
+
+        return Ban;
+    }
+    #endregion
+
+    #region CONTRACT WITH PORT CAPITAL
+    private async Task TrySaveFinalBooking()
+    {
+        if (InProgress) return;
+
+        if(Selected_Option is null)
+        {
+            ShowSnackbar("Selecciona un plazo de pago");
+            return;
+        }
+
+        if (!await ShowMessageBox(Localize.Get("msg_warning"), Localize.Get("pc_question_contract"), Localize.Get("btn_continue"), Localize.Get("btn_cancel")))
+            return;
+
+
+        var user_context = await ((ApiAuthenticationStateProvider)AuthProvider).GetAuthenticationStateAsync();
+        var userData = new RequestPortCapitalDataUserForm()
+            {
+                IDUser = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "User ID")!.Value),
+                IDCustomer = AppState.GetCurrentClientID()!.Value,
+                IDClientePrincipal = Convert.ToInt32(user_context.User.Claims.FirstOrDefault(claims => claims.Type == "Client ID")!.Value),
+                Language = LanguageUtil.getCurrentCulture().ToLower(),
+            };
+
+        if (await ValidationCanContract(userData))
+        {
+            await TryPCB(userData);
+        }
+    }
+
+    private void SetIsSaving(bool isSaving)
+    {
+        InProgress = isSaving;
+        BookingData.SetBookingIsSaving(isSaving);
+        StateHasChanged();
+    }
+
+    #region VALIDACIONES CONTRATACION PORT CAPITAL
+    private async Task<bool> ValidationCanContract(RequestPortCapitalDataUserForm UserData)
+    {
+        // Obtenemos de nuevo todo para revisar el estaus del cliente y existencia de este en port capital
+        var result = await DATA_ACCESS.GetCalculatedTariffPortCapital(new RequestPortCapitalQuotationForm(){
+            IDClient = UserData.IDCustomer,
+            IDUser = UserData.IDUser,
+            Amount = Selected_Option!.Amount,
+            Currency_Key = quotationService.Money_Kind.GetStringValue(),
+            Is_Express = quotationService.IsExpress()
+        });
+
+        if (!result.Operation_Succeeded || result.Result == null || result.Result.Data == null)
+        {
+            ShowSnackbar("pc_general_error");
+            return false;
+        }
+
+        var Installments = result.Result.Data;
+        if (Installments.Can_book_code > (int)EPortCapitalCanBookCode.QUALIFIED_USER_QUOTATION)
+        {
+            ShowSnackbar(Installments.Can_book_message);
+            return false;
+        }
+
+        // Si el cliente no esta registrado comentamos si quiere registrarse 
+        if (!Installments.Port_capital_customer_exist || !Installments.Port_capital_user_exist)
+        {
+            if (!Installments.Port_capital_customer_exist)
+            {
+                if (!await ShowMessageBox(Localize.Get("msg_warning"), Localize.Get("pc_question_register_customer"), Localize.Get("btn_continue"), Localize.Get("btn_cancel")))
+                {
+                    ShowSnackbar(Localize.Get("pc_not_register_error"));
+                    return false;
+                }
+            }
+
+            var ResultTryRegister = await DATA_ACCESS.PostPortCapitalCustomerRegister(new RequestPortCapitalCustomerRegisterForm()
+                {
+                    Data = UserData
+                });
+
+            if (!Installments.Port_capital_customer_exist && ResultTryRegister is not null)
+            {
+                string Message = ResultTryRegister is not null ? ResultTryRegister.Error_Message : "pc_register_customer_error_general";
+                ShowSnackbar(Message);
+                if (ResultTryRegister is null)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+    #endregion    
+
+    #region CONTRACT 
+    private async Task TryPCB(RequestPortCapitalDataUserForm userData)
+    {
+        try
+        {
+            await BookingData.SaveFinalBookingData(new()
+            {
+                QuotationSelected = Selected_Option,
+                UserData = userData,
+                IsExpress = true
+
+            });
+
+            if (BookingData.GetIsPCBSaving())
+            {
+                ShowSnackbar(Localize.Get("pc_contract_succes"), Severity.Success);
+                ShowComponent = false;
+                StateHasChanged();
+            }
+            else
+            {
+                ShowSnackbar(Localize.Get("pc_contract_unsuccessful"));
+            }
+        }
+        catch(Exception ex)
+        {
+        }
+
+    }
+    #endregion
+    #endregion
+
+    #region UTILS
+    private bool ShowSnackbar(string Msg, Severity type = Severity.Error)
+    {
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+        Snackbar.Add(Msg, type);
+
+        return type != Severity.Error;
+    }
+
+    private async Task<bool> ShowMessageBox(string MsgHeader, string MsgBody, string BtnYes, string BtnNo = null)
+    {
+        bool? ResultMessagebox = await DialogService.ShowMessageBox(
+                MsgHeader,
+                MsgBody,
+                yesText: BtnYes,
+                noText: BtnNo,
+                options: new DialogOptions()
+                    {
+                        ClassBackground = "portcapitalcomponent-custom-dialog-showmessagebox",
+                    }
+        );
+
+        return ResultMessagebox is not null && (bool)ResultMessagebox;
+    }
+    #endregion
+}

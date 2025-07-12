@@ -1,0 +1,106 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+::deep .paper-grey {
+    border-radius: 15px;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 1.7rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+::deep .nav-link{
+    padding: 0px;
+}
+
+::deep .login-text {
+    &.title {
+        align-self: flex-start;
+        color: css-color-var(primary-text-blue);
+    }
+
+    &.body {
+        align-self: flex-start;
+        color: css-color-var(primary-text-blue);
+    }
+
+    &.password-forget {
+        align-self: flex-end;
+        color: css-color-var(secondary);
+    }
+
+    &.styled {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+
+    &.small {
+        font-size: 0.7rem;
+        color: css-color-var(primary-text-blue);
+    }
+}
+
+::deep .divider {
+    width: 45%;
+    background-color: css-color-var(global-grey);
+}
+
+.reg-form-row {
+    flex-basis: 0;
+    flex-grow: 1;
+}
+
+.yes-account {
+    display: flex;
+    flex-direction: row;
+}
+
+::deep .login-button {
+    align-self: flex-end;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}
+
+.mini-style-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+/*.register-title-mobil {
+    font-size: 3.5em !important;
+}
+
+.register-element-mobil {
+    font-size: 2.0em !important;
+}*/
+
+::deep .mud-input-control.register-element-mobil .me-auto {
+    font-size: 1.9em;
+}
+
+::deep .mud-select.register-element-mobil .mud-select-input {
+    font-size: 1.0em;
+}
+
+::deep .mud-select.register-element-mobil .mud-svg-icon {
+    font-size: 1.0em;
+}
+
+
+.register-title-mobil {
+    font-size: 3.5em !important;
+}
+
+.register-element-mobil {
+    font-size: 2.0em !important;
+}
+
+.register-select-mobil {
+    font-size: 1.5em !important;
+}
+
+.register-select-item-mobil p {
+    font-size: 1.9em;
+}

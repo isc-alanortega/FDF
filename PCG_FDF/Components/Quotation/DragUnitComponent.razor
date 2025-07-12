@@ -1,0 +1,112 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.Comparers
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    @if (elementData is not null)
+    {
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack Row="true">
+                @if (elementData.GetChipFields() is not null && elementData.GetGuidFields() is not null)
+                {
+                    var f15_exclusions = elementData.GetFieldExclusions(15);
+                    <div class="chipset-wrapper">
+                        <MudChipSet ReadOnly="@quotationService.GetQuotationLocked()" MudChipEqualityComparer="@Comparer" ValueExpression="@(() => GetSelectedChip(15))" SelectedChip="@GetSelectedChip(15)" SelectedChipChanged="@(async (chip) => await ChipHasChanged(15, chip))" Class="chip-set-selector" Mandatory="true">
+                            @if (!f15_exclusions.Contains(guid_chassis_20))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![15] == guid_chassis_20)" IconCSS="extra-extra-large-plus unconstrain" ChipTag="guid_chassis_20" ChipIcon="@CustomIcons.chasis20.GetIcon()" IconViewBox="@CustomIcons.chasis20.GetViewBox()" ChipText="@localize.Get("quot_drag_chassis20")"></SimpleChip>
+                            }
+                            @if (!f15_exclusions.Contains(guid_chassis_40))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![15] == guid_chassis_40)" IconCSS="extra-extra-large-plus unconstrain" ChipTag="guid_chassis_40" ChipIcon="@CustomIcons.chasis40.GetIcon()" IconViewBox="@CustomIcons.chasis40.GetViewBox()" ChipText="@localize.Get("quot_drag_chassis40")"></SimpleChip>
+                            }
+                            @if (!f15_exclusions.Contains(guid_chassis_full))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![15] == guid_chassis_full)" IconCSS="extra-extra-large-plus unconstrain" ChipTag="guid_chassis_full" ChipIcon="@CustomIcons.chasisfull.GetIcon()" IconViewBox="@CustomIcons.chasisfull.GetViewBox()" ChipText="@localize.Get("quot_drag_chassisfull")"></SimpleChip>
+                            }
+                            @if (!f15_exclusions.Contains(guid_platform))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![15] == guid_platform)" IconCSS="extra-extra-large-plus unconstrain" ChipTag="guid_platform" ChipIcon="@CustomIcons.plataforma.GetIcon()" IconViewBox="@CustomIcons.plataforma.GetViewBox()" ChipText="@localize.Get("quot_drag_platform")"></SimpleChip>
+                            }
+                            @if (!f15_exclusions.Contains(guid_platform_3axle))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![15] == guid_platform_3axle)" IconCSS="extra-extra-large-plus unconstrain" ChipTag="guid_platform_3axle" ChipIcon="@CustomIcons.plataforma3ejes.GetIcon()" IconViewBox="@CustomIcons.plataforma3ejes.GetViewBox()" ChipText="@localize.Get("quot_drag_platform3axle")"></SimpleChip>
+                            }
+                            @if (!f15_exclusions.Contains(guid_platform_full))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![15] == guid_platform_full)" IconCSS="xxxh-11 unconstrain" ChipTag="guid_platform_full" ChipIcon="@CustomIcons.plataformafull.GetIcon()" IconViewBox="@CustomIcons.plataformafull.GetViewBox()" ChipText="@localize.Get("quot_drag_platformfull")"></SimpleChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                }
+            </MudStack>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Row="true">
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudItem xs="2">
+                        <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+    }
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 6;
+    private ElementQuotationData? elementData;
+    private ChipUUIDComparer Comparer { get; } = new();
+    private Guid guid_chassis_20 = new Guid("5BDA057F-4268-44C0-BCC6-4C46D7EB86D4");
+    private Guid guid_chassis_40 = new Guid("6800DB7E-226A-4E45-9A66-731646A79175");
+    private Guid guid_chassis_full = new Guid("D3C23587-962A-4015-B10D-4E3D5F1C7E89");
+    private Guid guid_platform = new Guid("7B29EB53-BA48-44A6-9CC2-0D8375B778B9");
+    private Guid guid_platform_3axle = new Guid("5994D5A4-BC8C-4FB3-8761-D2A7E9CF72A0");
+    private Guid guid_platform_full = new Guid("FF53E4B4-15E7-4BA4-9CDA-754483C6FA4D");
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        elementData.ElementHasChips(new List<int>() { 15 });
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task ChipHasChanged(int id, MudChip chip)
+    {
+        await elementData!.SetChipValue(id, chip);
+        await elementData!.SetGuidValue(id, (Guid)chip.Tag);
+    }
+
+    private MudChip? GetSelectedChip(int id)
+    {
+        return elementData!.GetChipFields()![id];
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,13 @@
+﻿::deep .selected {
+    background-color: #E3E3E3 !important;
+}
+
+::deep .complex-element-required {
+    .mud-input-label {
+        color: red !important;
+    }
+}
+
+::deep .form-upload-button {
+    margin: 0 !important;
+}

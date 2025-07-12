@@ -1,0 +1,30 @@
+::deep .chip-set-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+::deep .chip-set-selector.increase-it {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+::deep .container-amount {
+  max-width: 20%;
+}
+::deep .container-amount.increase-it {
+  max-width: 100%;
+}
+::deep .container-amount.increase-it .mud-input {
+  font-size: 2rem;
+}
+::deep .container-amount.increase-it .mud-input-label {
+  font-size: 2rem;
+}
+::deep .container-amount.increase-it .mud-input-numeric-spin {
+  flex-direction: row;
+}
+::deep .container-amount.increase-it .mud-input-numeric-spin .mud-icon-root {
+  font-size: 6rem;
+}
+
+.chipset-wrapper {
+  width: 100%;
+}

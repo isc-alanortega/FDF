@@ -1,0 +1,86 @@
+﻿@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Localization;
+@inject GlobalLocalizer Localize
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalBreakpointService BreakpointService
+@inject BookingDataCollection BookingData
+@implements IDisposable
+
+<MudDialog>
+    <DialogContent>
+        @if (Loading)
+        {
+            <div class="progress"></div>
+        }
+        else
+        {
+            <MudStack>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text">@Localize.Get("msg_clone_contract")</MudText>
+                <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center">
+                    <MudCheckBox Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")"
+                                 T="bool"
+                    @bind-Checked="@Same_Booking"
+                                 Color="Color.Tertiary"
+                                 RequiredError="@Localize.Get("errmsg_required")">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("msg_clone_within")</strong></MudText>
+                    </MudCheckBox>
+                </MudStack>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (!Loading)
+        {
+            <MudButton OnClick="Cancel">@Localize.Get("btn_cancel")</MudButton>
+            <MudButton Color="Color.Primary" OnClick="Submit">@Localize.Get("btn_continue")</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    private bool Same_Booking { get; set; } = false;
+    private bool Loading { get; set; } = false;
+
+    async void Submit()
+    {
+        Loading = true;
+        var clone_result = await DATA_ACCESS.PostTryCloneBooking(new CloneBookingRequest()
+            {
+                Contract_UUID = BookingData.UUID,
+                Same_Booking = Same_Booking,
+                User_ID = BookingData.User_ID
+            });
+        Loading = false;
+        MudDialog.Close(DialogResult.Ok(clone_result));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

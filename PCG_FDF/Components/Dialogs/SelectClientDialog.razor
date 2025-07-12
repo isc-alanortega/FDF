@@ -1,0 +1,143 @@
+﻿@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudDialog Class="@($"selectclientdialog-dialog-mobil")">
+    <DialogContent>
+        <div class="@($"dialog-stack {(BreakpointService.GetIsXsSmScreen() ? "selectclientdialog-dialog-stack" : "")}")">
+            <MudStack>
+                <MudText Typo="@(BreakpointService.GetIsXsSmScreen() ? Typo.h5 : Typo.h6)" Class="@($"title-text {(BreakpointService.GetIsMobile() ? $"selectclientdialog-element-h5 resize-it" : "")}")">@Localize.Get("msg_select_client")</MudText>
+                <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center" Class="@($"location-searchbar {(BreakpointService.GetIsMobile() ? "resize-it selectclientdialog-stack-mobil" : "")}")">
+                    <MudAutocomplete T="ClienteVinculadoEntidad"
+                                        FullWidth="true"
+                                        Class="@($"location-searchbar {(BreakpointService.GetIsXsSmScreen() ? "selectclientdialog-MudAutocomplete-mobil" : "")}")"
+                                        PopoverClass="@($"location-popover {(BreakpointService.GetIsXsSmScreen() ? $"resize-it selectclientdialog-location-popover-mobil" : "")}")"
+                                        ToStringFunc="@CustomConverter"
+                                        ResetValueOnEmptyText="false"
+                                        CoerceText="true"
+                                        CoerceValue="false"
+                                        AdornmentIcon="@Icons.Material.Filled.Search"
+                                        AdornmentColor="Color.Primary"
+                                        Clearable="true"
+                                        @bind-Value="@SelectedClient"
+                                        SearchFunc="@SearchClient"
+                                        Placeholder="@($"{(BreakpointService.GetIsXsSmScreen() ? "" : $"{Localize.Get("placeholder_select")} {Localize.Get("lbl_subclient")}")}")"
+                                        ListItemClass="list-item selectclientdialog-componet"/>
+                </MudStack>
+            </MudStack>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit" Class="@($"{(BreakpointService.GetIsMobile() ? "selectclientdialog-btn-mobil" : "")}")">@Localize.Get("btn_continue")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .selectclientdialog-dialog-stack {
+        width: 250px !important;
+        height: 100px !important;
+    }
+
+    .selectclientdialog-dialog-mobil svg {
+        font-size: 1.4em !important;
+    }
+
+    .selectclientdialog-btn-mobil,
+    .selectclientdialog-dialog-stack svg
+    .selectclientdialog-dialog-stack label,
+    .selectclientdialog-location-popover-mobil p,
+    .selectclientdialog-MudAutocomplete-mobil input {
+        font-size: 1.9em !important;
+    }
+
+    .selectclientdialog-element-h5 {
+        font-size: 2.1em !important;
+    }
+
+    .selectclientdialog-MudAutocomplete-mobil svg {
+        font-size: 2.5em !important;
+    }
+
+    .selectclientdialog-dialog-mobil .mud-dialog-title h6 {
+        font-size: 2.9em !important;
+    }    
+</style>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public bool From_Login { get; set; } = false;
+
+    private ClienteVinculadoEntidad SelectedClient { get; set; }
+    private Func<ClienteVinculadoEntidad, string> CustomConverter = client => client?.Entity_Name!;
+
+    async void Submit()
+    {
+        if (SelectedClient.Locations is not null && SelectedClient.Locations.Any())
+        {
+            var should_refresh = AppState.GetCurrentClientID() != SelectedClient.Client_ID;
+            await AppState.SetCurrentClient(SelectedClient.Client_ID);
+            if (should_refresh && !From_Login)
+            {
+                NavigationManager.NavigateTo("/", true);
+            }
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(Localize.Get("login_error_no_locations"), Severity.Error);
+        }
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    private async Task<IEnumerable<ClienteVinculadoEntidad>> SearchClient(string search)
+    {
+        return await Utility.Utils.RunAsync(() =>
+        {
+            if (string.IsNullOrEmpty(search))
+            {
+                return AppState.GetAvailable_Subclients().Values.Take(5);
+            }
+            return AppState.GetAvailable_Subclients().Values.Where(client => client.Entity_Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+        });
+    }
+
+    protected override void OnInitialized()
+    {
+        if (AppState.GetCurrentClientID().HasValue && AppState.GetAvailable_Subclients().TryGetValue(AppState.GetCurrentClientID()!.Value, out var subclient))
+        {
+            SelectedClient = subclient;
+        }
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

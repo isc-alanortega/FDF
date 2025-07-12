@@ -1,0 +1,67 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+
+::deep .text-stack {
+    padding: 16px 12px;
+}
+
+::deep .stack-card {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    border-radius: 20px;
+    box-shadow: none !important;
+    transition: all ease 0.3s;
+
+    .mud-expand-panel .mud-expand-panel-content {
+        padding-inline: 0;
+    }
+
+    &:hover {
+        background-color: css-color-var(badge-ok);
+        opacity: .8;
+    }
+}
+
+::deep .checkbox-label {
+    .mud-typography {
+        font-size: 2rem;
+    }
+
+    .mud-icon-root {
+        font-size: 3rem;
+    }
+}
+
+::deep .btn-trash {
+    justify-self: flex-end;
+    border-radius: 0px;
+    margin-left: auto;
+
+    &.resize-it {
+        .mud-icon-root {
+            font-size: 3.4rem;
+        }
+    }
+}
+
+::deep .package-item-text {
+    color: css-color-var(global-fullblack);
+}
+
+::deep .service-package-card {
+    padding: 4px 8px;
+    background-color: transparent;
+
+    .mud-disabled p.mud-typography.mud-typography-body1 {
+        color: css-color-var(global-fullblack);
+    }
+}
+
+::deep .package-header {
+    align-items: center;
+}
+
+@include keyframes(card-popup) {
+    @include anim-popup-center-frames();
+}

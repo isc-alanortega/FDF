@@ -1,0 +1,124 @@
+﻿@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Utility
+@implements IDisposable
+@implements IAsyncDisposable
+@inject ComplexTreeService SelectorState
+@inject PCG_FDF_DB DB;
+@inject GlobalBreakpointService BreakpointService
+
+<div class="complex-selector-wrapper d-flex">
+    @if (SelectorState.getSelectedTree() is not null && SelectorState.getSelectedTree().Count != 0)
+    {
+        @foreach (KeyValuePair<int, ComplexService> item in SelectorState.getSelectedTree())
+        {
+            @*            if (item.Value.Children is not null && item.Value.Children.Count != 0)
+    {*@
+            int local_level = item.Key != -1 ? item.Key + 1 : 0;
+            <ComplexChipset @key="item.Value.GUID" chipsetLevel="@local_level">
+                @foreach (ComplexService childService in item.Value.Children!.Values)
+                {
+                    ComplexService local_service = childService;
+                    bool disableAction = true;
+                    bool hasSelection = false;
+                    bool isSelected = false;
+                    if (SelectorState.getSelectedTree().TryGetValue(local_level, out _))
+                    {
+                        hasSelection = true;
+                        if (SelectorState.getSelectedTree()[local_level].Id == local_service.Id)
+                        {
+                            isSelected = true;
+                            if (local_service.isActionable)
+                            {
+                                disableAction = false;
+                            }
+                        }
+                    }
+                    string CSSClass = GetChipClass(isSelected, hasSelection);
+                    <ComplexChip OnAddService="@addService" Disabled="@SelectorState.GetDisabled()" MobileClass="@CSSClass" IsMobile="@BreakpointService.GetIsMobile()" addService="@addService" DisableAction="@disableAction" service="@local_service" actionable="@local_service.isActionable" helpTooltip="@local_service.helpTooltip"></ComplexChip>
+                }
+            </ComplexChipset>
+            @if (item.Value.Children is not null && item.Value.Children.Count != 0)
+            {
+                <div class="mini-divider"></div>
+            }
+            @*{else {
+    if (!item.Value.isActionable) {
+    <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+    @for (int i = 0; i < 6; i++)
+    {
+    <MudItem xs="2">
+    <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+    </MudItem>
+    }
+    </MudGrid>
+    }
+    }*@
+        }
+    }
+    else
+    {
+        <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+            @for (int i = 0; i < 6; i++)
+            {
+                <MudItem xs="2">
+                    <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Action addService { get; set; }
+
+    protected override void OnInitialized()
+    {
+        SelectorState.OnChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    private string GetChipClass(bool isSelected, bool hasSelection)
+    {
+        if (BreakpointService.GetIsMobile() && !isSelected && hasSelection)
+        {
+            return "d-none";
+        }
+        else
+        {
+            return "";
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await SelectorState.initTreeAsync(LanguageUtil.getCurrentCulture());
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        SelectorState.fullClear();
+        SelectorState.OnChange -= StateHasChanged;
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        SelectorState.fullClear();
+    }
+}

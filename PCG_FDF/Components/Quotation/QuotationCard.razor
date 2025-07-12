@@ -1,0 +1,179 @@
+﻿@using PCG_ENTITIES.Enums;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Data.Localization;
+@using PCG_FDF.Utility;
+@using PCG_FDF.Components.Quotation.Elements;
+@inject GlobalBreakpointService BreakpointService
+@inject QuotationDataCollection quotationService
+@implements IDisposable
+
+<div class="card-wrapper">
+    <MudStack>
+        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@Card.GetCardName()</MudText>
+        <MudStack>
+            <MudForm @ref="@FormReference" IsValid="@Card.GetCardValidated()" IsValidChanged="@(async (args) => await SetValidationState(args))" ReadOnly="@quotationService.IsGloballyReadonly()">
+                <MudGrid>
+                    <CascadingValue Value="@Card" Name="CardData">
+                        <CascadingValue Value="@Single_Element" Name="SingleElement">
+                            @foreach (var element in Card.Elements.Values)
+                            {
+                                switch (element.Type_ID)
+                                {
+                                    case EElementType.TEXT_BOX:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <TextFieldElement ElementData="@element"></TextFieldElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    case EElementType.TEXT_LABEL:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <LabelElement ElementData="@element"></LabelElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    // INTEGER NUMBER
+                                    case EElementType.INTEGER_NUMBER:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <IntegerInputElement ElementData="@element"></IntegerInputElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    case EElementType.DECIMAL_NUMBER:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <DecimalInputElement ElementData="@element"></DecimalInputElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    case EElementType.CHECK_BOX_UUID:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <CheckBoxUUIDElement ElementData="@element"></CheckBoxUUIDElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    case EElementType.OPTION_BOXES:
+                                        {
+                                            @if (Single_Element)
+                                            {
+                                                <MudItem md="12" sm="12" xs="12">
+                                                    <OptionBoxesElement ElementData="@element"></OptionBoxesElement>
+                                                </MudItem>
+                                            }
+                                            else
+                                            {
+                                                <MudItem md="6" sm="12" xs="12">
+                                                    <OptionBoxesElement ElementData="@element"></OptionBoxesElement>
+                                                </MudItem>
+                                            }
+                                            break;
+                                        }
+                                    // DATE
+                                    case EElementType.DATE:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <DateElement ElementData="@element"></DateElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    // TIME
+                                    case EElementType.TIME:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <TimeElement ElementData="@element"></TimeElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    // DATE AND TIME
+                                    case EElementType.DATE_TIME:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <DateTimeElement ElementData="@element"></DateTimeElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    // AUTOCOMPLETE
+                                    case EElementType.AUTOCOMPLE_LIST_UUID:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <AutocompleteElement ElementData="@element"></AutocompleteElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                    // SELECT LIST
+                                    case EElementType.VALUES_LIST_UUID:
+                                        {
+                                            <MudItem md="6" sm="12" xs="12">
+                                                <ListElement ElementData="@element"></ListElement>
+                                            </MudItem>
+                                            break;
+                                        }
+                                }
+                            }
+                        </CascadingValue>
+                    </CascadingValue>
+                </MudGrid>
+            </MudForm>
+        </MudStack>
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public StatefulCard Card { get; set; }
+
+    private bool Single_Element { get; set; } = false;
+
+    private MudForm? FormReference { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        quotationService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Card.Elements.Count == 1)
+        {
+            Single_Element = true;
+        }
+
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (FormReference is not null)
+            {
+                await Task.Delay(500);
+                await FormReference.Validate();
+            }
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task SetValidationState(bool state)
+    {
+        quotationService.SetCardValidationState(state, Card.Card_ID);
+        await quotationService.CheckServiceDataReady(Card.From_Services);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        quotationService.OnChange -= StateHasChanged;
+    }
+}

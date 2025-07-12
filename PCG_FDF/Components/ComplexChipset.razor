@@ -1,0 +1,35 @@
+﻿@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Entities
+@implements IDisposable
+@inject ComplexTreeService SelectorState
+@inherits OwningComponentBase<ComplexLevelService>
+
+<div class="complex-chipset-wrapper">
+    <MudChipSet MudChipEqualityComparer="@Comparer" ValueExpression="@(() => Service.GetSelectedChip())" SelectedChip="@Service.GetSelectedChip()" SelectedChipChanged="@Service.SetSelectedChip" Class="complex-chipset" Mandatory="true">
+        @ChildContent
+    </MudChipSet>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter, EditorRequired]
+    public int chipsetLevel { get; set; }
+
+    private ChipServiceComparer Comparer { get; } = new();
+
+    protected override Task OnInitializedAsync()
+    {
+        Service.setLevel(chipsetLevel);
+        Service.updateAction = (async (args) => await SelectorState.actionExec(args));
+        SelectorState.addSubState(Service);
+        return base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        SelectorState.removeSubState(Service);
+    }
+}

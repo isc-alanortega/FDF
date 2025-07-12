@@ -1,0 +1,39 @@
+﻿@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudDatePicker Editable="true"
+                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                       DateFormat="dd/MM/yyyy"
+                       Date="@TryGetStorageValue()"
+                       DateChanged="@(async (args) => await TryWriteStorageValue(args))"
+                       ReadOnly="@GetElementReadonly()"
+                       Disabled="@GetElementReadonly()"
+                       Required="true"
+                       RequiredError="@Localize.Get("errmsg_required")"
+                       Placeholder="@($"{Localize.Get("placeholder_set")} {GetElementName()}")" />
+    </MudStack>
+</div>
+
+@code {
+    private DateTime? TryGetStorageValue()
+    {
+        return Quotation_Data.GetElementValueAs<DateTime?>(Card.Card_ID, ElementData.Element_ID);
+    }
+
+    private async Task TryWriteStorageValue(DateTime? value)
+    {
+        await Quotation_Data.WriteSharedElementValue(value, Card.Card_ID, ElementData.Element_ID);
+    }
+}

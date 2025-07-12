@@ -1,0 +1,91 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+
+@include keyframes(drop-shadow-orange) {
+    @include anim-shadow-drop-frames(drop-shadow(0px 0px 0px css-color-var(global-RGBA-transparent)),drop-shadow(0px 0px 20px css-color-var(RGBA-tertiary-25)));
+}
+
+.animated-shadow {
+    @include animation('drop-shadow-orange 0.8s cubic-bezier(0.445, 0.050, 0.550, 0.950) infinite alternate both');
+}
+
+.suggestion-wrapper {
+    transform: translateX(200%);
+}
+
+::deep .card-package {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+    background: css-color-var(global-notepad-yellow);
+    padding-bottom: 8px;
+}
+
+::deep .title-row {
+    align-items: center;
+}
+
+::deep .card-text {
+    &.title {
+        color: css-color-var(primary-lighten-2);
+    }
+
+    &.body {
+        padding-left: 4px;
+        color: css-color-var(global-fullblack);
+        grid-column-start: 2;
+        align-self: start;
+
+        &.resize-it {
+            font-size: 2rem !important;
+        }
+    }
+}
+
+::deep .card-package-content {
+    flex-grow: 1;
+    padding-top: 6px;
+    padding-bottom: 8px;
+    align-items: center;
+    position: relative;
+}
+
+.card-package-row {
+    display: flex;
+    align-items: center;
+}
+
+.card-package-row-top {
+    display: flex;
+    align-items: center;
+    padding-bottom: 6px;
+}
+
+.card-package-row-bottom {
+    display: flex;
+    align-items: center;
+    padding: 6px 0px 10px 0px;
+}
+
+::deep .card-package-button {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    color: css-color-var(primary);
+    background: css-color-var(global-RGBA-transparent);
+}
+
+::deep .card-package-button-icon {
+    color: css-color-var(tertiary);
+}
+
+::deep .card-package-header {
+    padding: 12px;
+}
+
+::deep .mud-button-root {
+    &.resize-it {
+        font-size: 1.6rem;
+    }
+}

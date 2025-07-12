@@ -1,0 +1,1378 @@
+﻿@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Countries
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.RazonSocial
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Customers;
+@inject PCG_FDF_DB DATA_ACCESS
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject ISnackbar Snackbar
+@implements IDisposable
+@inject IJSRuntime JS
+
+<MudDialog Class="modern-dialog">
+	<DialogContent>
+		<MudForm @ref="BusinessName_Form" @bind-IsValid="Form_Is_Valid" Class="modern-form">
+			<MudGrid Spacing="2" Style="width: 100%;">
+				@* REASON TYPE *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_reasontype")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudSelect T="KeyValue"
+					ToStringFunc="@KeyValueConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_reasontype")}")"
+					Value="@Selected_Reason_Type"
+					Disabled="@(IsViewMode|| IsEditMode)"
+					ValueChanged="@((args) => OnReasonTypeChanged(args))">
+						@foreach (var option in (IEnumerable<KeyValue>)GetCustomList("REASONSTYPE"))
+						{
+							<MudSelectItem Value="@option" />
+						}
+					</MudSelect>
+				</MudItem>
+
+				@* UPLOAD CSF *@
+				<MudItem md="4" sm="6" xs="6" Class="upload-csf-container">
+					@if (!bIsInternacional)
+					{
+						<MudFileUpload T="IBrowserFile" Disabled="@IsViewMode" Files="@CSF_File" FilesChanged="@((file) => OnDocumentChange(file))">
+							<ButtonTemplate>
+								<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+									<MudButton HtmlTag="label"
+									Variant="Variant.Filled"
+									Color="Color.Primary"
+									Size="Size.Small"
+									Class="upload-csf-button"
+									StartIcon="@Icons.Material.Filled.CloudUpload"
+									for="@context"
+									Disabled="@IsUploadingCSF">
+										@if (IsUploadingCSF)
+										{
+											<MudProgressCircular Size="Size.Small" Color="Color.Inherit" Indeterminate="true" />
+											<span style="margin-left: 8px;">Subiendo...</span>
+										}
+										else
+										{
+											<span>SUBIR CONSTANCIA DE SITUACIÓN FISCAL</span>
+										}
+									</MudButton>
+								</MudStack>
+							</ButtonTemplate>
+						</MudFileUpload>
+					}
+				</MudItem>
+
+				<MudItem md="12" sm="12" xs="12">
+					<MudDivider Class="modern-divider" />
+					<MudText Typo="Typo.h6" Class="section-title"><strong>@Localize.Get("label_general_info")</strong></MudText>
+				</MudItem>
+
+
+
+				@* GENERAL DATA *@
+				@* RFC *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>RFC</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} RFC")"
+					@bind-Value="@StoreCustomerData.Rfc"
+					Disabled="@(IsRfcDisabled || IsViewMode || IsEditMode)" />
+				</MudItem>
+				@* NAME *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("com_reg_name")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(IsViewMode || !GetCSFRequired()||(IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("com_reg_name")}")"
+					@bind-Value="@StoreCustomerData.Nombre" />
+				</MudItem>
+				@* COMMERCIAL NAME *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_commercial_name")</strong></MudText>
+						@if (GetUrlCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetUrlCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_commercial_name")}")"
+					@bind-Value="@StoreCustomerData.NombreComercial" />
+				</MudItem>
+				@* REGIME *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_regime")</strong></MudText>
+						@if (GetUrlCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudSelect T="TaxRegimen"
+					ToStringFunc="@TaxRegimeConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Value="@Selected_Regime"
+					ValueChanged="@((args) => OnCustomValueChanged(args, "REGIME"))"
+					Required="@GetUrlCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_regime")}")"
+					Disabled="@(IsViewMode || IsRegimeDisabled ||(IsEditMode && !bIsInternacional))">
+						@foreach (var option in Tax_Regimes)
+						{
+							<MudSelectItem Value="@option" />
+						}
+					</MudSelect>
+				</MudItem>
+				@* EMAIL *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_email")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Disabled="@IsViewMode"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_email")}")"
+					@bind-Value="@StoreCustomerData.Email" />
+				</MudItem>
+				@* PHONE NUMBER *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_phonenumber")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudNumericField Class="modern-numericfield"
+					T="string"
+					Variant="Variant.Outlined"
+					Required="true"
+					MaxLength="10"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@IsViewMode"
+					HideSpinButtons="true"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_phonenumber")}")"
+					@bind-Value="@StoreCustomerData.Phone" />
+				</MudItem>
+
+				<MudItem md="12" sm="12" xs="12">
+					<MudDivider Class="modern-divider" />
+					<MudText Typo="Typo.h6" Class="section-title"><strong>@Localize.Get("label_taxaddress")</strong></MudText>
+				</MudItem>
+
+				@* TAX ADDRESS *@
+				@* COUNTRY *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_country")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudSelect T="KeyValue"
+					ToStringFunc="@KeyValueConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					ReadOnly="@(IsViewMode|| !bIsInternacional)"
+					Disabled="@(IsViewMode || !bIsInternacional)"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_country")}")"
+					Value="@Selected_Country"
+					ValueChanged="@((value) => OnCountryChanged(value))">
+						@foreach (var option in countryList)
+						{
+							<MudSelectItem Value="@option" />
+						}
+
+					</MudSelect>
+				</MudItem>
+				@* STATE *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_state")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(!GetCSFRequired() || IsViewMode||(IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_state")}")"
+					@bind-Value="@StoreCustomerData.Estado" />
+				</MudItem>
+				@* TOWN *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_town")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode||(IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_town")}")"
+					@bind-Value="@StoreCustomerData.Municipio" />
+				</MudItem>
+				@* NEIGHBORHOOD *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_neighborhood")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_neighborhood")}")"
+					@bind-Value="@StoreCustomerData.Colonia" />
+				</MudItem>
+				@* ZIPCODE *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_postcode")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudNumericField Class="modern-numericfield"
+					T="string"
+					Variant="Variant.Outlined"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(!GetCSFRequired() || IsViewMode||(IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode||(IsEditMode && !bIsInternacional))"
+					HideSpinButtons="true"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_postcode")}")"
+					@bind-Value="@StoreCustomerData.CodigoPostal" />
+				</MudItem>
+				@* STREET *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_street")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_street")}")"
+					@bind-Value="@StoreCustomerData.Calle" />
+				</MudItem>
+				@* LOCATION *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_location")</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Disabled="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_location")}")"
+					@bind-Value="@StoreCustomerData.Localidad" />
+				</MudItem>
+				@* EXT NUMBER *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_extnumber")</strong></MudText>
+						@if (GetCSFRequired())
+						{
+							<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+						}
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="@GetCSFRequired()"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Disabled="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_extnumber")}")"
+					@bind-Value="@StoreCustomerData.NumeroExterior" />
+				</MudItem>
+				@* INT NUMBER *@
+				<MudItem md="4" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_intnumber")</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Disabled="@(!GetCSFRequired() || IsViewMode||(IsEditMode && !bIsInternacional))"
+					ReadOnly="@(!GetCSFRequired() || IsViewMode|| (IsEditMode && !bIsInternacional))"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_intnumber")}")"
+					@bind-Value="@StoreCustomerData.NumeroInterior" />
+				</MudItem>
+
+				<MudItem md="12" sm="12" xs="12">
+					<MudDivider Class="modern-divider" />
+					<MudText Typo="Typo.h6" Class="section-title"><strong>@($"{Localize.Get("lbl_invoice_data")}")</strong></MudText>
+				</MudItem>
+
+				@* INVOICE DATA *@
+				@* PAYMENT METHOD *@
+				<MudItem md="6" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_payment_method")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudSelect T="SATTableTriplet"
+					ToStringFunc="@SATTableTripletConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Value="@Selected_Payment_Method"
+					Disabled="@IsViewMode"
+					ValueChanged="@((args) => OnCustomValueChanged(args, "PAYMENTMETHOD"))"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_payment_method")}")">
+						@foreach (var option in Payment_Methods)
+						{
+							<MudSelectItem Value="@option" />
+						}
+					</MudSelect>
+				</MudItem>
+				@* PAYMENT FORM *@
+				<MudItem md="6" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_payment_form")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudSelect T="SATTableTriplet"
+					ToStringFunc="@SATTableTripletConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Value="@Selected_Payment_Form"
+					Disabled="@IsViewMode"
+					ValueChanged="@((args) => OnCustomValueChanged(args, "PAYMENTFORM"))"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_payment_form")}")">
+						@foreach (var option in Payment_Forms)
+						{
+							<MudSelectItem Value="@option" />
+						}
+					</MudSelect>
+				</MudItem>
+				@* CFDI USAGE *@
+				<MudItem md="6" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_cfdi")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudSelect T="SATTableTriplet"
+					ToStringFunc="@SATTableTripletConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Value="@Selected_CFDI_Usage"
+					Disabled="@IsViewMode"
+					ValueChanged="@((args) => OnCustomValueChanged(args, "CFDI"))"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_cfdi")}")">
+						@foreach (var option in CFDI_Usages)
+						{
+							<MudSelectItem Value="@option" />
+						}
+					</MudSelect>
+				</MudItem>
+				@* COIN *@
+				<MudItem md="6" sm="6" xs="6">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@Localize.Get("label_coin")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudSelect T="KeyValue"
+					ToStringFunc="@KeyValueConverter"
+					Class="modern-select"
+					AnchorOrigin="Origin.BottomCenter"
+					Variant="Variant.Outlined"
+					Required="true"
+					Disabled="@IsViewMode"
+					RequiredError="@Localize.Get("errmsg_required")"
+					Clearable="false"
+					Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_coin")}")"
+					Value="@Selected_Coin"
+					ValueChanged="@(coin => OnCoinChanged(coin))">
+						@foreach (var option in (IEnumerable<KeyValue>)GetCustomList("COIN"))
+						{
+							<MudSelectItem Value="@option" />
+						}
+					</MudSelect>
+				</MudItem>
+
+				<MudItem md="12" sm="12" xs="12">
+					<MudDivider Class="modern-divider" />
+					<MudText Typo="Typo.h6" Class="section-title"><strong>@Localize.Get("label_contact_data")</strong></MudText>
+				</MudItem>
+
+				@* COLLECTIONS CONTACT DATA *@
+				<MudItem md="4" sm="4" xs="4">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@($"{Localize.Get("label_contact")} ({Localize.Get("label_collections")})")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_contact")}")"
+					@bind-Value="@StoreCustomerData.CobranzaContacto" />
+				</MudItem>
+				<MudItem md="4" sm="4" xs="4">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@($"{Localize.Get("label_email")} ({Localize.Get("label_collections")})")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_email")}")"
+					@bind-Value="@StoreCustomerData.CobranzaEmail" />
+				</MudItem>
+				<MudItem md="4" sm="4" xs="4">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@($"{Localize.Get("label_phonenumber")} ({Localize.Get("label_collections")})")</strong></MudText>
+						<MudText Typo="Typo.body1" Class="required-text"><strong>*</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="10"
+					Clearable="true"
+					Required="true"
+					RequiredError="@Localize.Get("errmsg_required")"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_phonenumber")}")"
+					@bind-Value="@StoreCustomerData.CobranzaTelefono" />
+				</MudItem>
+				@* AGENCY CONTACT DATA *@
+				<MudItem md="4" sm="4" xs="4">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@($"{Localize.Get("label_contact")} ({Localize.Get("label_agency")})")</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_contact")}")"
+					@bind-Value="@StoreCustomerData.AgenciaContacto" />
+				</MudItem>
+				<MudItem md="4" sm="4" xs="4">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@($"{Localize.Get("label_email")} ({Localize.Get("label_agency")})")</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="500"
+					Clearable="true"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_email")}")"
+					@bind-Value="@StoreCustomerData.AgenciaEmail" />
+				</MudItem>
+				<MudItem md="4" sm="4" xs="4">
+					<MudStack Row="true" Spacing="1">
+						<MudText Typo="Typo.body1" Class="label-text"><strong>@($"{Localize.Get("label_phonenumber")} ({Localize.Get("label_agency")})")</strong></MudText>
+					</MudStack>
+					<MudTextField Class="modern-textfield"
+					MaxLength="10"
+					Clearable="true"
+					DebounceInterval="1500"
+					T="string"
+					Immediate="true"
+					Disabled="@IsViewMode"
+					Variant="Variant.Outlined"
+					Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_phonenumber")}")"
+					@bind-Value="@StoreCustomerData.AgenciaTelefono" />
+				</MudItem>
+			</MudGrid>
+		</MudForm>
+	</DialogContent>
+	<DialogActions>
+		<MudStack Row="true" Class="pa-2" Justify="Justify.FlexEnd">
+			<MudButton Variant="Variant.Filled"
+			Color="Color.Success"
+			Size="Size.Small"
+			StartIcon="@Icons.Material.Filled.Check"
+			OnClick="Submit"
+			Disabled="@IsViewMode"
+			Class="modern-button">
+				@Localize.Get("btn_grabar")
+			</MudButton>
+			<MudButton Variant="Variant.Outlined"
+			Color="Color.Error"
+			Size="Size.Small"
+			StartIcon="@Icons.Material.Filled.Close"
+			OnClick="OnClickCancel"
+			Class="modern-button">
+				@Localize.Get("btn_cancel")
+			</MudButton>
+		</MudStack>
+	</DialogActions>
+</MudDialog>
+<style>
+	.modern-dialog {
+	max-width: 1200px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	border-radius: 12px;
+	}
+
+	.modern-form {
+	padding: 16px;
+	}
+
+	.modern-textfield,
+	.modern-select,
+	.modern-numericfield {
+	height: 40px !important;
+	font-size: 0.9rem;
+	color: #333333;
+	}
+
+	.modern-select .mud-input-outlined {
+	min-height: 40px !important;
+	}
+
+	.label-text {
+	color: #1a252f;
+	font-weight: 600;
+	}
+
+	.required-text {
+	color: #e74c3c;
+	}
+
+	.section-title {
+	color: #34495e;
+	margin-bottom: 12px;
+	}
+
+	.modern-divider {
+	margin: 16px 0;
+	background-color: #ecf0f1;
+	}
+
+	.upload-csf-container {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	margin-top: 25px;
+	}
+
+	.upload-csf-button {
+	border-radius: 12px;
+	padding: 10px 24px;
+	font-weight: bold;
+	font-size: 0.95rem;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.upload-csf-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+	}
+
+	.modern-button {
+	border-radius: 8px;
+	padding: 6px 16px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	margin-left: 8px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.modern-button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+	}
+</style>
+
+@code {
+	[CascadingParameter]
+	MudDialogInstance MudDialog { get; set; }
+	[Parameter]
+	public RazonSocial RazonSocial { get; set; } // Nuevo parámetro para recibir los datos
+
+	[Parameter]
+	public bool IsViewMode { get; set; } = false; // Nuevo parámetro para controlar el modo de visualización
+	[Parameter]
+	public bool IsEditMode { get; set; } = false;
+	[Parameter]
+	public int CustomerId { get; set; }
+
+	private MudForm BusinessName_Form { get; set; }
+	private bool Form_Is_Valid { get; set; }
+
+	private bool IsRfcDisabled { get; set; } = false;
+	private bool IsRegimeDisabled { get; set; } = false;
+
+	private Func<KeyValue, string> KeyValueConverter = kvp => kvp?.Value!;
+	private Func<SATTableTriplet, string> SATTableTripletConverter = kvp => kvp?.Value!;
+	private Func<TaxRegimen, string> TaxRegimeConverter = kvp => kvp?.Value!;
+	private StoreCustomerRequest StoreCustomerData { get; set; } = new StoreCustomerRequest();
+	private SATTableTriplet Selected_Payment_Method { get; set; } = new SATTableTriplet();
+	private SATTableTriplet Selected_Payment_Form { get; set; } = new SATTableTriplet();
+	private SATTableTriplet Selected_CFDI_Usage { get; set; } = new SATTableTriplet();
+	private TaxRegimen Selected_Regime { get; set; } = new TaxRegimen();
+	private KeyValue Selected_Reason_Type { get; set; } = new KeyValue();
+	private KeyValue Selected_Country { get; set; } = new KeyValue();
+	private List<KeyValue> countryList = new();
+	private KeyValue Selected_Coin { get; set; } = new KeyValue();
+	private IEnumerable<SATTableTriplet> CFDI_Usages { get; set; } = Enumerable.Empty<SATTableTriplet>();
+	private IEnumerable<SATTableTriplet> Payment_Methods { get; set; } = Enumerable.Empty<SATTableTriplet>();
+	private IEnumerable<SATTableTriplet> Payment_Forms { get; set; } = Enumerable.Empty<SATTableTriplet>();
+	private IEnumerable<TaxRegimen> Tax_Regimes { get; set; } = Enumerable.Empty<TaxRegimen>();
+	private IBrowserFile? CSF_File { get; set; }
+	private bool IsUploadingCSF { get; set; } = false;
+	private string? CSF_FileName { get; set; }
+	private bool bIsInternacional { get; set; } = false;
+	private List<KeyValue> ReasonTypes = new();
+
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+
+		// Llenar datos de RazonSocial si existen
+		OnLlenarInformacion();
+
+		// Obtener razones y preseleccionar Nacional por defecto
+		var razonTypes = GetCustomList("REASONSTYPE")
+							.Cast<KeyValue>()
+							.ToList();
+
+		// Determinar si es internacional basado en Rfc o SatCountryId
+		bIsInternacional = StoreCustomerData.Rfc == "XEXX010101000";
+
+		if (bIsInternacional)
+			{
+			Selected_Reason_Type = razonTypes.FirstOrDefault(kv => kv.Key == 1) ?? new KeyValue { Key = 1, Value = Localize.Get("label_foreign").ToUpper() };
+			// La moneda y el país se establecerán en OnLlenarDatosPaisyMoneda
+		}
+
+	else
+		{
+			Selected_Reason_Type = razonTypes.FirstOrDefault(kv => kv.Key == 0) ?? new KeyValue { Key = 0, Value = Localize.Get("label_national").ToUpper() };
+			// Si no hay datos previos, establecer México y MXN
+			if (StoreCustomerData.SatCountryId == 0)
+			{
+				Selected_Country = new KeyValue { Key = 151, Value = "MÉXICO" };
+				Selected_Coin = new KeyValue { Key = 1, Value = "MXN" };
+				StoreCustomerData.SatCountryId = Selected_Country.Key;
+				StoreCustomerData.IdMoneda = Selected_Coin.Key.ToString();
+				countryList = new List<KeyValue> { Selected_Country };
+			}
+		}
+
+		StateHasChanged();
+	}
+
+	protected async override Task OnInitializedAsync()
+	{
+		OnLlenarDatosPaisyMoneda();
+		
+		StoreCustomerData.CompanyId = 2;
+		//StoreCustomerData.IdMoneda = Selected_Coin.Key.ToString();
+
+		CFDI_Usages = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("CFDI");
+		Payment_Methods = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("PAYMENTMETHOD");
+		Payment_Forms = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("PAYMENTFORM");
+		Tax_Regimes = (IEnumerable<TaxRegimen>)await GetCustomListAsync("REGIME");
+
+		// Mapear los valores preexistentes después de cargar las listas
+		if (RazonSocial != null)
+		{
+			Selected_Payment_Method = Payment_Methods.FirstOrDefault(pm => pm.ID.ToString() == StoreCustomerData.IdMetodoPago) ?? new SATTableTriplet();
+			Selected_Payment_Form = Payment_Forms.FirstOrDefault(pf => pf.ID.ToString() == StoreCustomerData.IdFormaPago) ?? new SATTableTriplet();
+			Selected_CFDI_Usage = CFDI_Usages.FirstOrDefault(cu => cu.ID.ToString() == StoreCustomerData.IdUsoCfdi) ?? new SATTableTriplet();
+			Selected_Regime = Tax_Regimes.FirstOrDefault(r => r.Key == StoreCustomerData.RegimenCode) ?? new TaxRegimen();
+
+		}
+
+		await GetClientDocumentsData();
+
+		BreakpointService.OnChange += StateHasChanged;
+		await BreakpointService.InitializeService();
+		await base.OnInitializedAsync();
+	}
+	private async Task OnLlenarDatosPaisyMoneda()
+	{
+		// Obtener la lista de países
+		var countriesResult = await DATA_ACCESS.GetCountries();
+		if (countriesResult.Operation_Succeeded == true &&
+			countriesResult.Result.Data.Data is List<Country> countries)
+		{
+			// Convertir todos los países a la lista para el MudSelect
+			countryList = countries.Select(c => new KeyValue
+				{
+					Key = c.IdPais,
+					Value = c.Name
+				}).ToList();
+
+			// Buscar el país correspondiente a SatCountryId
+			if (StoreCustomerData.SatCountryId != 0)
+			{
+				var selected = countryList.FirstOrDefault(c => c.Key == StoreCustomerData.SatCountryId);
+				if (selected != null)
+				{
+					Selected_Country = selected;
+					// Asignar moneda según el país
+					Selected_Coin = StoreCustomerData.SatCountryId == 151
+						? new KeyValue { Key = 1, Value = "MXN" }
+						: new KeyValue { Key = 2, Value = "USD" }; // USD para países internacionales
+				}
+				else
+				{
+					// Si no se encuentra el país, usar México como predeterminado
+					Selected_Country = new KeyValue { Key = 151, Value = "MÉXICO" };
+					Selected_Coin = new KeyValue { Key = 1, Value = "MXN" };
+				}
+			}
+			else
+			{
+				// Si SatCountryId es 0, usar México y MXN
+				Selected_Country = new KeyValue { Key = 151, Value = "MÉXICO" };
+				Selected_Coin = new KeyValue { Key = 1, Value = "MXN" };
+			}
+		}
+		else
+		{
+			// Si falla la carga de países, usar México como predeterminado
+			Selected_Country = new KeyValue { Key = 151, Value = "MÉXICO" };
+			Selected_Coin = new KeyValue { Key = 1, Value = "MXN" };
+		}
+
+		// Actualizar StoreCustomerData
+		StoreCustomerData.SatCountryId = Selected_Country.Key;
+		StoreCustomerData.IdMoneda = Selected_Coin.Key.ToString();
+
+		StateHasChanged();
+	}
+
+	protected async override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await BreakpointService.ReCheckSize();
+			StateHasChanged();
+		}
+		await base.OnAfterRenderAsync(firstRender);
+	}
+
+	public async Task Submit()
+	{
+		try
+		{
+			bool IsValid = await Validate();
+			if (!IsValid)
+			{
+				ShowError("err_missing_data");
+				return;
+			}
+			if (IsEditMode)
+			{
+
+				// Mapear a PutCustomerRequest y enviar al endpoint PUT
+				var putRequest = MapToPutCustomerRequest(StoreCustomerData, CustomerId);
+				var result = await DATA_ACCESS.PutUpdateCustomer(putRequest);
+
+				if (result != null && result.Operation_Succeeded)
+				{
+					Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+					Snackbar.Add("Cliente actualizado exitosamente", Severity.Success);
+					MudDialog.Close(DialogResult.Ok(true));
+				}
+				else
+				{
+					ShowError("error_customer_update");
+				}
+			}
+			else
+			{
+				// Lógica existente para crear un nuevo cliente
+				var result = await DATA_ACCESS.PostStoreCustomer(StoreCustomerData);
+
+				if (result != null && result.Operation_Succeeded)
+				{
+					Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+					Snackbar.Add("Cliente creado exitosamente", Severity.Success);
+					MudDialog.Close(DialogResult.Ok(true));
+				}
+				else
+				{
+					ShowError("error_businessname_saved");
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			ShowError("error_businessname_saved");
+			Console.WriteLine(ex.ToString());
+		}
+	}
+	private PutCustomerRequest MapToPutCustomerRequest(StoreCustomerRequest storeRequest, int customerId)
+	{
+		return new PutCustomerRequest
+			{
+				CustomerId = customerId,
+				IdAgente = storeRequest.IdAgente,
+				AgenciaContacto = storeRequest.AgenciaContacto,
+				AgenciaEmail = storeRequest.AgenciaEmail,
+				AgenciaTelefono = storeRequest.AgenciaTelefono,
+				Calle = storeRequest.Calle,
+				CobranzaContacto = storeRequest.CobranzaContacto,
+				CobranzaEmail = storeRequest.CobranzaEmail,
+				CobranzaTelefono = storeRequest.CobranzaTelefono,
+				CodigoPostal = storeRequest.CodigoPostal,
+				Colonia = storeRequest.Colonia,
+				Email = storeRequest.Email,
+				Estado = storeRequest.Estado,
+				CompanyId = storeRequest.CompanyId,
+				IdFormaPago = storeRequest.IdFormaPago,
+				IdMetodoPago = storeRequest.IdMetodoPago,
+				IdMoneda = storeRequest.IdMoneda,
+				IdUsoCfdi = storeRequest.IdUsoCfdi,
+				Localidad = storeRequest.Localidad,
+				Municipio = storeRequest.Municipio,
+				Nombre = storeRequest.Nombre,
+				NumeroExterior = storeRequest.NumeroExterior,
+				NumeroInterior = storeRequest.NumeroInterior,
+				Rfc = storeRequest.Rfc,
+				SatCountryId = storeRequest.SatCountryId,
+				NombreComercial = storeRequest.NombreComercial,
+				RegimenCode = storeRequest.RegimenCode,
+				SitioWeb = storeRequest.SitioWeb,
+				TaxId = storeRequest.TaxId,
+				Phone = storeRequest.Phone,
+			//Curp = string.Empty // Si no lo tienes en StoreCustomerRequest, déjalo vacío
+			};
+	}
+	public void OnClickCancel()
+	{
+		MudDialog.Cancel();
+	}
+
+	public void Dispose()
+	{
+		BreakpointService.OnChange -= StateHasChanged;
+	}
+
+	public bool GetCSFRequired()
+	{
+		return CSF_File is null;
+	}
+
+	public bool GetUrlCSFRequired()
+	{
+		return string.IsNullOrEmpty(StoreCustomerData.UrlCSF);
+	}
+
+	private async void OnDocumentChange(IBrowserFile file)
+	{
+		if (file.Size > 2 * 1024 * 1024)
+		{
+			ShowError("error_invalid_sizedocument");
+			return;
+		}
+
+		IsUploadingCSF = true;
+		CSF_File = file;
+		CSF_FileName = file.Name;
+
+		try
+		{
+			using var stream = file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024);
+			var datos = await DATA_ACCESS.ParseCustomerDataFromCSFAsync(stream);
+
+			if (datos != null)
+			{
+				StoreCustomerData.Rfc = datos.Rfc;
+				StoreCustomerData.Nombre = datos.Nombre;
+				StoreCustomerData.Email = datos.Email;
+				StoreCustomerData.Estado = datos.Estado;
+				StoreCustomerData.Municipio = datos.Municipio;
+				StoreCustomerData.Colonia = datos.Colonia;
+				StoreCustomerData.Calle = datos.Calle;
+				StoreCustomerData.NumeroExterior = datos.NumeroExterior;
+				StoreCustomerData.NumeroInterior = datos.NumeroInterior;
+				StoreCustomerData.CodigoPostal = datos.CodigoPostal;
+				// StoreCustomerData.Curp = datos.Curp ?? "";
+				var matchedRegimen = Tax_Regimes.FirstOrDefault(r =>
+					string.Equals(r.Value.Trim(), datos.RegimenCode.Trim(), StringComparison.OrdinalIgnoreCase));
+
+				if (matchedRegimen is not null)
+				{
+					Selected_Regime = matchedRegimen;
+					StoreCustomerData.RegimenCode = matchedRegimen.Key;
+				}
+				else
+				{
+					Selected_Regime = new TaxRegimen();
+					StoreCustomerData.RegimenCode = string.Empty;
+				}
+
+				// Deshabilitar RFC y Régimen después de extraer datos
+				// IsRfcDisabled = true;
+				IsRegimeDisabled = true;
+
+				Snackbar.Add("Datos extraídos correctamente", Severity.Success);
+			}
+			else
+			{
+				Snackbar.Add("No se pudieron extraer datos de la CSF", Severity.Warning);
+			}
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add("Error al procesar CSF: " + ex.Message, Severity.Error);
+		}
+		finally
+		{
+			IsUploadingCSF = false;
+			StateHasChanged();
+		}
+	}
+	private async Task OnCountryChanged(KeyValue value)
+	{
+		Selected_Country = value ?? new KeyValue { Key = 151, Value = "MÉXICO" }; 
+		StoreCustomerData.SatCountryId = Selected_Country.Key; 
+		StateHasChanged();
+	}
+	private async Task<IEnumerable<object>> GetCustomListAsync(string field_name)
+	{
+		switch (field_name)
+		{
+			case "REGIME":
+				{
+					var result = await DATA_ACCESS.GetTaxRegime();
+
+					if (result is not null && result.Operation_Succeeded && result.Result is not null)
+					{
+						return result.Result;
+					}
+					else
+					{
+						return Enumerable.Empty<TaxRegimen>();
+					}
+				}
+			case "CFDI":
+				{
+					var result = await DATA_ACCESS.GetCFDIUsagesEmptyContainers();
+
+					if (result is not null && result.Operation_Succeeded && result.Result is not null)
+					{
+						return result.Result;
+					}
+					else
+					{
+						return Enumerable.Empty<SATTableTriplet>();
+					}
+				}
+			case "PAYMENTMETHOD":
+				{
+					var result = await DATA_ACCESS.GetPaymentMethodEmptyContainers(AppState.GetCurrentLocation());
+
+					if (result is not null && result.Operation_Succeeded && result.Result is not null)
+					{
+						return result.Result;
+					}
+					else
+					{
+						return Enumerable.Empty<SATTableTriplet>();
+					}
+				}
+			case "PAYMENTFORM":
+				{
+
+					var result = await DATA_ACCESS.GetPaymentFormEmptyContainers(1);
+
+					if (result is not null && result.Operation_Succeeded && result.Result is not null)
+					{
+						var paymentForms = result.Result;
+
+						// Solo preseleccionar transferencia si Selected_Payment_Form no ha sido inicializado
+						if (Selected_Payment_Form?.ID == 0 && string.IsNullOrEmpty(StoreCustomerData.IdFormaPago))
+						{
+							var transferencia = paymentForms.FirstOrDefault(pf => pf.Key == "03");
+							if (transferencia != null)
+							{
+								Selected_Payment_Form = transferencia;
+								StoreCustomerData.IdFormaPago = transferencia.ID.ToString();
+								StateHasChanged(); // Forzar actualización de UI
+							}
+						}
+
+						return paymentForms;
+					}
+					else
+					{
+						return Enumerable.Empty<SATTableTriplet>();
+					}
+				}
+		}
+
+		return Enumerable.Empty<KeyValue>();
+	}
+
+	private IEnumerable<object> GetCustomList(string field_name)
+	{
+		switch (field_name)
+		{
+			case "REASONSTYPE":
+				{
+					return new List<KeyValue>
+					{
+						new KeyValue { Key = 0, Value = Localize.Get("label_national").ToUpper() },
+						new KeyValue { Key = 1, Value = Localize.Get("label_foreign").ToUpper() }
+					};
+				}
+			case "COUNTRY":
+				{
+					return new List<KeyValue>
+					{
+						new KeyValue { Key = 151, Value = "MÉXICO" }
+					};
+				}
+			case "COIN":
+				{
+					return new List<KeyValue>
+					{
+						new KeyValue { Key = 1, Value = "MXN" },
+						new KeyValue { Key = 2, Value = "USD" }
+
+					};
+				}
+		}
+
+		return Enumerable.Empty<KeyValue>();
+	}
+
+	private async Task OnCustomValueChanged(object value, string field_name)
+	{
+		switch (field_name)
+		{
+			case "PAYMENTMETHOD":
+				{
+					Selected_Payment_Method = (SATTableTriplet)value;
+					StoreCustomerData.IdMetodoPago = Selected_Payment_Method.ID.ToString();
+
+					Payment_Forms = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("PAYMENTFORM");
+				}
+				break;
+			case "PAYMENTFORM":
+				{
+					Selected_Payment_Form = (SATTableTriplet)value;
+					StoreCustomerData.IdFormaPago = Selected_Payment_Form.ID.ToString();
+				}
+				break;
+			case "CFDI":
+				{
+					Selected_CFDI_Usage = (SATTableTriplet)value;
+					StoreCustomerData.IdUsoCfdi = Selected_CFDI_Usage.ID.ToString();
+				}
+				break;
+			case "REGIME":
+				{
+					Selected_Regime = (TaxRegimen)value;
+					StoreCustomerData.RegimenCode = Selected_Regime.Key;
+				}
+				break;
+		}
+
+		StateHasChanged();
+	}
+
+	private async Task GetClientDocumentsData()
+	{
+		var result = await DATA_ACCESS.GetClientDocumentsDataEmptyContainers();
+		if (result is not null && result.Operation_Succeeded && result.Result is not null)
+		{
+			StoreCustomerData.IdAgente = result.Result.IdAgente;
+		}
+	}
+
+	private async Task<bool> Validate()
+	{
+		await BusinessName_Form.Validate();
+
+		if (!BusinessName_Form.IsValid)
+		{
+			return false;
+		}
+
+		if (StoreCustomerData is null)
+		{
+			return false;
+		}
+
+		if (
+			string.IsNullOrEmpty(StoreCustomerData.CobranzaContacto) ||
+			string.IsNullOrEmpty(StoreCustomerData.CobranzaEmail) ||
+			string.IsNullOrEmpty(StoreCustomerData.CobranzaTelefono) ||
+			string.IsNullOrEmpty(StoreCustomerData.Email) ||
+			StoreCustomerData.CompanyId == 0 ||
+			string.IsNullOrEmpty(StoreCustomerData.IdFormaPago) || StoreCustomerData.IdFormaPago == "0" ||
+			string.IsNullOrEmpty(StoreCustomerData.IdMetodoPago) || StoreCustomerData.IdMetodoPago == "0" ||
+			string.IsNullOrEmpty(StoreCustomerData.IdMoneda) || StoreCustomerData.IdMoneda == "0" ||
+			string.IsNullOrEmpty(StoreCustomerData.IdUsoCfdi) || StoreCustomerData.IdUsoCfdi == "0" ||
+			string.IsNullOrEmpty(StoreCustomerData.Phone)
+			)
+		{
+			return false;
+		}
+		if (CSF_File is null)
+		{
+			if (
+				string.IsNullOrEmpty(StoreCustomerData.Calle) ||
+				string.IsNullOrEmpty(StoreCustomerData.CodigoPostal) ||
+				string.IsNullOrEmpty(StoreCustomerData.Colonia) ||
+				string.IsNullOrEmpty(StoreCustomerData.Estado) ||
+				string.IsNullOrEmpty(StoreCustomerData.Municipio) ||
+				string.IsNullOrEmpty(StoreCustomerData.NumeroExterior)
+			)
+			{
+				return false;
+			}
+		}
+		if (string.IsNullOrEmpty(StoreCustomerData.UrlCSF))
+		{
+			if (string.IsNullOrEmpty(StoreCustomerData.NombreComercial) || string.IsNullOrEmpty(StoreCustomerData.RegimenCode))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	private async Task OnReasonTypeChanged(KeyValue value)
+	{
+		//Si el tipo de razón es Extranjera Key=1
+		Selected_Reason_Type = value;
+		if (value.Key == 1)
+		{
+			StoreCustomerData.Rfc = "XEXX010101000";
+			IsRfcDisabled = true;
+			//Bool para poder ocultar el upload csf y preseleccionar USD
+			bIsInternacional = true;
+			Selected_Coin = new KeyValue { Key = 2, Value = "USD" };
+			// Consultar países cuando se selecciona Extranjera
+			var countriesResult = await DATA_ACCESS.GetCountries();
+			if (countriesResult?.Operation_Succeeded == true && countriesResult.Result?.Data?.Data != null)
+			{
+				countryList = countriesResult.Result.Data.Data.Select(c => new KeyValue { Key = c.IdPais, Value = c.Name }).ToList();
+				// Preseleccionar México si está en la lista, o mantener el valor por defecto
+				Selected_Country = countryList.FirstOrDefault(c => c.Key == 151) ?? new KeyValue { Key = 151, Value = "MÉXICO" };
+				StoreCustomerData.SatCountryId = Selected_Country.Key;
+			}
+		}
+		else
+		{
+			bIsInternacional = false;
+			StoreCustomerData.Rfc = null;
+			// Habilitar el campo RFC si no es modo vista y no hay datos preexistentes que lo deshabiliten
+			IsRfcDisabled = IsViewMode || (!IsEditMode && RazonSocial != null);
+			Selected_Coin = new KeyValue { Key = 1, Value = "MXN" };
+			Selected_Country = new KeyValue { Key = 151, Value = "MÉXICO" }; 
+			countryList = new List<KeyValue>
+				{
+					new KeyValue { Key = 151, Value = "MÉXICO" }
+				};
+			StoreCustomerData.SatCountryId = Selected_Country.Key;
+
+		}
+		// Ensure form sees the new coin selection
+		StoreCustomerData.IdMoneda = Selected_Coin.Key.ToString();
+		StateHasChanged();
+	}
+	private void OnLlenarInformacion()
+	{
+		if (RazonSocial != null)
+		{
+			StoreCustomerData.Rfc = RazonSocial.Rfc;
+			StoreCustomerData.Nombre = RazonSocial.Nombre;
+			StoreCustomerData.NombreComercial = RazonSocial.NombreComercial ?? string.Empty;
+			//StoreCustomerData.Email = RazonSocial.MailCobranza ?? string.Empty; //Falta este campo en la respuesta que nos dan ellos y falta Nombre comercial
+			StoreCustomerData.Phone = RazonSocial.Telefono ?? string.Empty;
+			StoreCustomerData.Estado = RazonSocial.StateId ?? string.Empty;
+			StoreCustomerData.Municipio = RazonSocial.Municipio ?? string.Empty;
+			StoreCustomerData.Colonia = RazonSocial.Colonia ?? string.Empty;
+			StoreCustomerData.CodigoPostal = RazonSocial.CodigoPostal ?? string.Empty;
+			StoreCustomerData.Calle = RazonSocial.Calle ?? string.Empty;
+			StoreCustomerData.Localidad = RazonSocial.Localidad ?? string.Empty;
+			StoreCustomerData.NumeroExterior = RazonSocial.NumeroExterior ?? string.Empty;
+			StoreCustomerData.NumeroInterior = RazonSocial.NumeroInterior ?? string.Empty;
+			StoreCustomerData.CobranzaContacto = RazonSocial.ContactoCobranza ?? string.Empty;
+			StoreCustomerData.CobranzaEmail = RazonSocial.MailCobranza ?? string.Empty;
+			StoreCustomerData.CobranzaTelefono = RazonSocial.TelefonoCobranza ?? string.Empty;
+			StoreCustomerData.AgenciaContacto = RazonSocial.ContactoAgencia ?? string.Empty;
+			StoreCustomerData.AgenciaEmail = RazonSocial.MailAgencia ?? string.Empty;
+			StoreCustomerData.AgenciaTelefono = RazonSocial.TelefonoAgencia ?? string.Empty;
+			StoreCustomerData.RegimenCode = RazonSocial.RegimenCode ?? string.Empty;
+			StoreCustomerData.IdMetodoPago = RazonSocial.IdMetodoDePago.ToString() ?? string.Empty;
+			StoreCustomerData.IdFormaPago = RazonSocial.IdTipoDePago.ToString() ?? string.Empty;
+			StoreCustomerData.IdUsoCfdi = RazonSocial.IdUsoDeCfdi.ToString() ?? string.Empty;
+			StoreCustomerData.IdMoneda = RazonSocial.IdMoneda.ToString() ?? string.Empty;
+			StoreCustomerData.SatCountryId = RazonSocial.CountryId;
+			IsRfcDisabled = IsViewMode;
+			IsRegimeDisabled = IsViewMode;
+			// Detectar si es internacional basado en el RFC
+			bIsInternacional = StoreCustomerData.Rfc == "XAXX010101000";
+			// Deshabilitar campos si no es modo edición y hay datos preexistentes
+			if (!IsEditMode && RazonSocial != null)
+			{
+				IsRfcDisabled = true;
+				IsRegimeDisabled = true;
+			}
+		}
+	}
+	//Asignar la moneda correctamente en el mudselect
+	private void OnCoinChanged(KeyValue coin)
+	{
+		Selected_Coin = coin;
+		if (coin != null)
+			StoreCustomerData.IdMoneda = coin.Key.ToString();
+		StateHasChanged();
+	}
+	protected void ShowError(string Error_Message)
+	{
+		Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+		Snackbar.Add(Localize.Get(Error_Message), Severity.Error);
+	}
+}

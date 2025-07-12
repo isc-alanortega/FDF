@@ -1,0 +1,12 @@
+.element-boundary {
+  margin: 8px 0px;
+}
+
+::deep .chip-set-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.chipset-wrapper {
+  width: 100%;
+}

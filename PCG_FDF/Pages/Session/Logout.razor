@@ -1,0 +1,16 @@
+﻿@page "/logout"
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI;
+@inject IAuthService AuthService
+@inject WhiteLabelManager WhiteLabel
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.Logout();
+    }
+
+}

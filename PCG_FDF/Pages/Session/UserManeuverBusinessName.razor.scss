@@ -1,0 +1,126 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+
+
+.quotations_wrapper {
+    padding-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+::deep .paper-grey {
+    border-radius: 15px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    background-image: linear-gradient(to bottom, css-color-var(global-fullwhite), css-color-var(global-theme-grey));
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .list-actions {
+    margin-left: auto;
+}
+
+::deep .list-row {
+    padding: 8px;
+    display: flex;
+
+    &.OBSERVED {
+        background-color: #FBD9D3;
+    }
+
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+.inner-row {
+    display: grid !important;
+    grid-template-columns: 10% 40% 20% 30% !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+::deep .pager-header-wrapper {
+    padding: 8px;
+    width: 100%;
+}
+
+.pager-header {
+    display: grid !important;
+    grid-template-columns: 10% 40% 20% 30% !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+::deep .grid-item {
+    &:hover {
+        @include animation("card-popup 0.3s cubic-bezier(0.5, 1, 0.89, 1) both");
+    }
+}
+
+::deep .selected-invoices-box {
+    margin-left: auto;
+    border-radius: 8px;
+    padding: 8px;
+    align-items: center;
+}
+
+.loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 4px solid #ffffff;
+    animation: spinner-anim0 0.8s infinite linear alternate, spinner-anim1 1.6s infinite linear;
+}
+
+@keyframes spinner-anim0 {
+    0% {
+        clip-path: polygon(50% 50%, 0 0, 50% 0%, 50% 0%, 50% 0%, 50% 0%, 50% 0%);
+    }
+
+    12.5% {
+        clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 0%, 100% 0%, 100% 0%);
+    }
+
+    25% {
+        clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 100%, 100% 100%, 100% 100%);
+    }
+
+    50% {
+        clip-path: polygon(50% 50%, 0 0, 50% 0%, 100% 0%, 100% 100%, 50% 100%, 0% 100%);
+    }
+
+    62.5% {
+        clip-path: polygon(50% 50%, 100% 0, 100% 0%, 100% 0%, 100% 100%, 50% 100%, 0% 100%);
+    }
+
+    75% {
+        clip-path: polygon(50% 50%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 50% 100%, 0% 100%);
+    }
+
+    100% {
+        clip-path: polygon(50% 50%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 50% 100%, 0% 100%);
+    }
+}
+
+@keyframes spinner-anim1 {
+    0% {
+        transform: scaleY(1) rotate(0deg);
+    }
+
+    49.99% {
+        transform: scaleY(1) rotate(135deg);
+    }
+
+    50% {
+        transform: scaleY(-1) rotate(0deg);
+    }
+
+    100% {
+        transform: scaleY(-1) rotate(-135deg);
+    }
+}

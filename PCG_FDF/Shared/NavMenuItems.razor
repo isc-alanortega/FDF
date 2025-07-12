@@ -1,0 +1,105 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_ENTITIES.Enums
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject GlobalLocalizer localize
+@inject ApplicationState AppState
+@inject GlobalBreakpointService BreakpointService
+@inject WhiteLabelManager WhiteLabel
+
+@if (BreakpointService.GetIsMobile())
+{
+    <MobileNavMenu></MobileNavMenu>
+}
+else
+{
+    <div class="icon-wrapper" onclick="@navigateToStart">
+        <MudIcon Class="@(WhiteLabel.GetIconCSSClass() + " " + WhiteLabel.GetIconSizeModifier())" Size="Size.Large" Icon="@WhiteLabel.GetPageIcon().GetIcon()" ViewBox="@WhiteLabel.GetPageIcon().GetViewBox()"></MudIcon>
+    </div>
+    @if (WhiteLabel.Current_Page != EPages.The_Sharks && WhiteLabel.Current_Page != EPages.SmarGo && WhiteLabel.Current_Page != EPages.CargoPi && WhiteLabel.Current_Page != EPages.Cima_Group)
+    {
+        <MudText Typo="Typo.h4"><strong>@(WhiteLabel.GetPageName())</strong></MudText>
+    }
+    <MudSpacer />
+    <div>
+        <AuthorizeView>
+            <Authorized>
+                <MudStack Row="true" Spacing="1">
+                    <UserProfileFragment></UserProfileFragment>
+                    <LocationFragment></LocationFragment>
+                </MudStack>
+            </Authorized>
+            <NotAuthorized>
+                @if (AppState.GetInteconAuthenticated() is not null && AppState.GetInteconAuthenticated()!.Value)
+                {
+                    <MudButton Class="reg-button" Variant="Variant.Filled" OnClick="@InteconLogout">
+                        <MudText Typo="Typo.h6">@localize.Get("btn_logout")</MudText>
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton Class="nav-button" Variant="Variant.Text" OnClick="@navigateToLogin">
+                        <MudText Typo="Typo.h6">@localize.Get("nav_login")</MudText>
+                        </MudButton>
+                   @* <MudButton Class="reg-button" Variant="Variant.Filled" OnClick="@navigateToRegister">
+                        <MudText Typo="Typo.h6">@localize.Get("nav_register")</MudText>
+                        </MudButton>*@
+                   
+                }
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+    <HelpMenu></HelpMenu>
+    <NotificationMenu></NotificationMenu>
+    <div class="language-wrapper">
+        <LanguageSelector></LanguageSelector>
+    </div>
+}
+
+@code {
+    private void navigateToStart()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void navigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private void navigateToRegister()
+    {
+        NavigationManager.NavigateTo("/register");
+    }
+
+    private void InteconLogout()
+    {
+        NavigationManager.NavigateTo("/", true, true);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        AppState.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        AppState.OnChange -= StateHasChanged;
+    }
+}

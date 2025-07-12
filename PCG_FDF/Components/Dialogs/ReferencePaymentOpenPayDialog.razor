@@ -1,0 +1,696 @@
+﻿@using System;
+@using System.Globalization;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.Localization;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Payments;
+@inject PCG_FDF_DB dataAccessService
+@inject GlobalLocalizer Localize
+@inject GlobalBreakpointService BreakpointService
+@inject ApplicationState AppState
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@implements IDisposable
+@implements IAsyncDisposable
+
+<MudDialog Class="@($"selectclientdialog-dialog-mobil")">
+    <DialogContent>
+        <MudStack Row="true" Style="width: 100%; height: 100%;">
+            <!-- Stack Izquierdo -->
+            <MudStack Style="flex: 1; padding-right: 1rem;">
+                @*CUSTOMS BROKER*@
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"
+                         Class="title-text"
+                         Style="color: dodgerblue">
+                    @Localize.Get("label_customsbroker")
+                </MudText>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text"
+                         Color="Color.Default">
+                    @GetCustomeValue("CUSTOMSBROKER")
+                </MudText>
+                @*REFERENCE INVOICES*@
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"
+                         Class="title-text"
+                         Style="color: dodgerblue">
+                    @Localize.Get("label_referenceinvoices")
+                </MudText>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text"
+                         Color="Color.Default">
+                    @GetCustomeValue("INVOICESREFERENCE")
+                </MudText>
+            </MudStack>
+
+            <!-- Stack Derecho -->
+            <MudStack Style="flex: 1; padding-left: 1rem;">
+                @*PAYMENT DEADLINE*@
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"
+                         Class="title-text"
+                         Style="color: dodgerblue">
+                    @* @Localize.Get("label_payment_deadline")*@
+                    Referencia Válida Hasta
+                </MudText>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text"
+                         Color="Color.Default">
+                    @GetCustomeValue("DUEDATE")
+                </MudText>
+                @*TOTAL AMOUNT*@
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4)"
+                         Class="title-text"
+                         Style="color: dodgerblue">
+                    <stong>@Localize.Get("label_totalpayment")</stong>
+                </MudText>
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"
+                         Class="title-text"
+                         Color="Color.Default">
+                    <strong>@GetCustomeValue("TOTALAMOUNT")</strong>
+                </MudText>
+            </MudStack>
+        </MudStack>
+        <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+
+        @*PAYMENT INFORMATION*@
+        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"
+                 Class="title-text"
+                 Style="color: dodgerblue">
+            @Localize.Get("label_stepspayment")
+        </MudText>
+
+        <MudStack Row="true" Style="width: 100%; height: 100%;">
+            <!-- Stack Izquierdo -->
+            <MudStack Style="flex: 1; padding-right: 1rem; display: flex; flex-direction: column; align-items: center;">
+                @*BANK*@
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text"
+                         Style="color: dodgerblue; text-align: center;">
+                    BBVA Bancomer
+                </MudText>
+
+                <MudCard Style="width: 100%; max-width: 600px; background-color: #e3f2fd;">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">
+                                    <strong>@($"1. {Localize.Get("label_select")}")</strong>
+                                </MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+
+                    <MudCardContent>
+                        <MudGrid Justify="Justify.FlexStart" AlignItems="AlignItems.Center">
+                            @*ICON*@
+                            <MudItem xs="3" Style="display: flex; align-items: center; justify-content: center;">
+                                <MudImage Src="./assets/img/hand_click_icon.png"
+                                          Alt="Hand Click Icon"
+                                          Height="80">
+                                </MudImage>
+                            </MudItem>
+                            @*INSTRUCTIONS*@
+                            <MudItem xs="9">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                         Class="title-text"
+                                         Color="Color.Default">
+                                    @Localize.Get("msg_selectioninstruction")
+                                </MudText>
+                                @*CIE NUMBER*@
+                                <MudStack Row="true" Style="padding-top: 3px">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @($"{Localize.Get("label_cienumber")}: ")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("AGREEMENT")
+                                    </MudText>
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+                <MudCard Style="width: 100%; max-width: 600px; background-color: #e3f2fd;">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack AlignItems="AlignItems.Center" Style="width: 100%">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)">
+                                    <strong>@($"2. {Localize.Get("label_registerdata")}")</strong>
+                                </MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+
+                    <MudCardContent>
+                        <MudGrid Justify="Justify.FlexStart" AlignItems="AlignItems.Center">
+                            @*ICON*@
+                            <MudItem xs="3" Style="display: flex; align-items: center; justify-content: center;">
+                                <MudImage Src="./assets/img/register_icon.png"
+                                          Alt="Register Icon"
+                                          Height="80">
+                                </MudImage>
+                            </MudItem>
+                            @*INSTRUCTIONS*@
+                            <MudItem xs="9">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                         Class="title-text"
+                                         Color="Color.Default">
+                                    @Localize.Get("msg_registerinfo")
+                                </MudText>
+                                @*REFERENCE*@
+                                <MudStack Row="true" Style="padding-top: 3px">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @($"{Localize.Get("label_reference")}: ")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("REFERENCE")
+                                    </MudText>
+                                </MudStack>
+                                @*TOTAL AMOUNT*@
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @($"{Localize.Get("label_amount_due")}: ")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("TOTALAMOUNT")
+                                    </MudText>
+                                </MudStack>
+                                @*CONCEPT*@
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @($"{Localize.Get("label_concept")}: ")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("CONCEPT")
+                                    </MudText>
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudStack>
+
+            <!-- Stack Derecho -->
+            <MudStack Style="flex: 1; padding-left: 1rem;">
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                         Class="title-text"
+                         Style="color: dodgerblue; text-align: center;">
+                    @Localize.Get("label_otherbanks")
+                </MudText>
+
+                <MudCard Style="width: 100%; max-width: 600px; background-color: #f5f5f5;">
+                    <MudCardContent>
+                        <MudGrid Justify="Justify.FlexStart" AlignItems="AlignItems.Center">
+                            @*ICON*@
+                            <MudItem xs="3" Style="display: flex; align-items: center; justify-content: center;">
+                                <MudImage Src="./assets/img/transfer_icon.png"
+                                          Alt="Transfer Icon"
+                                          Height="80">
+                                </MudImage>
+                            </MudItem>
+                            @*INSTRUCTIONS*@
+                            <MudItem xs="9">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                         Class="title-text"
+                                         Color="Color.Default">
+                                    @Localize.Get("msg_otherbanks")
+                                </MudText>
+                                @*BANK*@
+                                <MudStack Row="true" Style="padding-top: 3px">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @($"{Localize.Get("label_destinationbank")}: ")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("BANK")
+                                    </MudText>
+                                </MudStack>
+                                @*CLABE*@
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        CLABE
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("CLABE")
+                                    </MudText>
+                                </MudStack>
+                                @*REFERENCE*@
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @Localize.Get("label_reference")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("REFERENCE")
+                                    </MudText>
+                                </MudStack>
+                                @*TOTAL AMOUNT*@
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Style="color: dodgerblue">
+                                        @($"{Localize.Get("label_amount_due")}: ")
+                                    </MudText>
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                                             Class="title-text"
+                                             Color="Color.Default">
+                                        @GetCustomeValue("TOTALAMOUNT")
+                                    </MudText>
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudStack>
+        </MudStack>
+        <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+
+        @*MESSAGES*@
+        <MudStack AlignItems="AlignItems.Center" Spacing="0">
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"
+                     Class="title-text"
+                     Style="color: dodgerblue">
+                @Localize.Get("msg_payment_openpay")
+            </MudText>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                     Class="title-text"
+                     Color="Color.Default">
+                @($"{Localize.Get("msg_reminderreference")} {GetCustomeValue("DUEDATE")}")
+            </MudText>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)"
+                     Class="title-text"
+                     Color="Color.Default">
+                @Localize.Get("msg_openpay_email")
+            </MudText>
+            <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+            @*BUTTONS*@
+            <MudStack Row="true" Justify="Justify.Center" Style="width: 100%; padding-top: 20px; padding-bottom: 20px">
+                <MudButton HtmlTag="label"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           Disabled="@Download_In_Progress"
+                           OnClick="@DownloadForm"
+                           StartIcon="@Icons.Material.Filled.CloudDownload"
+                           Style="width: 100%; max-width: 250px">
+                    @(Localize.Get("btn_download_payment").ToUpper())
+                </MudButton>
+                <MudButton HtmlTag="label"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           Disabled="@Sending_In_Progress"
+                           OnClick="@SendPaymentVoucher"
+                           StartIcon="@Icons.Material.Outlined.Send"
+                           Style="width: 100%; max-width: 230px">
+                    @Localize.Get("btn_sendemail")
+                </MudButton>
+            </MudStack>
+
+            @*TERMS AND CONDITIONS*@
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="color: #424B8B; padding: 0; margin: 0">
+                <strong>@Localize.Get("label_termsconditions")</strong>
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="color: #424B8B; padding: 0; margin: 0">
+                <strong>@Localize.Get("label_privacypolicy")</strong>
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="padding: 0; margin: 0">
+                CENTRO INTERMODAL DE MANIOBRAS S.A. DE C.V.
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="padding: 0; margin: 0">
+                @($"{Localize.Get("nav_contact")}: contacto@cimagroup.com.mx")
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="padding: 0; margin: 0">
+                @($"{Localize.Get("label_phonenumber")}: 314-336-72-64")
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="padding: 0; margin: 0">
+                @($"{Localize.Get("footer_address")} Carretera Federal Libre Manzanillo-Minatitlán Km. 4.5, Colonia Tepeixtles, C.P. 28239, Manzanillo, Colima, México.")
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="padding: 0; margin: 0">
+                @($"© 2025 {Localize.Get("footer_allrights_CG")}")
+            </MudText>
+            <MudText Typo="Typo.subtitle1"
+                     Class="title-text"
+                     Style="padding: 0; margin: 0">
+                Powered By
+            </MudText>
+            <MudImage Src="./assets/img/openpay_logo.png"
+                      Alt="Openpay Logo"
+                      Height="35">
+            </MudImage>
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="OnClickCancel" Class="@($"{(BreakpointService.GetIsMobile() ? "selectclientdialog-btn-mobil" : "")}")">@Localize.Get("btn_close")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .selectclientdialog-dialog-stack {
+    max-width: 100%;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    }
+
+    .selectclientdialog-dialog-mobil svg {
+    font-size: 1.4em !important;
+    }
+
+    .selectclientdialog-btn-mobil,
+    .selectclientdialog-dialog-stack svg
+    .selectclientdialog-dialog-stack label,
+    .selectclientdialog-location-popover-mobil p,
+    .selectclientdialog-MudAutocomplete-mobil input {
+    font-size: 1.9em !important;
+    }
+
+    .selectclientdialog-element-h5 {
+    font-size: 2.1em !important;
+    }
+
+    .selectclientdialog-MudAutocomplete-mobil svg {
+    font-size: 2.5em !important;
+    }
+
+    .selectclientdialog-dialog-mobil .mud-dialog-title h6 {
+    font-size: 2.9em !important;
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public PaymentReferenceResponse PaymentReference { get; set; } = new PaymentReferenceResponse();
+
+    [Parameter]
+    public bool SendEmail { get; set; } = true;
+
+    private bool Download_In_Progress { get; set; } = false;
+    private bool Sending_In_Progress { get; set; } = false;
+
+    private IJSObjectReference? module_download;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private string GetCustomeValue(string field)
+    {
+        switch (field)
+        {
+            case "CUSTOMSBROKER":
+                {
+                    if (PaymentReference.Customer is null)
+                    {
+                        return "";
+                    }
+
+                    return PaymentReference.Customer.Name;
+                }
+            case "INVOICESREFERENCE":
+                {
+                    return PaymentReference.SimplexReference.ToString();
+                }
+            case "DUEDATE":
+                {
+                    if (PaymentReference.ReferenceRegister is null)
+                    {
+                        return "";
+                    }
+
+                    var cultura = new CultureInfo("es-MX");
+                    string longDate = PaymentReference.ReferenceRegister.DueDate.ToString("f", cultura);
+
+                    return longDate;
+                }
+            case "TOTALAMOUNT":
+                {
+                    if (PaymentReference.ReferenceRegister is null)
+                    {
+                        return "";
+                    }
+
+                    return $"${PaymentReference.ReferenceRegister.Amount:N2} {PaymentReference.ReferenceRegister.Currency}";
+                }
+            case "BANK":
+                {
+                    return PaymentReference.Bank;
+                }
+            case "REFERENCE":
+                {
+                    return PaymentReference.Reference;
+                }
+            case "CONCEPT":
+                {
+                    if (PaymentReference.ReferenceRegister is null)
+                    {
+                        return "";
+                    }
+
+                    return PaymentReference.ReferenceRegister.Description;
+                }
+            case "CLABE":
+                {
+                    return PaymentReference.Clabe;
+                }
+            case "AGREEMENT":
+                {
+                    return PaymentReference.Agreement;
+                }
+        }
+
+        return "";
+    }
+
+    private async Task SendPaymentVoucher()
+    {
+        try
+        {
+            if (!Sending_In_Progress)
+            {
+                Sending_In_Progress = true;
+
+                // Open dialog and add if doesn't exist
+                var options = new DialogOptions
+                {
+                    CloseButton = true,
+                    MaxWidth = MaxWidth.False,
+                    FullWidth = false,
+                    DisableBackdropClick = true
+                };
+
+                var dialog = DialogService.Show<EmailToSendVoucherPayment>("", options);
+
+                var dialogResult = await dialog.Result;
+
+                if (dialogResult.Canceled || string.IsNullOrWhiteSpace(dialogResult.Data.ToString()))
+                {
+                    return;
+                }
+
+                var VoucherRequest = new PaymentDownloadRequest
+                {
+                    Email = dialogResult.Data.ToString(),
+                    Bank = PaymentReference.Bank,
+                    Clabe = PaymentReference.Clabe,
+                    Agreement = PaymentReference.Agreement,
+                    Reference = PaymentReference.Reference,
+                    ReferenceRegister = new PaymentDonwloadReferenceRegister
+                    {
+                        ReferenceId = PaymentReference.ReferenceRegister.ReferenceId.ToString(),
+                        DueDate = PaymentReference.ReferenceRegister.DueDate,
+                        Reference = PaymentReference.Reference,
+                        Description = PaymentReference.ReferenceRegister.Description,
+                        Amount = PaymentReference.ReferenceRegister.Amount.ToString(),
+                        Currency = PaymentReference.ReferenceRegister.Currency,
+                        CreatedAt = PaymentReference.ReferenceRegister.CreatedAt,
+                        ProviderKey = PaymentReference.ReferenceRegister.ProviderKey,
+                        ReferenceStatusKey = PaymentReference.ReferenceRegister.ReferenceStatusKey
+                    },
+                    Customer = new PaymentDownloadCustomerRegister
+                    {
+                        Name = PaymentReference.Customer.Name,
+                        Email = PaymentReference.Customer.Email
+                    },
+                    SimplexReference = PaymentReference.SimplexReference.ToString(),
+                    PaymentFileID = PaymentReference.Payment_File_ID
+                };
+
+                var result = await dataAccessService.SendPaymentVoucher(VoucherRequest);
+                if (result is null || result.Result is null || !result.Result.Value)
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(Localize.Get("error_send_voucherpayment"), Severity.Error);
+
+                    return;
+                }
+
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(Localize.Get("msg_voucher_successfully_send"), Severity.Success);
+
+                StateHasChanged();
+            }
+        } 
+        catch (Exception ex)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(Localize.Get("error_send_voucherpayment"), Severity.Error);
+        } 
+        finally
+        {
+            Sending_In_Progress = false;
+        }
+        
+    }
+
+    private async Task DownloadForm()
+    {
+        try
+        {
+            if (!Download_In_Progress)
+            {
+                Download_In_Progress = true;
+
+                var VoucherRequest = new PaymentDownloadRequest
+                {
+                    Email = null,
+                    SendEmail = SendEmail,
+                    Bank = PaymentReference.Bank,
+                    Clabe = PaymentReference.Clabe,
+                    Agreement = PaymentReference.Agreement,
+                    Reference = PaymentReference.Reference,
+                    ReferenceRegister = new PaymentDonwloadReferenceRegister
+                    {
+                        ReferenceId = PaymentReference.ReferenceRegister.ReferenceId.ToString(),
+                        DueDate = PaymentReference.ReferenceRegister.DueDate,
+                        Reference = PaymentReference.Reference,
+                        Description = PaymentReference.ReferenceRegister.Description,
+                        Amount = PaymentReference.ReferenceRegister.Amount.ToString(),
+                        Currency = PaymentReference.ReferenceRegister.Currency,
+                        CreatedAt = PaymentReference.ReferenceRegister.CreatedAt,
+                        ProviderKey = PaymentReference.ReferenceRegister.ProviderKey,
+                        ReferenceStatusKey = PaymentReference.ReferenceRegister.ReferenceStatusKey
+                    },
+                    Customer = new PaymentDownloadCustomerRegister
+                    {
+                        Name = PaymentReference.Customer.Name,
+                        Email = PaymentReference.Customer.Email
+                    },
+                    SimplexReference = PaymentReference.SimplexReference.ToString(),
+                    PaymentFileID = PaymentReference.Payment_File_ID
+                };
+
+                var FILESTREAM = await dataAccessService.PostDownloadVoucherPayment(VoucherRequest);
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"Ficha_Pago_{DateTime.Now.Date}.pdf";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(Localize.Get("msg_voucher_successfully_downloaded"), Severity.Success);
+
+                    return;
+                }
+
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(Localize.Get("error_download_voucherpayment"), Severity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(Localize.Get("error_send_voucherpayment"), Severity.Error);
+        }
+        finally
+        {
+            Download_In_Progress = false;
+        }
+    }
+
+    public void OnClickCancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

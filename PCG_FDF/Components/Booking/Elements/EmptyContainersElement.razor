@@ -1,0 +1,3180 @@
+﻿@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Components.Dialogs
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Entities;
+@using PCG_FDF.Utility
+@inherits BookingElementBase
+@inject PCG_FDF_DB DATA_ACCESS
+@inject ApplicationState AppState
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="element-boundary">
+    @if (LoadForm)
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Text" />
+        }
+    }
+    else
+    {
+
+        <MudStack Spacing="1">
+            @*GENERAL INFORMATION*@
+            <MudStack Row="true" Style="padding-bottom:5px">
+                @if (ElementData.Element_Icon is not null)
+                {
+                    <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+                }
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@Localize.Get("label_general_info")</strong></MudText>
+                @if (ElementData.Required)
+                {
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                }
+            </MudStack>
+            <MudGrid>
+                @*PATENT*@
+                <MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_patent")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudAutocomplete T="KeyValue"
+                    ToStringFunc="@KeyValueConverter"
+                    Class="complex-element-required"
+                    PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                    ResetValueOnEmptyText="false"
+                    CoerceText="true"
+                    CoerceValue="false"
+                    AdornmentIcon="@Icons.Material.Filled.Search"
+                    AdornmentColor="Color.Primary"
+                    Required="@ElementData.Required"
+                    Clearable="true"
+                    Value="@((KeyValue?)TryGetNewCustomValue("PATENT"))"
+                    ValueChanged="@((args) => OnCustomValueChanged(args, "PATENT"))"
+                    Disabled="@GetElementReadonly()"
+                    ReadOnly="@GetElementReadonly()"
+                    SearchFunc="@SearchDynamicPatent"
+                    RequiredError="@Localize.Get("errmsg_required")"
+                    Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_patent")}")"
+                    />
+                </MudItem>
+                @*COMPANY NAME*@
+                <MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_business_name")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudAutocomplete T="CompanyInfoTriplet"
+                    ToStringFunc="@CompanyTripletConverter"
+                    Class="complex-element-required"
+                    @ref="_companyNameAutocomplete"
+                    PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                    ResetValueOnEmptyText="false"
+                    CoerceText="true"
+                    CoerceValue="false"
+                    AdornmentIcon="@Icons.Material.Filled.Search"
+                    AdornmentColor="Color.Primary"
+                    Required="@ElementData.Required"
+                    Clearable="true"
+                    Value="@((CompanyInfoTriplet?)TryGetNewCustomValue("COMPANYNAME"))"
+                    ValueChanged="@((args) => OnCustomValueChanged(args, "COMPANYNAME"))"
+                    Disabled="@GetElementReadonly()"
+                    ReadOnly="@GetElementReadonly()"
+                    SearchFunc="@SearchDynamicCompanyName"
+                    RequiredError="@Localize.Get("errmsg_required")"
+                    Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_business_name")}")" />
+                </MudItem>
+                @*REGIME*@
+                <MudItem md="12" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_regime")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class=@(ContainersInfo.Company_Name is null || ContainersInfo.Regime is null ? "title-text booking-required-information" : "title-text") Style="padding-top:5px; padding-bottom:5px">
+                        @GetRegimenLabel()
+                    </MudText>
+                </MudItem>
+            </MudGrid>
+            <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+
+            @*INVOICE DATA*@
+            <MudStack Row="true" Style="padding-bottom:5px">
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@Localize.Get("lbl_invoice_data")</strong></MudText>
+                @if (ElementData.Required)
+                {
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                }
+            </MudStack>
+            <MudGrid>
+                @if (!ContainersInfo.Is_Load)
+                {
+                    @*SERVICE UNIT*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_service_unit")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudSelect T="KeyValue"
+                        ToStringFunc="@KeyValueConverter"
+                        Class="complex-element-required"
+                        AnchorOrigin="Origin.BottomCenter"
+                        Variant="Variant.Outlined"
+                        Disabled="true"
+                        ReadOnly="true"
+                        Required="@(!ContainersInfo.Is_Load)"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Clearable="false"
+                        Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_service_unit")}")"
+                        @bind-Value="@ContainersInfo.Service_Unit">
+
+                            @foreach (var option in (IEnumerable<KeyValue>)GetCustomList("SERVICEUNIT"))
+                            {
+                                <MudSelectItem Value="option" />
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                @*CFDI USAGE*@
+                <MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_cfdi")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudSelect T="SATTableTriplet"
+                    ToStringFunc="@SATTableTripletConverter"
+                    Class="complex-element-required"
+                    AnchorOrigin="Origin.BottomCenter"
+                    Variant="Variant.Outlined"
+                    Value="@((SATTableTriplet?)TryGetNewCustomValue("CFDI"))"
+                    ValueChanged="@((args) => OnCustomValueChanged(args, "CFDI"))"
+                    Disabled="@GetElementReadonly()"
+                    ReadOnly="@GetElementReadonly()"
+                    Required="@ElementData.Required"
+                    RequiredError="@Localize.Get("errmsg_required")"
+                    Clearable="false"
+                    Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_cfdi")}")">
+
+                        @foreach (var option in (IEnumerable<SATTableTriplet>)GetCustomList("CFDI"))
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+                    </MudSelect>
+                </MudItem>
+                @*PAYMENT METHOD*@
+                @*< MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_payment_method")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudSelect T="SATTableTriplet"
+                               ToStringFunc="@SATTableTripletConverter"
+                               Class="complex-element-required"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined"
+                               Value="@((SATTableTriplet?)TryGetNewCustomValue("PAYMENTMETHOD"))"
+                               ValueChanged="@((args) => OnCustomValueChanged(args, "PAYMENTMETHOD"))"
+                               Disabled="@GetElementReadonly()"
+                               ReadOnly="@GetElementReadonly()"
+                               Required="@ElementData.Required"
+                               RequiredError="@Localize.Get("errmsg_required")"
+                               Clearable="false"
+                               Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_payment_method")}")">
+
+                        @foreach (var option in (IEnumerable<SATTableTriplet>)GetCustomList("PAYMENTMETHOD"))
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+                    </MudSelect>
+                </MudItem >*@
+                @*PAYMENT FORM*@
+                @*<MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_payment_form")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudSelect T="SATTableTriplet"
+                               ToStringFunc="@SATTableTripletConverter"
+                               Class="complex-element-required"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Variant="Variant.Outlined"
+                               Value="@((SATTableTriplet?)TryGetNewCustomValue("PAYMENTFORM"))"
+                               ValueChanged="@((args) => OnCustomValueChanged(args, "PAYMENTFORM"))"
+                               Disabled="@GetElementReadonly()"
+                               ReadOnly="@GetElementReadonly()"
+                               Required="@ElementData.Required"
+                               RequiredError="@Localize.Get("errmsg_required")"
+                               Clearable="false"
+                               Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_payment_form")}")">
+
+                        @foreach (var option in (IEnumerable<SATTableTriplet>)GetCustomList("PAYMENTFORM"))
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+                    </MudSelect>
+            </MudItem>*@
+                @*COIN*@
+                <MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_coin")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudSelect T="KeyValue"
+                    ToStringFunc="@KeyValueConverter"
+                    Class="complex-element-required"
+                    AnchorOrigin="Origin.BottomCenter"
+                    Variant="Variant.Outlined"
+                    Value="@((KeyValue?)TryGetNewCustomValue("COIN"))"
+                    Disabled="true"
+                    ReadOnly="true"
+                    Required="@ElementData.Required"
+                    RequiredError="@GetCoinRequiredLabel()"
+                    Clearable="false"
+                    Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_coin")}")">
+                    </MudSelect>
+                </MudItem>
+                @*BILLING TYPE*@
+                <MudItem md="6" sm="12" xs="12">
+                    <MudStack Row="true">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_billing_type")</strong></MudText>
+                        @if (ElementData.Required)
+                        {
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                        }
+                    </MudStack>
+                    <MudSelect T="KeyValue"
+                    ToStringFunc="@KeyValueConverter"
+                    Class="complex-element-required"
+                    AnchorOrigin="Origin.BottomCenter"
+                    Variant="Variant.Outlined"
+                    Value="@((KeyValue?)TryGetNewCustomValue("BILLINGTYPE"))"
+                    ValueChanged="@((args) => OnCustomValueChanged(args, "BILLINGTYPE"))"
+                    Disabled="@(GetElementReadonly() || ContainersInfo.Is_Load)"
+                    ReadOnly="@(GetElementReadonly() || ContainersInfo.Is_Load)"
+                    Required="@ElementData.Required"
+                    RequiredError="@Localize.Get("errmsg_required")"
+                    Clearable="false"
+                    Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_billing_type")}")">
+
+                        @foreach (var option in (IEnumerable<KeyValue>)GetCustomList("BILLINGTYPE"))
+                        {
+                            <MudSelectItem Value="option" />
+                        }
+                    </MudSelect>
+                </MudItem>
+                @if (GetRequiredPaymentReceipt())
+                {
+                    @if (ContainersInfo.Is_Load)
+                    {
+                        @*ACCOUNT NUMBER*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_accountnumber")</strong></MudText>
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            </MudStack>
+                            <MudNumericField Class="@($"complex-element-required numerical-input booking-elements-mudnumericfield {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                            T="int?"
+                            Variant="Variant.Outlined"
+                            Value="@((int?)TryGetNewCustomValue("ACCOUNTNUMBER"))"
+                            ValueChanged="@((args) => OnCustomValueChanged(args, "ACCOUNTNUMBER"))"
+                            Disabled="@GetElementReadonly()"
+                            ReadOnly="@GetElementReadonly()"
+                            Required="@GetRequiredPaymentReceipt()"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            HideSpinButtons="true"
+                            Min="1"
+                            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_accountnumber")}")" />
+                        </MudItem>
+                    }
+
+                    @*TRANSACTION FOLIO*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_folio_transaction")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudNumericField Class="@($"complex-element-required numerical-input booking-elements-mudnumericfield {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                        T="int?"
+                        Variant="Variant.Outlined"
+                        Value="@((int?)TryGetNewCustomValue("TRANSACTIONFOLIO"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "TRANSACTIONFOLIO"))"
+                        Disabled="@GetElementReadonly()"
+                        ReadOnly="@GetElementReadonly()"
+                        Required="@GetRequiredPaymentReceipt()"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        HideSpinButtons="true"
+                        Min="1"
+                        Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_folio_transaction")}")" />
+                    </MudItem>
+                }
+            </MudGrid>
+            <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+
+            @*SERVICE INFORMATION*@
+            <MudStack Row="true" Style="padding-bottom:5px">
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@Localize.Get("label_servicedata")</strong></MudText>
+                @if (ElementData.Required)
+                {
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                }
+            </MudStack>
+            @if (ContainersInfo.Is_Load)
+            {
+                <MudGrid Spacing="2" Justify="Justify.SpaceBetween" Style="align-items: flex-end">
+                    @*SERVICE DATE*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_servicedate")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudDatePicker Editable="true"
+                        Mask="@(new DateMask("dd/MM/yyyy"))"
+                        DateFormat="dd/MM/yyyy"
+                        Date="@((DateTime?)TryGetNewCustomValue("SERVICEDATE"))"
+                        DateChanged="@((args) => OnCustomValueChanged(args, "SERVICEDATE"))"
+                        MinDate="@DateTime.Today"
+                        ReadOnly="@GetElementReadonly()"
+                        Disabled="@GetElementReadonly()"
+                        Required="@ElementData.Required"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Placeholder="@Localize.Get("placeholder_date")" />
+                    </MudItem>
+                    @*REFERENCE*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_reference")</strong></MudText>
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="500"
+                        Clearable="true"
+                        Disabled="@GetElementReadonly()"
+                        ReadOnly="@GetElementReadonly()"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@((string)TryGetNewCustomValue("REFERENCE"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "REFERENCE"))"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_internalreference")}")" />
+                    </MudItem>
+                    @*NOTIFICATION EMAIL*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_notificationemail")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="500"
+                        Clearable="true"
+                        ReadOnly="@GetElementReadonly()"
+                        Disabled="@GetElementReadonly()"
+                        Required="@ElementData.Required"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Validation="@(ValidateNotificationEmail)"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@((string)TryGetNewCustomValue("NOTIFICATIONEMAILS"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "NOTIFICATIONEMAILS"))"
+                        Immediate="true"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{Localize.Get("placeholder_email")}")" />
+
+                    </MudItem>
+                    @*SHIPPING COMPANY*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_shippingcompany")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudSelect T="ShippingLineInfoTriplet"
+                        ToStringFunc="@ShippingTripletConverter"
+                        Class="complex-element-required"
+                        AnchorOrigin="Origin.BottomCenter"
+                        Variant="Variant.Outlined"
+                        Value="@((ShippingLineInfoTriplet?)TryGetNewCustomValue("SHIPPINGCOMPANY"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "SHIPPINGCOMPANY"))"
+                        Disabled="@ShippingCompanyDisabled()"
+                        ReadOnly="@ShippingCompanyDisabled()"
+                        Required="@ElementData.Required"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Clearable="false"
+                        Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_shippingcompany")}")">
+
+                            @foreach (var option in (IEnumerable<ShippingLineInfoTriplet>)GetCustomList("SHIPPINGCOMPANY"))
+                            {
+                                <MudSelectItem Value="option" />
+                            }
+
+                        </MudSelect>
+                    </MudItem>
+                    @*VESSEL*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_vessel")</strong></MudText>
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="500"
+                        Clearable="true"
+                        Disabled="@GetElementReadonly()"
+                        ReadOnly="@GetElementReadonly()"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@((string)TryGetNewCustomValue("VESSEL"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "VESSEL"))"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_vessel")}")" />
+                    </MudItem>
+                    @*OBSERVATIONS*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_considerations")</strong></MudText>
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="500"
+                        Clearable="true"
+                        Disabled="@GetElementReadonly()"
+                        ReadOnly="@GetElementReadonly()"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@((string)TryGetNewCustomValue("OBSERVATIONS"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "OBSERVATIONS"))"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_considerations")}")" />
+                    </MudItem>
+                </MudGrid>
+            }
+            else
+            {
+                <MudGrid Spacing="2" Justify="Justify.SpaceBetween" Style="align-items: flex-end">
+                    @*SHIPPING COMPANY*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_shippingcompany")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudSelect T="ShippingLineInfoTriplet"
+                        ToStringFunc="@ShippingTripletConverter"
+                        Class="complex-element-required"
+                        AnchorOrigin="Origin.BottomCenter"
+                        Variant="Variant.Outlined"
+                        Value="@((ShippingLineInfoTriplet?)TryGetNewCustomValue("SHIPPINGCOMPANY"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "SHIPPINGCOMPANY"))"
+                        Disabled="@ShippingCompanyDisabled()"
+                        ReadOnly="@ShippingCompanyDisabled()"
+                        Required="@ElementData.Required"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Clearable="false"
+                        Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_shippingcompany")}")">
+
+                            @foreach (var option in (IEnumerable<ShippingLineInfoTriplet>)GetCustomList("SHIPPINGCOMPANY"))
+                            {
+                                <MudSelectItem Value="option" />
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    @*SERVICE DATE*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_servicedate")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudDatePicker Editable="true"
+                        Mask="@(new DateMask("dd/MM/yyyy"))"
+                        DateFormat="dd/MM/yyyy"
+                        Date="@((DateTime?)TryGetNewCustomValue("SERVICEDATE"))"
+                        DateChanged="@((args) => OnCustomValueChanged(args, "SERVICEDATE"))"
+                        MinDate="@DateTime.Today"
+                        ReadOnly="@GetElementReadonly()"
+                        Disabled="@GetElementReadonly()"
+                        Required="@ElementData.Required"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Placeholder="@Localize.Get("placeholder_date")" />
+                    </MudItem>
+                    @*REFERENCE*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_reference")</strong></MudText>
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="500"
+                        Clearable="true"
+                        Disabled="@GetElementReadonly()"
+                        ReadOnly="@GetElementReadonly()"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@((string)TryGetNewCustomValue("REFERENCE"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "REFERENCE"))"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_internalreference")}")" />
+                    </MudItem>
+                    @*NOTIFICATION EMAIL*@
+                    <MudItem md="6" sm="12" xs="12">
+                        <MudStack Row="true">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_notificationemail")</strong></MudText>
+                            @if (ElementData.Required)
+                            {
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                            }
+                        </MudStack>
+                        <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                        MaxLength="500"
+                        Clearable="true"
+                        ReadOnly="@GetElementReadonly()"
+                        Disabled="@GetElementReadonly()"
+                        Required="@ElementData.Required"
+                        RequiredError="@Localize.Get("errmsg_required")"
+                        Validation="@(ValidateNotificationEmail)"
+                        DebounceInterval="1500"
+                        T="string"
+                        Value="@((string)TryGetNewCustomValue("NOTIFICATIONEMAILS"))"
+                        ValueChanged="@((args) => OnCustomValueChanged(args, "NOTIFICATIONEMAILS"))"
+                        Immediate="true"
+                        Variant="Variant.Outlined"
+                        Placeholder="@($"{Localize.Get("placeholder_email")}")" />
+
+                    </MudItem>
+                </MudGrid>
+            }
+            <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+            @*DOCUMENTS*@
+            @if (GetRequiredDocumentBL() || GetRequiredPaymentReceipt() || GetRequiredDocumentTemporary() || ContainersInfo.Is_Load)
+            {
+                <MudStack Row="true" Style="padding-bottom:5px">
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@Localize.Get("label_documents")</strong></MudText>
+                    @if (ElementData.Required)
+                    {
+                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                    }
+                </MudStack>
+                <MudGrid Spacing="4" Justify="Justify.FlexStart">
+                    @*ASSIGNMENT LETTER*@
+                    @if (ContainersInfo.Is_Load)
+                    {
+                        <MudItem>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @*UPLOAD BUTTON*@
+                                <MudFileUpload T="IBrowserFile" Files="@Assignment_File" FilesChanged="@((file) => OnDocumentChange(file, 1040))" Accept=".pdf" Disabled="@GetElementReadonly()" Required="@ContainersInfo.Is_Load" RequiredError="@Localize.Get("errmsg_required")" MaxFileSize="2097152">
+                                    <ButtonTemplate>
+                                        <MudButton HtmlTag="label"
+                                        Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        Size="Size.Large"
+                                        StartIcon="@Icons.Material.Filled.CloudUpload"
+                                        for="@context">
+                                            @Localize.Get("btn_upload_assignment")
+                                        </MudButton>
+                                    </ButtonTemplate>
+                                </MudFileUpload>
+                                @*DOWNLOAD BUTTON*@
+                                @if (Full_Assignment_Document_Data.Document_Uploaded)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.SimCardDownload" Color="Color.Primary" OnClick="@(async () => await DownloadPDF(1040, "label_assignmentletter", Full_Assignment_Document_Data.Uploaded_Document_ID))"></MudIconButton>
+                                }
+                                @*ICON STATUS*@
+                                @if (Full_Assignment_Document_Data.Document_Status is not null)
+                                {
+                                    switch (Full_Assignment_Document_Data.Document_Status)
+                                    {
+                                        case EDocumentStatus.LOADED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_inprocess")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Warning" Class="doc-status-icon loaded" Icon="@Icons.Material.Rounded.HourglassFull"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.APPROVED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_accepted")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Success" Class="doc-status-icon approved" Icon="@Icons.Material.Rounded.FactCheck"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.REJECTED:
+                                            {
+                                                if (Full_Assignment_Document_Data.Document_Rejection_Reason is not null)
+                                                {
+                                                    <MudTooltip Text="@GetRejectionString(Full_Assignment_Document_Data)" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="@Localize.Get("document_rejected")" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                break;
+                                            }
+                                    }
+                                }
+                            </MudStack>
+                        </MudItem>
+                    }
+                    @if (GetRequiredDocumentBL())
+                    {
+                        <MudItem>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @*UPLOAD BUTTON*@
+                                <MudFileUpload T="IBrowserFile" Files="@BL_File" FilesChanged="@((file) => OnDocumentChange(file, 3))" Accept=".pdf" Disabled="@GetElementReadonly()" Required="@GetRequiredDocumentBL()" RequiredError="@Localize.Get("errmsg_required")">
+                                    <ButtonTemplate>
+                                        <MudButton HtmlTag="label"
+                                        Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        Size="Size.Large"
+                                        StartIcon="@Icons.Material.Filled.CloudUpload"
+                                        for="@context">
+                                            @Localize.Get("btn_upload_bl")
+                                        </MudButton>
+                                    </ButtonTemplate>
+                                </MudFileUpload>
+                                @*DOWNLOAD BUTTON*@
+                                @if (Full_BL_Document_Data.Document_Uploaded)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.SimCardDownload" Color="Color.Primary" OnClick="@(async () => await DownloadPDF(3, "label_bl", Full_BL_Document_Data.Uploaded_Document_ID))"></MudIconButton>
+                                }
+                                @*ICON STATUS*@
+                                @if (Full_BL_Document_Data.Document_Status is not null)
+                                {
+                                    switch (Full_BL_Document_Data.Document_Status)
+                                    {
+                                        case EDocumentStatus.LOADED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_inprocess")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Warning" Class="doc-status-icon loaded" Icon="@Icons.Material.Rounded.HourglassFull"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.APPROVED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_accepted")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Success" Class="doc-status-icon approved" Icon="@Icons.Material.Rounded.FactCheck"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.REJECTED:
+                                            {
+                                                @if (Full_BL_Document_Data.Document_Rejection_Reason is not null)
+                                                {
+                                                    <MudTooltip Text="@GetRejectionString(Full_BL_Document_Data)" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="@Localize.Get("document_rejected")" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                break;
+                                            }
+
+                                    }
+                                }
+                            </MudStack>
+                        </MudItem>
+                    }
+                    @if (GetRequiredPaymentReceipt())
+                    {
+                        <MudItem>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @*UPLOAD BUTTON*@
+                                <MudFileUpload T="IBrowserFile" Files="@Payment_File" FilesChanged="@((file) => OnDocumentChange(file, 1032))" Accept=".pdf" Disabled="@GetElementReadonly()" Required="@GetRequiredPaymentReceipt()" RequiredError="@Localize.Get("errmsg_required")">
+                                    <ButtonTemplate>
+                                        <MudButton HtmlTag="label"
+                                        Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        Size="Size.Large"
+                                        StartIcon="@Icons.Material.Filled.CloudUpload"
+                                        for="@context">
+                                            @Localize.Get("btn_upload_payment")
+                                        </MudButton>
+                                    </ButtonTemplate>
+                                </MudFileUpload>
+                                @*DOWNLOAD BUTTON*@
+                                @if (Full_Payment_Document_Data.Document_Uploaded)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.SimCardDownload" Color="Color.Primary" OnClick="@(async () => await DownloadPDF(1032, "label_payment_receipt", Full_Payment_Document_Data.Uploaded_Document_ID))"></MudIconButton>
+                                }
+                                @*ICON STATUS*@
+                                @if (Full_Payment_Document_Data.Document_Status is not null)
+                                {
+                                    switch (Full_Payment_Document_Data.Document_Status)
+                                    {
+                                        case EDocumentStatus.LOADED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_inprocess")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Warning" Class="doc-status-icon loaded" Icon="@Icons.Material.Rounded.HourglassFull"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.APPROVED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_accepted")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Success" Class="doc-status-icon approved" Icon="@Icons.Material.Rounded.FactCheck"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.REJECTED:
+                                            {
+                                                if (Full_Payment_Document_Data.Document_Rejection_Reason is not null)
+                                                {
+                                                    <MudTooltip Text="@GetRejectionString(Full_Payment_Document_Data)" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="@Localize.Get("document_rejected")" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                break;
+                                            }
+                                    }
+                                }
+                            </MudStack>
+                        </MudItem>
+                    }
+                    @if (GetRequiredDocumentTemporary())
+                    {
+                        <MudItem>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @*UPLOAD BUTTON*@
+                                <MudFileUpload T="IBrowserFile" Files="@Temporary_File" FilesChanged="@((file) => OnDocumentChange(file, 1037))" Accept=".pdf" Disabled="@GetElementReadonly()" Required="@GetRequiredDocumentTemporary()" RequiredError="@Localize.Get("errmsg_required")">
+                                    <ButtonTemplate>
+                                        <MudButton HtmlTag="label"
+                                        Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        Size="Size.Large"
+                                        StartIcon="@Icons.Material.Filled.CloudUpload"
+                                        for="@context">
+                                            @Localize.Get("btn_upload_temporary")
+                                        </MudButton>
+                                    </ButtonTemplate>
+                                </MudFileUpload>
+                                @*DOWNLOAD BUTTON*@
+                                @if (Full_Temporary_Document_Data.Document_Uploaded)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.SimCardDownload" Color="Color.Primary" OnClick="@(async () => await DownloadPDF(1037, "label_temporary", Full_Temporary_Document_Data.Uploaded_Document_ID))"></MudIconButton>
+                                }
+                                @*ICON STATUS*@
+                                @if (Full_Temporary_Document_Data.Document_Status is not null)
+                                {
+                                    switch (Full_Temporary_Document_Data.Document_Status)
+                                    {
+                                        case EDocumentStatus.LOADED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_inprocess")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Warning" Class="doc-status-icon loaded" Icon="@Icons.Material.Rounded.HourglassFull"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.APPROVED:
+                                            {
+                                                <MudTooltip Text="@Localize.Get("document_accepted")" Arrow="true" Placement="Placement.Top">
+                                                    <MudIcon Color="@Color.Success" Class="doc-status-icon approved" Icon="@Icons.Material.Rounded.FactCheck"></MudIcon>
+                                                </MudTooltip>
+                                                break;
+                                            }
+                                        case EDocumentStatus.REJECTED:
+                                            {
+                                                if (Full_Temporary_Document_Data.Document_Rejection_Reason is not null)
+                                                {
+                                                    <MudTooltip Text="@GetRejectionString(Full_Temporary_Document_Data)" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="@Localize.Get("document_rejected")" Arrow="true" Placement="Placement.Top">
+                                                        <MudIcon Color="@Color.Error" Class="doc-status-icon rejected" Icon="@Icons.Material.Filled.Cancel"></MudIcon>
+                                                    </MudTooltip>
+                                                }
+                                                break;
+                                            }
+                                    }
+                                }
+                            </MudStack>
+                        </MudItem>
+                    }
+                </MudGrid>
+                <MudDivider Style="margin-top:12px; margin-bottom:12px; padding-top:1px"></MudDivider>
+            }
+
+            @*CONTAINERS ASSIGNMENT*@
+            <MudStack Row="true" Style="padding-bottom:5px">
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text"><strong>@Localize.Get("label_containers")</strong></MudText>
+                @if (ElementData.Required)
+                {
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                }
+            </MudStack>
+            @if (ContainersInfo.Is_Load)
+            {
+                @*LOAD CONTAINERS*@
+                @if (!GetElementReadonly())
+                {
+                    @*CONTAINERS INPUTS*@
+                    <MudGrid>
+                        @*QUANTITY CONTAINERS*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_amount")</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudNumericField @ref="ContainerQuantityField"
+                            Class="@($"complex-element-required numerical-input booking-elements-mudnumericfield {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")"
+                            T="int?"
+                            Variant="Variant.Outlined"
+                            Value="@((int?)TryGetNewLoadContainerField("CONTAINERQUANTITY"))"
+                            ValueChanged="@((args) => TryModifyNewLoadContainerField(args, "CONTAINERQUANTITY"))"
+                            Disabled="@(GetElementReadonly() || (BookingData.IsForceEdit && !ContainersInfo.Has_Credit!.Value))"
+                            ReadOnly="@(GetElementReadonly() || (BookingData.IsForceEdit && !ContainersInfo.Has_Credit!.Value))"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            HideSpinButtons="true"
+                            Min="1"
+                            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_amount")} {Localize.Get("label_containers")}")" />
+                        </MudItem>
+                        @*CONTAINER QUALITY*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_quality")</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudSelect T="KeyValue"
+                            Class="complex-element-required"
+                            ToStringFunc="@KeyValueConverter"
+                            AnchorOrigin="Origin.BottomCenter"
+                            Variant="Variant.Outlined"
+                            Value="@((KeyValue?)TryGetNewLoadContainerField("CONTAINERQUALITY"))"
+                            ValueChanged="@((args) => TryModifyNewLoadContainerField(args, "CONTAINERQUALITY"))"
+                            Disabled="@GetElementReadonly()"
+                            ReadOnly="@GetElementReadonly()"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_quality")}")">
+
+                                @foreach (var option in (IEnumerable<KeyValue>)GetCustomList("CONTAINERQUALITY"))
+                                {
+                                    <MudSelectItem Value="option" />
+                                }
+
+                            </MudSelect>
+                        </MudItem>
+                        @*CONTAINER SIZE/TYPE*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_containersize")</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudSelect T="EmptyContainerInfoTriplet"
+                            Class="complex-element-required"
+                            ToStringFunc="@ContainerTripletConverter"
+                            AnchorOrigin="Origin.BottomCenter"
+                            Variant="Variant.Outlined"
+                            Value="@((EmptyContainerInfoTriplet?)TryGetNewLoadContainerField("CONTAINERSIZETYPE"))"
+                            ValueChanged="@((args) => TryModifyNewLoadContainerField(args, "CONTAINERSIZETYPE"))"
+                            Disabled="@GetElementReadonly()"
+                            ReadOnly="@GetElementReadonly()"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_containersize")}")">
+
+                                @foreach (var option in (IEnumerable<EmptyContainerInfoTriplet>)GetCustomList("CONTAINERSIZETYPE"))
+                                {
+                                    <MudSelectItem Value="option" />
+                                }
+
+                            </MudSelect>
+                        </MudItem>
+                        @*BOOKING TYPE*@
+                        @if (ContainersInfo.Shipping_Company is not null && ContainersInfo.Shipping_Company.Value == 7)
+                        {
+                            <MudItem md="6" sm="12" xs="12">
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_booking_type")</strong></MudText>
+                                    @if (ElementData.Required)
+                                    {
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                    }
+                                </MudStack>
+                                <MudSelect T="KeyValue"
+                                Class="complex-element-required"
+                                ToStringFunc="@KeyValueConverter"
+                                AnchorOrigin="Origin.BottomCenter"
+                                Variant="Variant.Outlined"
+                                Value="@((KeyValue?)TryGetNewLoadContainerField("BOOKINGTYPE"))"
+                                ValueChanged="@((args) => TryModifyNewLoadContainerField(args, "BOOKINGTYPE"))"
+                                Disabled="@GetElementReadonly()"
+                                ReadOnly="@GetElementReadonly()"
+                                RequiredError="@Localize.Get("errmsg_required")"
+                                Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_booking_type")}")">
+
+                                    @foreach (var option in (IEnumerable<KeyValue>)GetCustomList("BOOKINGTYPE"))
+                                    {
+                                        <MudSelectItem Value="option" />
+                                    }
+
+                                </MudSelect>
+                            </MudItem>
+                        }
+                        @*BOOKING*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>Booking</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")} complex-element-required")"
+                            MaxLength="500"
+                            Clearable="true"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            Disabled="@GetElementReadonly()"
+                            ReadOnly="@GetElementReadonly()"
+                            Validation="@ValidateBookingContainer"
+                            DebounceInterval="1500"
+                            T="string"
+                            Value="@((string?)TryGetNewLoadContainerField("BOOKING"))"
+                            ValueChanged="@((args) => TryModifyNewLoadContainerField(args, "BOOKING"))"
+                            Variant="Variant.Outlined"
+                            Placeholder="@($"{Localize.Get("placeholder_input")} Booking")" />
+                        </MudItem>
+
+                        @if (Adding_Container)
+                        {
+                            @*EDITING CONTAINERS BUTTONS*@
+                            <MudItem md="6" sm="12" xs="12" Style="align-content: flex-end">
+                                <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
+                                    <MudButton Variant="Variant.Filled"
+                                    Color="Color.Error"
+                                    Size="Size.Large"
+                                    StartIcon="@Icons.Material.Filled.Cancel"
+                                    OnClick="CancelAddContainer">
+                                        @Localize.Get("btn_cancel")
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Filled"
+                                    Color="Color.Success"
+                                    Size="Size.Large"
+                                    StartIcon="@Icons.Material.Filled.CheckCircle"
+                                    OnClick="@(async () => await TryAddContainer())">
+                                        @Localize.Get("btn_accept")
+                                    </MudButton>
+                                </MudStack>
+                            </MudItem>
+                        }
+                        else
+                        {
+                            @*ADD CONTAINER BUTTON*@
+                            @if (!BookingData.IsForceEdit || (ContainersInfo.Has_Credit.HasValue && ContainersInfo.Has_Credit.Value))
+                            {
+                                <MudItem md="6" sm="12" xs="12" Style="align-content: flex-end">
+                                    <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Disabled="@AddContainerDisabled()" OnClick="@TryAddNewContainer" Style="width: 100%; max-width: 150px">
+                                        <MudGrid Justify="Justify.Center" Style="padding: 10px; align-items: center">
+                                            <MudImage Src="./assets/img/container_icon.svg" Alt="Container Icon" Height="24" Style="padding-right: 5px"></MudImage>
+                                            <MudText>@Localize.Get("btn_add")</MudText>
+                                        </MudGrid>
+                                    </MudButton>
+                                </MudItem>
+                            }
+                        }
+                    </MudGrid>
+                }
+                <MudItem md="12" sm="12" xs="12" Style="padding-top: 10px">
+                    <MudStack>
+                        @*CONTAINERS TABLE*@
+                        <MudTable SelectedItem="@Selected_Load_Container" @ref="@Load_Containers_Table" SelectedItemChanged="@SetSelectedLoadContainer" RowClassFunc="@LoadContainersSelectedRowClassFunc" Items="@GetLoadContainers()" T="EmptyLoadContainerData" Hover="true" Breakpoint="Breakpoint.Sm" MultiSelection="false">
+                            <HeaderContent>
+                                <MudTh>@Localize.Get("label_amount")</MudTh>
+                                <MudTh>@Localize.Get("label_quality")</MudTh>
+                                <MudTh>@Localize.Get("label_containersizetype")</MudTh>
+                                <MudTh hidden="@(ContainersInfo.Shipping_Company is null || ContainersInfo.Shipping_Company.Value != 7)">@Localize.Get("label_booking_type")</MudTh>
+                                <MudTh>Booking</MudTh>
+                                <MudTh hidden="@GetElementReadonly()"></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="@Localize.Get("label_amount")">@context.Quantity</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_quality")">@KeyValueConverter.Invoke(context.Quality)</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_containersizetype")">@ContainerTripletConverter.Invoke(context.Size_Type)</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_booking_type")" hidden="@(ContainersInfo.Shipping_Company is null || ContainersInfo.Shipping_Company.Value != 7)">@KeyValueConverter.Invoke(context.Booking_Type)</MudTd>
+                                <MudTd DataLabel=Booking>@context.Booking</MudTd>
+                                <MudTd hidden="@GetElementReadonly()">
+                                    <MudStack Style="margin-left: auto; " Row="true">
+                                        <MudTooltip Text="@Localize.Get("btn_edit")" Arrow="true" Placement="Placement.Top">
+                                            <MudIconButton Icon="@Icons.Material.Rounded.Edit" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => TryEditContainer(context.Container_UUID))" Disabled="@EditContainerDisabled()" />
+                                        </MudTooltip>
+                                        @if (!BookingData.IsForceEdit || (ContainersInfo.Has_Credit.HasValue && ContainersInfo.Has_Credit.Value))
+                                        {
+                                            <MudTooltip Text="@Localize.Get("btn_remove")" Arrow="true" Placement="Placement.Top">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(async () => await TryRemoveContainer(context.Container_UUID))" Disabled="@DeleteContainerDisabled()" />
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudStack>
+                </MudItem>
+            }
+            else
+            {
+                @*UNLOAD CONTAINERS*@
+                @if (!GetElementReadonly())
+                {
+                    @*CONTAINERS INPUTS*@
+                    <MudGrid>
+                        @*CONTAINER SERIAL*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_containerserial")</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudTextField @ref="ContainerSerialField"
+                            Class="@($"text-input complex-element-required {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                            MaxLength="11"
+                            Clearable="true"
+                            Disabled="@(GetElementReadonly() || AddContainerDisabled())"
+                            ReadOnly="@GetElementReadonly()"
+                            Validation="@(ValidateSerialContainer)"
+                            DebounceInterval="1500"
+                            T="string"
+                            Value="@((string?)TryGetNewContainerField("CONTAINERSERIAL"))"
+                            ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERSERIAL"))"
+                            Variant="Variant.Outlined"
+                            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_containerserial")}")" />
+                        </MudItem>
+                        @*CONTAINER SIZE/TYPE*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_containersize")</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudSelect T="EmptyContainerInfoTriplet"
+                            Class="complex-element-required"
+                            ToStringFunc="@ContainerTripletConverter"
+                            AnchorOrigin="Origin.BottomCenter"
+                            Variant="Variant.Outlined"
+                            Value="@((EmptyContainerInfoTriplet?)TryGetNewContainerField("CONTAINERSIZETYPE"))"
+                            ValueChanged="@((args) => TryModifyNewContainerField(args, "CONTAINERSIZETYPE"))"
+                            Disabled="@(GetElementReadonly() || AddContainerDisabled())"
+                            ReadOnly="@GetElementReadonly()"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_containersize")}")">
+
+                                @foreach (var option in (IEnumerable<EmptyContainerInfoTriplet>)GetCustomList("CONTAINERSIZETYPE"))
+                                {
+                                    <MudSelectItem Value="option" />
+                                }
+
+                            </MudSelect>
+                        </MudItem>
+                        @*BILL OF LANDING*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudStack Row="true">
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_bl")</strong></MudText>
+                                @if (ElementData.Required)
+                                {
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                }
+                            </MudStack>
+                            <MudTextField Class="@($"text-input complex-element-required {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                            MaxLength="500"
+                            Clearable="true"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            Validation="@ValidateBLContainer"
+                            Disabled="@(GetElementReadonly() || AddContainerDisabled())"
+                            ReadOnly="@GetElementReadonly()"
+                            DebounceInterval="1500"
+                            T="string"
+                            Value="@((string?)TryGetNewContainerField("BILLOFLADING"))"
+                            ValueChanged="@((args) => TryModifyNewContainerField(args, "BILLOFLADING"))"
+                            Variant="Variant.Outlined"
+                            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_bl")} ")" />
+                        </MudItem>
+                        @*REFERENCE*@
+                        <MudItem md="6" sm="12" xs="12">
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_reference")</strong></MudText>
+                            <MudTextField Class="@($"text-input {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                            MaxLength="500"
+                            Clearable="true"
+                            RequiredError="@Localize.Get("errmsg_required")"
+                            Disabled="@(GetElementReadonly() || AddContainerDisabled())"
+                            ReadOnly="@GetElementReadonly()"
+                            DebounceInterval="1500"
+                            T="string"
+                            Value="@((string?)TryGetNewContainerField("REFERENCE"))"
+                            ValueChanged="@((args) => TryModifyNewContainerField(args, "REFERENCE"))"
+                            Variant="Variant.Outlined"
+                            Placeholder="@($"{Localize.Get("placeholder_input")} {Localize.Get("label_reference")}")" />
+                        </MudItem>
+                        @*BUQUE VIAJE*@
+                        @if (!ShipVoyageDisabled())
+                        {
+                            <MudItem md="6" sm="12" xs="12">
+                                <MudStack Row="true">
+                                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@Localize.Get("label_shipvoyage")</strong></MudText>
+                                     @if (ElementData.Required)
+                                    {
+                                        <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+                                    }
+                                </MudStack>
+                                <MudAutocomplete T="KeyValue"
+                                ToStringFunc="@KeyValueConverter"
+                                Class="complex-element-required"
+                                PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                                ResetValueOnEmptyText="false"
+                                CoerceText="true"
+                                CoerceValue="false"
+                                AdornmentIcon="@Icons.Material.Filled.Search"
+                                AdornmentColor="Color.Primary"
+                                Clearable="true"
+                                Value="@((KeyValue?)TryGetNewContainerField("SHIPVOYAGE"))"
+                                ValueChanged="@((args) => TryModifyNewContainerField(args, "SHIPVOYAGE"))"
+                                Disabled="@(GetElementReadonly() || AddContainerDisabled())"
+                                ReadOnly="@(GetElementReadonly() || AddContainerDisabled())"
+                                SearchFunc="@SearchDynamicVoyage"
+                                Placeholder="@($"{Localize.Get("placeholder_select")} {Localize.Get("label_shipvoyage")}")" />
+                            </MudItem>
+                        }
+                        @if (Adding_Container)
+                        {
+                            @*EDITING CONTAINERS BUTTONS*@
+                            <MudItem md="6" sm="12" xs="12" Style="align-content: flex-end">
+                                <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
+                                    <MudButton Variant="Variant.Filled"
+                                    Color="Color.Error"
+                                    Size="Size.Large"
+                                    StartIcon="@Icons.Material.Filled.Cancel"
+                                    OnClick="CancelAddContainer">
+                                        @Localize.Get("btn_cancel")
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Filled"
+                                    Color="Color.Success"
+                                    Size="Size.Large"
+                                    StartIcon="@Icons.Material.Filled.CheckCircle"
+                                    OnClick="@(async () => await TryAddContainer())">
+                                        @Localize.Get("btn_accept")
+                                    </MudButton>
+                                </MudStack>
+                            </MudItem>
+                        }
+                        else
+                        {
+                            @*ADD CONTAINER BUTTON*@
+                            @if (!BookingData.IsForceEdit || (ContainersInfo.Has_Credit.HasValue && ContainersInfo.Has_Credit.Value))
+                            {
+                                <MudItem md="12" sm="12" xs="12" Style="align-content: flex-end">
+                                    <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
+                                        <MudButton HtmlTag="label"
+                                        Variant="Variant.Filled"
+                                        Color="Color.Success"
+                                        Size="Size.Large"
+                                        Disabled="@AddContainerDisabled()"
+                                        OnClick="@TryAddNewContainer"
+                                        Style="width: 100%; max-width: 150px">
+                                            <MudGrid Justify="Justify.Center" Style="padding: 10px; align-items: center">
+                                                <MudImage Src="./assets/img/container_icon.svg" Alt="Container Icon" Height="24" Style="padding-right: 5px"></MudImage>
+                                                <MudText>@Localize.Get("btn_add")</MudText>
+                                            </MudGrid>
+                                        </MudButton>
+                                        <MudButton HtmlTag="label"
+                                        Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        Size="Size.Large"
+                                        Disabled="@DisableDownload()"
+                                        OnClick="@DownloadForm"
+                                        StartIcon="@Icons.Material.Filled.CloudDownload"
+                                        Style="width: 100%; max-width: 230px">
+                                            @Localize.Get("btn_download_form")
+                                        </MudButton>
+                                        <MudFileUpload T="IBrowserFile" FilesChanged="@OnFileChanged" Accept=".xlsx" Disabled="@DisableForm()" Style="width: 100%; max-width: 150px">
+                                            <ButtonTemplate>
+                                                <MudButton HtmlTag="label"
+                                                Variant="Variant.Filled"
+                                                Color="Color.Primary"
+                                                Size="Size.Large"
+                                                Disabled="@(ContainersInfo.Shipping_Company is null)"
+                                                StartIcon="@Icons.Material.Filled.CloudUpload"
+                                                for="@context">
+                                                    @Localize.Get("btn_upload_excel")
+                                                </MudButton>
+                                            </ButtonTemplate>
+                                        </MudFileUpload>
+                                    </MudStack>
+                                </MudItem>
+                            }
+                        }
+                    </MudGrid>
+                }
+                <MudItem md="12" sm="12" xs="12" Style="padding-top: 10px">
+                    <MudStack>
+                        <MudTable SelectedItem="@Selected_Container" @ref="@Containers_Table" SelectedItemChanged="@SetSelectedContainer" RowClassFunc="@ContainersSelectedRowClassFunc" Items="@GetContainers()" T="EmptyContainerData" Hover="true" Breakpoint="Breakpoint.Sm" MultiSelection="false">
+                            <HeaderContent>
+                                <MudTh>Serial</MudTh>
+                                <MudTh>@Localize.Get("label_containersizetype")</MudTh>
+                                <MudTh>@Localize.Get("label_bl")</MudTh>
+                                <MudTh>@Localize.Get("label_shipvoyage")</MudTh>
+                                <MudTh>@Localize.Get("label_reference")</MudTh>
+                                <MudTh hidden="@GetElementReadonly()"></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Serial">@context.Container_Serial</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_containersizetype")">@ContainerTripletConverter.Invoke(context.Size_Type)</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_bl")">@context.Bill_Of_Lading</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_shipvoyage")">@KeyValueConverter.Invoke(context.Ship_Voyage)</MudTd>
+                                <MudTd DataLabel="@Localize.Get("label_reference")">@context.Reference</MudTd>
+                                <MudTd hidden="@GetElementReadonly()">
+                                    <MudStack Style="margin-left: auto; " Row="true">
+                                        <MudTooltip Text="@Localize.Get("btn_edit")" Arrow="true" Placement="Placement.Top">
+                                            <MudIconButton Icon="@Icons.Material.Rounded.Edit" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() =>TryEditContainer(context.Container_UUID))" Disabled="@EditContainerDisabled()" />
+                                        </MudTooltip>
+                                        @if (!BookingData.IsForceEdit || (ContainersInfo.Has_Credit.HasValue && ContainersInfo.Has_Credit.Value))
+                                        {
+                                            <MudTooltip Text="@Localize.Get("btn_remove")" Arrow="true" Placement="Placement.Top">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Tertiary" OnClick="@(async () => await TryRemoveContainer(context.Container_UUID))" Disabled="@DeleteContainerDisabled()" />
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </MudStack>
+                </MudItem>
+            }
+        </MudStack>
+    }
+</div>
+
+@code {
+    private bool LoadForm { get; set; } = false;
+    private Func<KeyValue, string> KeyValueConverter = kvp => kvp?.Value!;
+    private Func<SATTableTriplet, string> SATTableTripletConverter = kvp => kvp?.Value!;
+    private Func<CompanyInfoTriplet, string> CompanyTripletConverter = trpl => trpl?.Value!;
+    private Func<ShippingLineInfoTriplet, string> ShippingTripletConverter = trpl => trpl?.Shipping_Name!;
+    private Func<EmptyContainerInfoTriplet, string> ContainerTripletConverter = trplt => trplt?.Size_Type!;
+    /*Client Objects*/
+    private CustomerDocumentsInformation ClientDocumentInfo { get; set; }
+    private IEnumerable<SATTableTriplet> CFDI_Usages { get; set; }
+    private IEnumerable<SATTableTriplet> Payment_Methods { get; set; }
+    private IEnumerable<SATTableTriplet> Payment_Forms { get; set; }
+    /*Empty Containers Objects*/
+    private EmptyContainerGroup ContainersInfo { get; set; }
+    private EmptyContainerData? New_Container_Data { get; set; } = new EmptyContainerData();
+    private EmptyLoadContainerData? New_Load_Container_Data { get; set; } = new EmptyLoadContainerData { Quantity = 1 };
+    private MudTable<EmptyContainerData> Containers_Table { get; set; }
+    private MudTable<EmptyLoadContainerData> Load_Containers_Table { get; set; }
+    private EmptyContainerData? Selected_Container { get; set; }
+    private EmptyLoadContainerData? Selected_Load_Container { get; set; }
+    private MudTextField<string> ContainerSerialField = new MudTextField<string>();
+    private MudNumericField<int?> ContainerQuantityField = new MudNumericField<int?>();
+    private IEnumerable<ShippingLineInfoTriplet> Shipping_Companies { get; set; }
+    private IEnumerable<EmptyContainerInfoTriplet> Container_Sizes { get; set; }
+    private int Selected_Container_Row { get; set; } = -1;
+    /*Documents Objects*/
+    private IBrowserFile? Assignment_File { get; set; }
+    private IBrowserFile? Payment_File { get; set; }
+    private IBrowserFile? BL_File { get; set; }
+    private IBrowserFile? Temporary_File { get; set; }
+    private FullDocumentData Full_Assignment_Document_Data { get; set; } =
+    new FullDocumentData()
+        {
+            Document_Uploaded = false,
+            Document_File = null,
+            Uploaded_Document_ID = null,
+            Document_Rejection_Reason = null,
+            Document_Status = null
+        };
+    private FullDocumentData Full_Payment_Document_Data { get; set; } =
+    new FullDocumentData()
+        {
+            Document_Uploaded = false,
+            Document_File = null,
+            Uploaded_Document_ID = null,
+            Document_Rejection_Reason = null,
+            Document_Status = null
+        };
+    private FullDocumentData Full_BL_Document_Data { get; set; } =
+    new FullDocumentData()
+        {
+            Document_Uploaded = false,
+            Document_File = null,
+            Uploaded_Document_ID = null,
+            Document_Rejection_Reason = null,
+            Document_Status = null
+        };
+    private FullDocumentData Full_Temporary_Document_Data { get; set; } =
+    new FullDocumentData()
+        {
+            Document_Uploaded = false,
+            Document_File = null,
+            Uploaded_Document_ID = null,
+            Document_Rejection_Reason = null,
+            Document_Status = null
+        };
+
+    private bool Adding_Container { get; set; } = false;
+    private bool Editing { get; set; } = false;
+    private bool Download_In_Progress { get; set; } = false;
+    private bool Form_In_Progress { get; set; } = false;
+
+    private IJSObjectReference? module_download;
+    //Lista de patentes
+    private List<KeyValue> AllPatents { get; set; } = new();
+    private bool IsInitialLoad { get; set; } = true;
+    private MudAutocomplete<CompanyInfoTriplet> _companyNameAutocomplete;
+
+    // Lista de CompanyName
+    private List<CompanyInfoTriplet> AllCompanies { get; set; } = new();
+    private bool IsCompanyInitialLoad { get; set; } = true;
+
+    //Lista de buques viajes
+    private List<KeyValue> AllVoyages { get; set; } = new();
+    private bool IsVoyageInitialLoad { get; set; } = true;
+
+    protected async override Task OnInitializedAsync()
+    {
+        await SetComplexElementValid(false);
+        LoadForm = BookingData.GetStatus() != EStatusContratacion.DATA_COMPLETED_LOCKED;
+
+        ContainersInfo = (EmptyContainerGroup)ElementData.Complex_Data["INITIALIZER"].Preloaded_Value;
+        Payment_Methods = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("PAYMENTMETHOD");
+        CFDI_Usages = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("CFDI");
+        ContainersInfo.Service_Unit = new KeyValue { Key = 1, Value = "[E48] - SER" };
+
+        // Cargar todas las patentes al inicio
+        var initialPatents = await SearchDynamicPatent("");
+        if (initialPatents != null)
+        {
+            AllPatents = initialPatents.ToList();
+        }
+        var companiesResult = await DATA_ACCESS.GetCompanyNamesEmptyContainers("");
+        if (companiesResult != null && companiesResult.Operation_Succeeded && companiesResult.Result != null)
+        {
+            AllCompanies = companiesResult.Result.ToList();
+        }
+        IsCompanyInitialLoad = false;
+        await GetShowPaymentModal();
+
+        LoadForm = false;
+        StateHasChanged();
+        await Task.Delay(500);
+
+        if (IsCollection)
+        {
+            if (BookingData.GetUnsharedStorage()[SectionData.Key][SectionData.Value.Keys.First()][ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteUnsharedElementValue(ContainersInfo, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+            }
+            else
+            {
+                ContainersInfo = BookingData.GetUnsharedElementValueAs<EmptyContainerGroup>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID)!;
+
+                // Get Documents
+                var assignment_data = ContainersInfo.Assignment_Letter_Document;
+                if (assignment_data is not null)
+                {
+                    Assignment_File = assignment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Assignment_Document_Data.Document_Uploaded = assignment_data.Document_Uploaded;
+                    Full_Assignment_Document_Data.Document_File = assignment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Assignment_Document_Data.Uploaded_Document_ID = assignment_data.Uploaded_Document_ID;
+                    Full_Assignment_Document_Data.Document_Rejection_Reason = assignment_data.Document_Rejection_Reason;
+                    Full_Assignment_Document_Data.Document_Status = assignment_data.Document_Status;
+                }
+
+                var payment_data = ContainersInfo.Payment_Receipt_Document;
+                if (payment_data is not null)
+                {
+                    Payment_File = payment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Payment_Document_Data.Document_Uploaded = payment_data.Document_Uploaded;
+                    Full_Payment_Document_Data.Document_File = payment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Payment_Document_Data.Uploaded_Document_ID = payment_data.Uploaded_Document_ID;
+                    Full_Payment_Document_Data.Document_Rejection_Reason = payment_data.Document_Rejection_Reason;
+                    Full_Payment_Document_Data.Document_Status = payment_data.Document_Status;
+                }
+
+                var bl_data = ContainersInfo.BL_Document;
+                if (bl_data is not null)
+                {
+                    BL_File = bl_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_BL_Document_Data.Document_Uploaded = bl_data.Document_Uploaded;
+                    Full_BL_Document_Data.Document_File = bl_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_BL_Document_Data.Uploaded_Document_ID = bl_data.Uploaded_Document_ID;
+                    Full_BL_Document_Data.Document_Rejection_Reason = bl_data.Document_Rejection_Reason;
+                    Full_BL_Document_Data.Document_Status = bl_data.Document_Status;
+                }
+
+                var temporary_data = ContainersInfo.Temporary_Document;
+                if (temporary_data is not null)
+                {
+                    Temporary_File = temporary_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Temporary_Document_Data.Document_Uploaded = temporary_data.Document_Uploaded;
+                    Full_Temporary_Document_Data.Document_File = temporary_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Temporary_Document_Data.Uploaded_Document_ID = temporary_data.Uploaded_Document_ID;
+                    Full_Temporary_Document_Data.Document_Rejection_Reason = temporary_data.Document_Rejection_Reason;
+                    Full_Temporary_Document_Data.Document_Status = temporary_data.Document_Status;
+                }
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+        else
+        {
+            if (BookingData.GetSharedStorage()[ElementData.Element_ID] is null)
+            {
+                await BookingData.WriteSharedElementValue(ContainersInfo, ElementData.Element_ID);
+            }
+            else
+            {
+                ContainersInfo = BookingData.GetSharedElementValueAs<EmptyContainerGroup>(ElementData.Element_ID)!;
+
+                // Get Documents
+                var assignment_data = ContainersInfo.Assignment_Letter_Document;
+                if (assignment_data is not null)
+                {
+                    Assignment_File = assignment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Assignment_Document_Data.Document_Uploaded = assignment_data.Document_Uploaded;
+                    Full_Assignment_Document_Data.Document_File = assignment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Assignment_Document_Data.Uploaded_Document_ID = assignment_data.Uploaded_Document_ID;
+                    Full_Assignment_Document_Data.Document_Rejection_Reason = assignment_data.Document_Rejection_Reason;
+                    Full_Assignment_Document_Data.Document_Status = assignment_data.Document_Status;
+                }
+
+                var payment_data = ContainersInfo.Payment_Receipt_Document;
+                if (payment_data is not null)
+                {
+                    Payment_File = payment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Payment_Document_Data.Document_Uploaded = payment_data.Document_Uploaded;
+                    Full_Payment_Document_Data.Document_File = payment_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Payment_Document_Data.Uploaded_Document_ID = payment_data.Uploaded_Document_ID;
+                    Full_Payment_Document_Data.Document_Rejection_Reason = payment_data.Document_Rejection_Reason;
+                    Full_Payment_Document_Data.Document_Status = payment_data.Document_Status;
+                }
+
+                var bl_data = ContainersInfo.BL_Document;
+                if (bl_data is not null)
+                {
+                    BL_File = bl_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_BL_Document_Data.Document_Uploaded = bl_data.Document_Uploaded;
+                    Full_BL_Document_Data.Document_File = bl_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_BL_Document_Data.Uploaded_Document_ID = bl_data.Uploaded_Document_ID;
+                    Full_BL_Document_Data.Document_Rejection_Reason = bl_data.Document_Rejection_Reason;
+                    Full_BL_Document_Data.Document_Status = bl_data.Document_Status;
+                }
+
+                var temporary_data = ContainersInfo.Temporary_Document;
+                if (temporary_data is not null)
+                {
+                    Temporary_File = temporary_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Temporary_Document_Data.Document_Uploaded = temporary_data.Document_Uploaded;
+                    Full_Temporary_Document_Data.Document_File = temporary_data.Document_Uploaded ? new PlaceholderFile() : null;
+                    Full_Temporary_Document_Data.Uploaded_Document_ID = temporary_data.Uploaded_Document_ID;
+                    Full_Temporary_Document_Data.Document_Rejection_Reason = temporary_data.Document_Rejection_Reason;
+                    Full_Temporary_Document_Data.Document_Status = temporary_data.Document_Status;
+                }
+            }
+            await SetComplexElementValid(ValidateElement());
+        }
+
+        ClientDocumentInfo = await GetAgentData();
+        Shipping_Companies = (IEnumerable<ShippingLineInfoTriplet>)await GetCustomListAsync("SHIPPINGCOMPANY");
+        Payment_Forms = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("PAYMENTFORM");
+        Container_Sizes = (IEnumerable<EmptyContainerInfoTriplet>)await GetCustomListAsync("CONTAINERSIZETYPE");
+        await GetClientData();
+
+        if (string.IsNullOrEmpty(ContainersInfo.Notification_Emails))
+        {
+            await GetLastNotificationEmails();
+        }
+
+        if (!BookingData.IsForceEdit)
+        {
+            await SectionForm.Validate();
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_download = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/download_helper.js");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private bool GetRequiredDocumentBL()
+    {
+        if (!ContainersInfo.Is_Load && ClientDocumentInfo is not null && ClientDocumentInfo.IdUsuarioWeb != 742 && (ClientDocumentInfo.IdLinea is null || ClientDocumentInfo.IdLinea == 0) &&
+            ContainersInfo is not null && ContainersInfo.Shipping_Company is not null && ContainersInfo.Shipping_Company.Value != 42)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool GetRequiredPaymentReceipt()
+    {
+        // return ContainersInfo.Has_Credit.HasValue && !ContainersInfo.Has_Credit.Value;
+        return false;
+    }
+
+    private bool GetRequiredDocumentTemporary()
+    {
+        if (!ContainersInfo.Is_Load && ClientDocumentInfo is not null && (ClientDocumentInfo.IdAduana == 430 || ClientDocumentInfo.IdAduana == 280))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private async Task DownloadForm()
+    {
+        try
+        {
+            if (!Download_In_Progress)
+            {
+                Download_In_Progress = true;
+                var FILESTREAM = await DATA_ACCESS.PostDownloadExcelForm(ElementData.Data_Type_ID);
+                if (FILESTREAM is not null && module_download is not null)
+                {
+                    var fileName = $"{ElementData.Element_Name}.xlsx";
+                    using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                    await module_download.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            Download_In_Progress = false;
+        }
+    }
+
+    private async Task OnFileChanged(IBrowserFile file)
+    {
+        try
+        {
+            if (!Form_In_Progress)
+            {
+                Form_In_Progress = true;
+                var upload_result = await DATA_ACCESS.PostUploadExcel<EmptyContainerGroup?>(file, ElementData.Data_Type_ID, 0, ContainersInfo.Location_ID, ContainersInfo.Shipping_Company);
+
+                if (upload_result is null)
+                {
+                    ShowError("error_not_implemented");
+                }
+                else
+                {
+                    if (upload_result.Operation_Succeeded)
+                    {
+                        Selected_Container = null;
+                        Selected_Container_Row = -1;
+                        ContainersInfo.Containers = upload_result.Result!.Result!.Containers;
+                        await TryWriteStorageValue();
+                    }
+                    else
+                    {
+                        if (upload_result.Error_Message == "err_format_invalid")
+                        {
+                            ShowError("err_format_invalid");
+                        }
+                        else
+                        {
+                            if (upload_result.Errors is not null && upload_result.Errors.Any())
+                            {
+                                ShowError("err_non_controlled");
+                            }
+                            else
+                            {
+                                var parameters = new DialogParameters();
+                                parameters.Add("Error_Message", upload_result.Error_Message);
+                                parameters.Add("Additional_Data", upload_result?.Result?.Additional_Error_Data);
+                                parameters.Add("Additional_Value", upload_result?.Result?.Error_Value);
+                                var dialog = await DialogService.ShowAsync<ErrorDialog>("Error", parameters);
+                                var result = await dialog.Result;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            Form_In_Progress = false;
+        }
+    }
+
+    private async Task OnDocumentChange(IBrowserFile file, int Document_Subtype_ID)
+    {
+        var Full_Document_Data = new FullDocumentData();
+
+        // Validate isn't over 2mb
+        if (file.Size > 2 * 1024 * 1024)
+        {
+            ShowError("error_invalid_sizedocument");
+            return;
+        }
+
+        switch (Document_Subtype_ID)
+        {
+            case 3:
+                {
+                    BL_File = file;
+                    var result = await DATA_ACCESS.PostUploadBookingFile(file, Document_Subtype_ID, BookingData.Invoice, BookingData.User_ID, BookingData.Client_ID, Full_BL_Document_Data.Uploaded_Document_ID);
+
+                    if (result.Operation_Succeeded && result.Result.HasValue)
+                    {
+                        Full_Document_Data = new FullDocumentData()
+                            {
+                                Document_Uploaded = true,
+                                Document_File = file,
+                                Uploaded_Document_ID = result.Result,
+                                Document_Status = EDocumentStatus.LOADED
+                            };
+                        Full_BL_Document_Data = Full_Document_Data;
+                    }
+                }
+                break;
+            case 1032:
+                {
+                    Payment_File = file;
+                    var result = await DATA_ACCESS.PostUploadBookingFile(file, Document_Subtype_ID, BookingData.Invoice, BookingData.User_ID, BookingData.Client_ID, Full_Payment_Document_Data.Uploaded_Document_ID);
+
+                    if (result.Operation_Succeeded && result.Result.HasValue)
+                    {
+                        Full_Document_Data = new FullDocumentData()
+                            {
+                                Document_Uploaded = true,
+                                Document_File = file,
+                                Uploaded_Document_ID = result.Result,
+                                Document_Status = EDocumentStatus.LOADED
+                            };
+                        Full_Payment_Document_Data = Full_Document_Data;
+                    }
+                }
+                break;
+            case 1037:
+                {
+                    Temporary_File = file;
+                    var result = await DATA_ACCESS.PostUploadBookingFile(file, Document_Subtype_ID, BookingData.Invoice, BookingData.User_ID, BookingData.Client_ID, Full_Temporary_Document_Data.Uploaded_Document_ID);
+
+                    if (result.Operation_Succeeded && result.Result.HasValue)
+                    {
+                        Full_Document_Data = new FullDocumentData()
+                            {
+                                Document_Uploaded = true,
+                                Document_File = file,
+                                Uploaded_Document_ID = result.Result,
+                                Document_Status = EDocumentStatus.LOADED
+                            };
+                        Full_Temporary_Document_Data = Full_Document_Data;
+                    }
+                }
+                break;
+            case 1040:
+                {
+                    Assignment_File = file;
+                    var result = await DATA_ACCESS.PostUploadBookingFile(file, Document_Subtype_ID, BookingData.Invoice, BookingData.User_ID, BookingData.Client_ID, Full_Assignment_Document_Data.Uploaded_Document_ID);
+
+                    if (result.Operation_Succeeded && result.Result.HasValue)
+                    {
+                        Full_Document_Data = new FullDocumentData()
+                            {
+                                Document_Uploaded = true,
+                                Document_File = file,
+                                Uploaded_Document_ID = result.Result,
+                                Document_Status = EDocumentStatus.LOADED
+                            };
+                        Full_Assignment_Document_Data = Full_Document_Data;
+                    }
+                }
+                break;
+        }
+
+        await TryModifyDocument(Document_Subtype_ID, Full_Document_Data);
+    }
+
+    private MetadataEntidad CreateMetadata(KeyValuePair<int, object?> metadata_kvp, int Document_Subtype_ID)
+    {
+        return new MetadataEntidad()
+            {
+                Metadata_ID = metadata_kvp.Key,
+                Data_Type = BookingData.GetDocuments()[Document_Subtype_ID].Metadata[metadata_kvp.Key].Data_Type_ID,
+                Value = metadata_kvp.Value
+            };
+    }
+
+    private string GetRejectionString(FullDocumentData Full_Document_Data)
+    {
+        switch (Full_Document_Data.Document_Rejection_Reason)
+        {
+            case EDocumentRejections.UNREADABLE:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.UNREADABLE}");
+                }
+            case EDocumentRejections.INCORRECT:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.INCORRECT}");
+                }
+            case EDocumentRejections.EXPIRED:
+                {
+                    return Localize.Get($"EDocumentRejections_{(int)EDocumentRejections.EXPIRED}");
+                }
+        }
+        return string.Empty;
+    }
+
+    private async Task DownloadPDF(int Document_Subtype_ID, string File_Name, int? Uploaded_Document_ID = null)
+    {
+        if (Uploaded_Document_ID.HasValue)
+        {
+            var FILESTREAM = await DATA_ACCESS.PostDownloadBookingDocument(Uploaded_Document_ID!.Value);
+            if (FILESTREAM is not null && module_download is not null)
+            {
+                var fileName = Localize.Get(File_Name);
+                using var streamRef = new DotNetStreamReference(stream: FILESTREAM);
+                await module_download.InvokeVoidAsync("downloadFileFromStream", $"{fileName}.pdf", streamRef);
+            }
+        }
+    }
+
+    private bool DisableDownload()
+    {
+        return Download_In_Progress || GetElementReadonly();
+    }
+
+    private bool DisableForm()
+    {
+        return Form_In_Progress || GetElementReadonly();
+    }
+
+    private bool AddContainerDisabled()
+    {
+        return GetElementReadonly() || ContainersInfo.Shipping_Company is null;
+    }
+
+    private bool EditContainerDisabled()
+    {
+        if (ContainersInfo.Is_Load)
+        {
+            if (GetElementReadonly() || Adding_Container || Editing || !CanChange() || ContainersInfo.Shipping_Company is null)
+            {
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            if (GetElementReadonly() || Adding_Container || Editing || !CanChange() || ContainersInfo is null || ContainersInfo.Shipping_Company is null)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private bool DeleteContainerDisabled()
+    {
+        if (ContainersInfo.Is_Load)
+        {
+            if (GetElementReadonly() || Adding_Container || Editing || !CanChange() || ContainersInfo.Shipping_Company is null)
+            {
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            if (GetElementReadonly() || Adding_Container || Editing || !CanChange() || ContainersInfo is null || ContainersInfo.Shipping_Company is null)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private bool ShippingCompanyDisabled()
+    {
+        return GetElementReadonly() ||
+               (ContainersInfo.Is_Load && ContainersInfo.Load_Containers is not null && ContainersInfo.Load_Containers.Any()) ||
+               (!ContainersInfo.Is_Load && ContainersInfo.Containers is not null && ContainersInfo.Containers.Any());
+    }
+
+    private bool ShipVoyageDisabled()
+    {
+        if (ContainersInfo is null || ContainersInfo.Shipping_Company is null || !ContainersInfo.Shipping_Company.Travel_Required)
+        {
+
+            return true;
+        }
+        if (ContainersInfo.Location_ID == 430)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private string GetRegimenLabel()
+    {
+        if (ContainersInfo.Company_Name is null)
+        {
+            return Localize.Get("error_missing_companyname");
+        }
+
+        if (ContainersInfo.Regime is null)
+        {
+            return Localize.Get("error_missing_regime");
+        }
+
+        return ContainersInfo.Regime.Value;
+    }
+
+    private string? GetCoinRequiredLabel()
+    {
+        if (ContainersInfo.Company_Name is null)
+        {
+            return Localize.Get("error_missing_companyname");
+        }
+
+        if (ContainersInfo.Coin is null)
+        {
+            return Localize.Get("error_missing_coin");
+        }
+
+        return string.Empty;
+    }
+
+    private string ContainersSelectedRowClassFunc(EmptyContainerData element, int rowNumber)
+    {
+        if (CanChange())
+        {
+            if (Selected_Container_Row == rowNumber)
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else if (Containers_Table.SelectedItem != null && Containers_Table.SelectedItem.Equals(element))
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else
+            {
+                Selected_Container_Row = -1;
+                return string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private string LoadContainersSelectedRowClassFunc(EmptyLoadContainerData element, int rowNumber)
+    {
+        if (CanChange())
+        {
+            if (Selected_Container_Row == rowNumber)
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else if (Load_Containers_Table.SelectedItem != null && Load_Containers_Table.SelectedItem.Equals(element))
+            {
+                Selected_Container_Row = rowNumber;
+                return "selected";
+            }
+            else
+            {
+                Selected_Container_Row = -1;
+                return string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    private void SetSelectedContainer(EmptyContainerData? data)
+    {
+        if (CanChange())
+        {
+            Selected_Container = data;
+        }
+    }
+
+    private void SetSelectedLoadContainer(EmptyLoadContainerData? data)
+    {
+        if (CanChange())
+        {
+            Selected_Load_Container = data;
+        }
+    }
+
+    private bool CanChange()
+    {
+        return !(Editing || Adding_Container);
+    }
+
+    private void CancelAddContainer()
+    {
+        Editing = false;
+        Adding_Container = false;
+        New_Container_Data = new EmptyContainerData();
+        New_Load_Container_Data = new EmptyLoadContainerData { Quantity = 1 };
+    }
+
+    // METHOD TO ADD A CONTAINER WHEN IN EDITING STATE
+    private async Task TryAddContainer()
+    {
+        if (ContainersInfo.Is_Load)
+        {
+            if (ValidateLoadContainer(New_Load_Container_Data))
+            {
+                ContainersInfo.Load_Containers[New_Load_Container_Data.Container_UUID] = new EmptyLoadContainerData(New_Load_Container_Data);
+                New_Load_Container_Data = new EmptyLoadContainerData { Quantity = 1, Booking = New_Load_Container_Data.Booking };
+
+                Adding_Container = false;
+                Editing = false;
+            }
+        }
+        else
+        {
+            if (ValidateContainer(New_Container_Data))
+            {
+                ContainersInfo.Containers[New_Container_Data.Container_UUID] = new EmptyContainerData(New_Container_Data);
+                New_Container_Data = new EmptyContainerData{ Bill_Of_Lading = New_Container_Data.Bill_Of_Lading };
+
+                Adding_Container = false;
+                Editing = false;
+            }
+        }
+
+        await TryWriteStorageValue();
+    }
+
+    private async Task TryAddNewContainer()
+    {
+        var uuid = Guid.NewGuid();
+
+        if (ContainersInfo.Is_Load)
+        {
+            if (!ValidateLoadContainer(New_Load_Container_Data))
+            {
+                return;
+            }
+
+            var containers = ContainersInfo.Load_Containers;
+
+            New_Load_Container_Data.Container_UUID = uuid;
+            containers[uuid] = new EmptyLoadContainerData(New_Load_Container_Data);
+
+            New_Load_Container_Data = new EmptyLoadContainerData { Quantity = 1, Booking = New_Load_Container_Data.Booking };
+
+            await ContainerQuantityField.FocusAsync();
+        }
+        else
+        {
+            if (!ValidateContainer(New_Container_Data))
+            {
+                return;
+            }
+
+            var containers = ContainersInfo.Containers;
+
+            New_Container_Data.Container_UUID = uuid;
+            containers[uuid] = new EmptyContainerData(New_Container_Data);
+
+            New_Container_Data.Container_Serial = null;
+            New_Container_Data.Size_Type = null;
+
+            await ContainerSerialField.FocusAsync();
+        }
+
+        await TryWriteStorageValue();
+    }
+
+    private void TryEditContainer(Guid UUID_Container)
+    {
+        if (ContainersInfo.Is_Load)
+        {
+            Selected_Load_Container = ContainersInfo.Load_Containers[UUID_Container];
+
+            if (Selected_Load_Container is not null && !GetElementReadonly())
+            {
+                New_Load_Container_Data = new EmptyLoadContainerData(ContainersInfo.Load_Containers[Selected_Load_Container.Container_UUID]);
+                Adding_Container = true;
+                Editing = true;
+            }
+        }
+        else
+        {
+            Selected_Container = ContainersInfo.Containers[UUID_Container];
+
+            if (Selected_Container is not null && !GetElementReadonly())
+            {
+                New_Container_Data = new EmptyContainerData(ContainersInfo.Containers[Selected_Container.Container_UUID]);
+                Adding_Container = true;
+                Editing = true;
+            }
+        }
+    }
+
+    private async Task TryRemoveContainer(Guid UUID_Container)
+    {
+        if (ContainersInfo.Is_Load)
+        {
+            Selected_Load_Container = ContainersInfo.Load_Containers[UUID_Container];
+
+            if (Selected_Load_Container is not null && !GetElementReadonly())
+            {
+                ContainersInfo.Load_Containers.Remove(Selected_Load_Container.Container_UUID);
+                Selected_Load_Container = null;
+            }
+        }
+        else
+        {
+            Selected_Container = ContainersInfo.Containers[UUID_Container];
+
+            if (Selected_Container is not null && !GetElementReadonly())
+            {
+                ContainersInfo.Containers.Remove(Selected_Container.Container_UUID);
+                Selected_Container = null;
+            }
+        }
+
+        await TryWriteStorageValue();
+    }
+
+    private bool ValidateContainer(EmptyContainerData? Container)
+    {
+        if (GetElementReadonly())
+        {
+            return false;
+        }
+
+        // Validate that a shipping line has been selected
+        if (ContainersInfo.Shipping_Company is null)
+        {
+            ShowError("error_container_shippingc_missing");
+            return false;
+        }
+
+        // Validate required elements
+        if (Container is null)
+        {
+            return false;
+        }
+        if (string.IsNullOrEmpty(Container.Container_Serial))
+        {
+            ShowError("error_container_serial_invalid");
+            return false;
+        }
+        if (Container.Size_Type is null || Container.Size_Type.ID == 0)
+        {
+            ShowError("error_container_sizetype_missing");
+            return false;
+        }
+        if (Container.Bill_Of_Lading is null)
+        {
+            ShowError("error_container_bl_missing");
+            return false;
+        }
+
+        // Validate Container Serial
+        if (!Validations.IsValidContainerSerial(Container.Container_Serial))
+        {
+            ShowError("error_container_serial_invalid");
+            return false;
+        }
+        if (ContainersInfo.Shipping_Company.Invalids_Containers_Prefix is not null && ContainersInfo.Shipping_Company.Invalids_Containers_Prefix.Any())
+        {
+            if (ContainersInfo.Shipping_Company.Invalids_Containers_Prefix.Any(prefix => Container.Container_Serial.Length >= prefix.Length && Container.Container_Serial.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                ShowError("error_container_serial_invalid");
+                return false;
+            }
+        }
+        if (ContainersInfo.Containers.Values.Any(container => container.Container_Serial == Container.Container_Serial))
+        {
+            // Validate there isn't a repeated Serial Container
+            var repeated = ContainersInfo.Containers.Values.First(container => container.Container_Serial == Container.Container_Serial);
+            if (repeated.Container_UUID != Container.Container_UUID)
+            {
+                ShowError("error_container_serial_repeated");
+                return false;
+            }
+        }
+
+        // Validate BL only if has valid bls
+        if (ContainersInfo.Shipping_Company.Valids_BLs is not null && ContainersInfo.Shipping_Company.Valids_BLs.Any())
+        {
+            if (!ContainersInfo.Shipping_Company.Valids_BLs.Any(prefix => Container.Bill_Of_Lading.Length >= prefix.Length && Container.Bill_Of_Lading.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                ShowError("error_invalid_bl");
+                return false;
+            }
+        }
+
+        // Validate BL only for Cosco
+        if (ContainersInfo.Shipping_Company.Value == 4 && Container.Bill_Of_Lading.Length != 10)
+        {
+            ShowError("error_invalidlength_bl");
+            return false;
+        }
+
+        // Validate Voyage only for Evergreen
+        if (ContainersInfo.Shipping_Company.Value == 3 && Container.Ship_Voyage is null && ContainersInfo.Location_ID != 430)
+        {
+            ShowError("error_container_shipvoyage_missing");
+            return false;
+        }
+
+    return true;
+    }
+
+    private bool ValidateLoadContainer(EmptyLoadContainerData? Container)
+    {
+        if (GetElementReadonly())
+        {
+            return false;
+        }
+
+        // Validate that a shipping line has been selected
+        if (ContainersInfo.Shipping_Company is null)
+        {
+            ShowError("error_container_shippingc_missing");
+            return false;
+        }
+
+        // Validate required elements
+        if (Container is null)
+        {
+            return false;
+        }
+        if (Container.Quantity == 0)
+        {
+            ShowError("error_container_quantity_missing");
+            return false;
+        }
+        if (Container.Quality is null)
+        {
+            ShowError("error_container_quality_missing");
+            return false;
+        }
+        if (Container.Size_Type is null || Container.Size_Type.ID == 0)
+        {
+            ShowError("error_container_sizetype_missing");
+            return false;
+        }
+        if (string.IsNullOrEmpty(Container.Booking))
+        {
+            ShowError("error_container_booking_missing");
+            return false;
+        }
+        if (ContainersInfo.Shipping_Company.Value == 7 && Container.Booking_Type is null)
+        {
+            ShowError("error_container_bookingtype_missing");
+            return false;
+        }
+
+        // Validate Booking only if has valid Bookings
+        if (ContainersInfo.Shipping_Company.Valids_Bookings is not null && ContainersInfo.Shipping_Company.Valids_Bookings.Any())
+        {
+            if (!ContainersInfo.Shipping_Company.Valids_Bookings.Any(prefix => Container.Booking.Length >= prefix.Length && Container.Booking.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                ShowError("error_invalid_booking");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private string? ValidateNotificationEmail(string notificationEmails)
+    {
+        if (string.IsNullOrWhiteSpace(notificationEmails))
+        {
+            return Localize.Get("errmsg_required");
+        }
+
+        if (notificationEmails.EndsWith(";"))
+        {
+            return Localize.Get("error_invalid_endemail");
+        }
+
+        var emails = notificationEmails.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                                       .Select(email => email.Trim())
+                                       .Where(email => !string.IsNullOrEmpty(email))
+                                       .ToList();
+        string emailPattern = @"^[\w\.-]+@[\w\.-]+\.\w{2,4}$";
+        bool allValid = emails.All(email => System.Text.RegularExpressions.Regex.IsMatch(email, emailPattern));
+
+        return allValid ? null : Localize.Get("error_invalid_email");
+    }
+
+    private string? ValidateSerialContainer(string serial)
+    {
+        if (string.IsNullOrEmpty(serial))
+        {
+            return null;
+        }
+
+        // Validate Container Serial
+        if (!Validations.IsValidContainerSerial(serial))
+        {
+            return Localize.Get("error_container_serial_invalid");
+        }
+        if (ContainersInfo.Shipping_Company is not null && ContainersInfo.Shipping_Company.Invalids_Containers_Prefix is not null && ContainersInfo.Shipping_Company.Invalids_Containers_Prefix.Any())
+        {
+            if (ContainersInfo.Shipping_Company.Invalids_Containers_Prefix.Any(prefix => serial.Length >= prefix.Length && serial.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                return Localize.Get("error_container_serial_invalid");
+            }
+        }
+        return null;
+    }
+
+    private string? ValidateBLContainer(string bl)
+    {
+        if (string.IsNullOrEmpty(bl))
+        {
+            return null;
+        }
+
+        if (ContainersInfo.Shipping_Company is not null && ContainersInfo.Shipping_Company.Valids_BLs is not null && ContainersInfo.Shipping_Company.Valids_BLs.Any())
+        {
+            if (!ContainersInfo.Shipping_Company.Valids_BLs.Any(prefix => bl.Length >= prefix.Length && bl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                return Localize.Get("error_invalid_bl");
+            }            
+        }
+
+        // Validate BL only for Cosco
+        if (ContainersInfo.Shipping_Company is not null && ContainersInfo.Shipping_Company.Value == 4 && bl.Length != 10)
+        {
+            return Localize.Get("error_invalidlength_bl");
+        }
+
+        return null;
+    }
+
+    private string? ValidateBookingContainer(string booking)
+    {
+        if (string.IsNullOrEmpty(booking) || ContainersInfo.Shipping_Company is null || ContainersInfo.Shipping_Company.Valids_Bookings is null || !ContainersInfo.Shipping_Company.Valids_Bookings.Any())
+        {
+            return null;
+        }
+
+        if (!ContainersInfo.Shipping_Company.Valids_Bookings.Any(prefix => booking.Length >= prefix.Length && booking.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+        {
+            return Localize.Get("error_invalid_booking");
+        }
+
+        return null;
+    }
+
+    private bool ValidateElement()
+    {
+        if (ContainersInfo.Regime is null)
+        {
+            return false;
+        }
+
+        // Notification Email
+        if (!string.IsNullOrEmpty(ValidateNotificationEmail(ContainersInfo.Notification_Emails)))
+        {
+            return false;
+        }
+
+        // Load Containers
+        if (ContainersInfo.Is_Load && (ContainersInfo.Load_Containers == null || !ContainersInfo.Load_Containers.Any()))
+        {
+            return false;
+        }
+
+        // Unload Containers
+        if (!ContainersInfo.Is_Load && (ContainersInfo.Containers == null || !ContainersInfo.Containers.Any()))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private async Task TryWriteStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteUnsharedElementValue(ContainersInfo, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await SetComplexElementValid(ValidateElement());
+            await BookingData.WriteSharedElementValue(ContainersInfo, ElementData.Element_ID);
+        }
+    }
+
+    private EmptyContainerGroup? GetSource()
+    {
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<EmptyContainerGroup>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        else
+        {
+            return BookingData.GetSharedElementValueAs<EmptyContainerGroup>(ElementData.Element_ID);
+        }
+    }
+
+    private IEnumerable<KeyValue> GetPreloadedList(string field_name)
+    {
+        if (ElementData.Complex_Data[field_name].Contains_List && !ElementData.Complex_Data[field_name].Is_Autocomplete_List)
+        {
+            return GetComplexPreloadedListAs<KeyValue>(field_name);
+        }
+        return Enumerable.Empty<KeyValue>();
+    }
+
+    private IEnumerable<EmptyContainerData> GetContainers()
+    {
+        return ContainersInfo.Containers.Values;
+    }
+
+    private IEnumerable<EmptyLoadContainerData> GetLoadContainers()
+    {
+        return ContainersInfo.Load_Containers.Values;
+    }
+
+    private async Task GetClientData()
+    {
+        if (ContainersInfo is null || ContainersInfo.Company_Name is null)
+        {
+            return;
+        }
+
+        var result = await DATA_ACCESS.GetClientDataEmptyContainers(ContainersInfo.Company_Name.Key, ContainersInfo.Location_ID);
+        if (result is null || !result.Operation_Succeeded || result.Result is null)
+        {
+            return;
+        }
+
+        ContainersInfo.Regime = result.Result.Regime;
+        ContainersInfo.Agent_ID = result.Result.Agent_ID!.Value;
+        ContainersInfo.Coin = result.Result.Coin;
+        if (ContainersInfo.Company_Name is not null)
+        {
+            ContainersInfo.Company_Name.Address = result.Result.Address;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task<CustomerDocumentsInformation> GetAgentData()
+    {
+        var result = await DATA_ACCESS.GetClientDocumentsDataEmptyContainers();
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            ContainersInfo.Location_ID = result.Result.IdAduana;
+            ContainersInfo.Has_Credit = result.Result.Credito;
+
+            await TryWriteStorageValue();
+            return result.Result;
+        }
+        else
+        {
+            return new CustomerDocumentsInformation();
+        }
+    }
+
+    private async Task GetShowPaymentModal()
+    {
+        ContainersInfo.Show_Payment_Modal = await DATA_ACCESS.GetShowPaymentModal(AppState.GetCurrentClientID() ?? 0, ContainersInfo.Location_ID) ?? true;
+
+        StateHasChanged();
+    }
+
+    private async Task GetLastNotificationEmails()
+    {
+        ContainersInfo.Notification_Emails = await DATA_ACCESS.GetClientLastNofiticationEmails(AppState.GetCurrentClientID() ?? 0, ContainersInfo.Location_ID);
+
+        StateHasChanged();
+    }
+
+    private async Task OnCustomValueChanged(object value, string field_name)
+    {
+        switch (field_name)
+        {
+            case "PATENT":
+                {
+                    ContainersInfo.Patent = (KeyValue)value;
+                }
+                break;
+            case "BILLINGTYPE":
+                {
+                    ContainersInfo.Billing_Type = ContainersInfo.Is_Load 
+                        ? new KeyValue { Key = 1, Value = "POR CONTENEDOR" }
+                        : (KeyValue)value;
+                }
+                break;
+            case "COMPANYNAME":
+                {
+                    ContainersInfo.Company_Name = (CompanyInfoTriplet)value;
+                    await GetClientData();
+                    if (ContainersInfo.Coin?.Key != 1)
+                    {
+                        ShowError("La razón social seleccionada usa dólares y no están soportados actualmente.");
+                        // Limpiar modelo
+                        ContainersInfo.Company_Name = null;
+                        ContainersInfo.Regime = null;
+                        ContainersInfo.Coin = null;
+                        // Limpiar componente y texto
+                        await _companyNameAutocomplete.Clear();
+                        StateHasChanged();
+                    }
+                }
+                break;
+            case "CFDI":
+                {
+                    ContainersInfo.CFDI = (SATTableTriplet)value;
+                }
+                break;
+            case "PAYMENTMETHOD":
+                {
+                    ContainersInfo.Payment_Method = (SATTableTriplet)value;
+                    Payment_Forms = (IEnumerable<SATTableTriplet>)await GetCustomListAsync("PAYMENTFORM");
+                }
+                break;
+            case "PAYMENTFORM":
+                {
+                    ContainersInfo.Payment_Form = (SATTableTriplet)value;
+                }
+                break;
+            case "REGIME":
+                {
+                    ContainersInfo.Regime = (KeyValue)value;
+                }
+                break;
+            case "COIN":
+                {
+                    ContainersInfo.Coin = (KeyValue)value;
+                }
+                break;
+            case "ACCOUNTNUMBER":
+                {
+                    ContainersInfo.Account_Number = (int)value;
+                }
+                break;
+            case "TRANSACTIONFOLIO":
+                {
+                    ContainersInfo.Transaction_Folio = (int?)value;
+                }
+                break;
+            case "SHIPPINGCOMPANY":
+                {
+                    ContainersInfo.Shipping_Company = (ShippingLineInfoTriplet)value;
+                    Container_Sizes = (IEnumerable<EmptyContainerInfoTriplet>)await GetCustomListAsync("CONTAINERSIZETYPE");
+
+                    // Restore New Containers Data
+                    New_Load_Container_Data.Size_Type = new EmptyContainerInfoTriplet();
+                    New_Load_Container_Data.Quality = new KeyValue();
+                    New_Load_Container_Data.Booking_Type = new KeyValue();
+
+                    New_Container_Data.Size_Type = new EmptyContainerInfoTriplet();
+                }
+                break;
+            case "VESSEL":
+                {
+                    ContainersInfo.Load_Vessel = string.IsNullOrEmpty((string?)value) ? string.Empty : ((string)value).ToUpper();
+                }
+                break;
+            case "SERVICEDATE":
+                {
+                    ContainersInfo.Service_Date = (DateTime)value;
+                }
+                break;
+            case "REFERENCE":
+                {
+                    ContainersInfo.Reference = string.IsNullOrEmpty((string?)value) ? string.Empty : ((string)value).ToUpper();
+                }
+                break;
+            case "NOTIFICATIONEMAILS":
+                {
+                    ContainersInfo.Notification_Emails = (string?)value;
+                }
+                break;
+            case "OBSERVATIONS":
+                {
+                    ContainersInfo.Observations = string.IsNullOrEmpty((string?)value) ? string.Empty : ((string)value).ToUpper();
+                }
+                break;
+        }
+
+        await TryWriteStorageValue();
+    }
+
+    private object? TryGetNewCustomValue(string field_name)
+    {
+        switch (field_name)
+        {
+            case "PATENT":
+                {
+                    return ContainersInfo.Patent;
+                }
+            case "BILLINGTYPE":
+                {
+                    if (ContainersInfo.Is_Load)
+                    {
+                        ContainersInfo.Billing_Type = new KeyValue { Key = 1, Value = "POR CONTENEDOR" };
+                    }
+
+                    return ContainersInfo.Billing_Type;
+                }
+            case "COMPANYNAME":
+                {
+
+                    return ContainersInfo.Company_Name;
+                }
+            case "PAYMENTMETHOD":
+                {
+                    if (ContainersInfo.Payment_Method == null && Payment_Methods != null && Payment_Methods.Any())
+                    {
+                        ContainersInfo.Payment_Method = Payment_Methods.FirstOrDefault(method => method.ID == 1);
+                    }
+
+                    return ContainersInfo.Payment_Method;
+                }
+            case "PAYMENTFORM":
+                {
+                    if (ContainersInfo.Payment_Form == null && Payment_Forms != null && Payment_Forms.Any())
+                    {
+                        ContainersInfo.Payment_Form = Payment_Forms.FirstOrDefault(form => form.ID == 7);
+                    }
+                    return ContainersInfo.Payment_Form;
+                }
+            case "CFDI":
+                {
+                    if (ContainersInfo.CFDI == null && CFDI_Usages != null && CFDI_Usages.Any())
+                    {
+                        ContainersInfo.CFDI = CFDI_Usages.FirstOrDefault(form => form.ID == 1);
+                    }
+                    return ContainersInfo.CFDI;
+                }
+            case "REGIME":
+                {
+                    return ContainersInfo.Regime is not null ? ContainersInfo.Regime.Value : "";
+                }
+            case "COIN":
+                {
+                    return ContainersInfo.Coin;
+                }
+            case "ACCOUNTNUMBER":
+                {
+                    return ContainersInfo.Account_Number;
+                }
+            case "TRANSACTIONFOLIO":
+                {
+                    return ContainersInfo.Transaction_Folio;
+                }
+            case "SHIPPINGCOMPANY":
+                {
+                    return ContainersInfo.Shipping_Company;
+                }
+            case "VESSEL":
+                {
+                    return ContainersInfo.Load_Vessel;
+                }
+            case "SERVICEDATE":
+                {
+                    return ContainersInfo.Service_Date;
+                }
+            case "REFERENCE":
+                {
+                    return ContainersInfo.Reference;
+                }
+            case "NOTIFICATIONEMAILS":
+                {
+                    return ContainersInfo.Notification_Emails;
+                }
+            case "OBSERVATIONS":
+                {
+                    return ContainersInfo.Observations;
+                }
+        }
+
+        return null;
+    }
+
+    private async Task<IEnumerable<object>> GetCustomListAsync(string field_name)
+    {
+        switch (field_name)
+        {
+            case "CFDI":
+                {
+                    var result = await DATA_ACCESS.GetCFDIUsagesEmptyContainers();
+
+                    if (result is not null && result.Operation_Succeeded && result.Result is not null)
+                    {
+                        ContainersInfo.CFDI = result.Result.First(cfdi => cfdi.ID == 1);
+                        return result.Result;
+                    }
+                    else
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+                }
+            case "PAYMENTMETHOD":
+                {
+                    var result = await DATA_ACCESS.GetPaymentMethodEmptyContainers(AppState.GetCurrentLocation());
+
+                    if (result is not null && result.Operation_Succeeded && result.Result is not null)
+                    {
+                        ContainersInfo.Payment_Method = result.Result.First();
+                        return result.Result;
+                    }
+                    else
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+                }
+            case "PAYMENTFORM":
+                {
+                    if (ContainersInfo is null || ContainersInfo.Payment_Method is null)
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+
+                    var result = await DATA_ACCESS.GetPaymentFormEmptyContainers(ContainersInfo.Payment_Method.ID);
+
+                    if (result is not null && result.Operation_Succeeded && result.Result is not null)
+                    {
+                        return result.Result;
+                    }
+                    else
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+                }
+            case "SHIPPINGCOMPANY":
+                {
+                    var result = await DATA_ACCESS.GetShippingLineEmptyContainers(ContainersInfo.Is_Load ? "expo" : "impo", ContainersInfo.Location_ID);
+                    if (result is not null && result.Operation_Succeeded && result.Result is not null)
+                    {
+                        return result.Result;
+                    }
+                    else
+                    {
+                        return Enumerable.Empty<ShippingLineInfoTriplet>();
+                    }
+                }
+
+            case "CONTAINERSIZETYPE":
+                {
+                    if (ContainersInfo is null || ContainersInfo.Shipping_Company is null)
+                    {
+                        return Enumerable.Empty<EmptyContainerInfoTriplet>();
+                    }
+
+                    var result = await DATA_ACCESS.GetEmptyContainersTypes(ContainersInfo.Shipping_Company, ContainersInfo.Location_ID, ContainersInfo.Is_Load ? "expo" : "impo");
+                    if (result is not null && result.Operation_Succeeded && result.Result is not null)
+                    {
+                        return result.Result;
+                    }
+                    else
+                    {
+                        return Enumerable.Empty<EmptyContainerInfoTriplet>();
+                    }
+                }
+        }
+
+        return Enumerable.Empty<KeyValue>();
+    }
+
+    private async Task<IEnumerable<KeyValue>?>SearchDynamicPatent(string value)
+    {
+        if (IsInitialLoad)
+        {
+            // Solo carga desde la API la primera vez
+            var result = await DATA_ACCESS.GetPatentsEmptyContainers(value ?? "");
+            if (result != null && result.Operation_Succeeded && result.Result != null)
+            {
+                IsInitialLoad = false; 
+                return result.Result;
+            }
+            return Enumerable.Empty<KeyValue>();
+        }
+        else
+        {
+            // Filtra localmente a partir de AllPatents
+            return AllPatents
+                .Where(p => string.IsNullOrEmpty(value) || p.Value.Contains(value, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+    }
+
+    private  Task<IEnumerable<CompanyInfoTriplet>?>SearchDynamicCompanyName(string value)
+    {
+        // var result = await DATA_ACCESS.GetCompanyNamesEmptyContainers(value);
+
+        // if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        // {
+        //     return result.Result;
+        // }
+        // else
+        // {
+        //     return Enumerable.Empty<CompanyInfoTriplet>();
+        // 
+
+
+        var filtered = AllCompanies
+       .Where(c => string.IsNullOrEmpty(value) 
+                   || c.Value.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(filtered);
+    }
+
+    private async Task<IEnumerable<KeyValue>?>SearchDynamicVoyage(string value)
+    {
+
+        //fILTRAR EN LISTA LOCAL, SI NO SE ENCUENTRA SE HACE LA CONSULTA CON LO QUE EL USUARIO MANDE
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            if (AllVoyages == null || !AllVoyages.Any())
+            {
+                var initRes = await DATA_ACCESS.GetShipVoyagesEmptyContainers("");
+                if (initRes?.Operation_Succeeded == true && initRes.Result != null)
+                {
+                    AllVoyages = initRes.Result.ToList();
+                }
+                else
+                {
+                    AllVoyages = new List<KeyValue>();
+                }
+            }
+            return AllVoyages;
+        }
+        else
+        {
+            var filtered = AllVoyages
+                .Where(v => v.Value.Contains(value, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (!filtered.Any() && AllVoyages.Any())
+            {
+                var remoteRes = await DATA_ACCESS.GetShipVoyagesEmptyContainers(value);
+                if (remoteRes?.Operation_Succeeded == true && remoteRes.Result != null)
+                {
+                    AllVoyages = remoteRes.Result.ToList();
+                    return AllVoyages;
+                }
+                return Enumerable.Empty<KeyValue>();
+            }
+            return filtered;
+        }
+
+        // if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        // {
+        //     return result.Result;
+        // }
+        // else
+        // {
+        //     return Enumerable.Empty<KeyValue>();
+        // }
+    }
+
+    private IEnumerable<object> GetCustomList(string field_name)
+    {
+        switch (field_name)
+        {
+            case "SERVICEUNIT":
+                {
+                    return new List<KeyValue>
+                    {
+                        new KeyValue { Key = 1, Value = "[E48] - SER" }
+                    };
+                }
+            case "PAYMENTMETHOD":
+                {
+                    if (Payment_Methods is null)
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+                    return Payment_Methods;
+                }
+            case "PAYMENTFORM":
+                {
+                    if (Payment_Forms is null)
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+                    return Payment_Forms;
+                }
+            case "BILLINGTYPE":
+                {
+                    return new List<KeyValue>
+                    {
+                        new KeyValue { Key = 0, Value = "POR SOLICITUD" },
+                        new KeyValue { Key = 1, Value = "POR CONTENEDOR" }
+                    };
+                }
+            case "SHIPPINGCOMPANY":
+                {
+                    if (Shipping_Companies is null)
+                    {
+                        return Enumerable.Empty<ShippingLineInfoTriplet>();
+                    }
+
+                    return Shipping_Companies;
+                }
+            case "CFDI":
+                {
+                    if (CFDI_Usages is null)
+                    {
+                        return Enumerable.Empty<SATTableTriplet>();
+                    }
+
+                    return CFDI_Usages;
+                }
+            case "CONTAINERSIZETYPE":
+                {
+                    if (Container_Sizes is null)
+                    {
+                        return Enumerable.Empty<EmptyContainerInfoTriplet>();
+                    }
+
+                    return Container_Sizes;
+                }
+            case "CONTAINERQUALITY":
+                {
+                    return new List<KeyValue>
+                    {
+                        new KeyValue { Key = 1, Value = "A" },
+                        new KeyValue { Key = 3, Value = "B" },
+                        new KeyValue { Key = 4, Value = "C" },
+                        new KeyValue { Key = 5, Value = "GC" },
+                        new KeyValue { Key = 6, Value = "FG" },
+                        new KeyValue { Key = 7, Value = "CM" },
+                        new KeyValue { Key = 8, Value = "D" },
+                        new KeyValue { Key = 9, Value = "A-CM" },
+                        new KeyValue { Key = 10, Value = "B+" },
+                        new KeyValue { Key = 11, Value = "A-FX" },
+                        new KeyValue { Key = 12, Value = "Q" },
+                        new KeyValue { Key = 13, Value = "M" },
+                        new KeyValue { Key = 14, Value = "SC" },
+                        new KeyValue { Key = 16, Value = "PS" },
+                        new KeyValue { Key = 17, Value = "AS" },
+                        new KeyValue { Key = 18, Value = "N/O" }
+                    };
+                }
+            case "BOOKINGTYPE":
+                {
+                    return new List<KeyValue>
+                    {
+                        new KeyValue { Key = 1, Value = "MSK" },
+                        new KeyValue { Key = 2, Value = "HSD" }
+                    };
+                }
+        }
+
+        return Enumerable.Empty<KeyValue>();
+    }
+
+    private object? TryGetNewLoadContainerField(string field_name)
+    {
+        if (New_Load_Container_Data is null)
+        {
+            return null;
+        }
+
+        switch (field_name)
+        {
+            case "CONTAINERQUANTITY":
+                {
+                    return New_Load_Container_Data.Quantity == 0 ? 1 : New_Load_Container_Data.Quantity;
+                }
+            case "CONTAINERQUALITY":
+                {
+                    return New_Load_Container_Data.Quality;
+                }
+            case "CONTAINERSIZETYPE":
+                {
+                    return New_Load_Container_Data.Size_Type;
+                }
+            case "BOOKINGTYPE":
+                {
+                    return New_Load_Container_Data.Booking_Type;
+                }
+            case "BOOKING":
+                {
+                    return New_Load_Container_Data.Booking;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private object? TryGetNewContainerField(string field_name)
+    {
+        if (New_Container_Data is null)
+        {
+            return null;
+        }
+
+        switch (field_name)
+        {
+            case "CONTAINERSIZETYPE":
+                {
+                    return New_Container_Data.Size_Type;
+                }
+            case "BILLOFLADING":
+                {
+                    return New_Container_Data.Bill_Of_Lading;
+                }
+            case "CONTAINERSERIAL":
+                {
+                    return New_Container_Data.Container_Serial;
+                }
+            case "REFERENCE":
+                {
+                    return New_Container_Data.Reference;
+                }
+            case "SHIPVOYAGE":
+                {
+                    return New_Container_Data.Ship_Voyage;
+                }
+            default:
+                {
+                    return null;
+                }
+        }
+    }
+
+    private void TryModifyNewLoadContainerField(object? value, string field_name)
+    {
+        if (New_Load_Container_Data is null)
+        {
+            return;
+        }
+
+        switch (field_name)
+        {
+            case "CONTAINERQUANTITY":
+                {
+                    New_Load_Container_Data.Quantity = ((int?)value) ?? 1;
+                    break;
+                }
+            case "CONTAINERQUALITY":
+                {
+                    New_Load_Container_Data.Quality = (KeyValue?)value;
+                    break;
+                }
+            case "CONTAINERSIZETYPE":
+                {
+                    New_Load_Container_Data.Size_Type = (EmptyContainerInfoTriplet?)value;
+                    break;
+                }
+            case "BOOKINGTYPE":
+                {
+                    New_Load_Container_Data.Booking_Type = (KeyValue?)value;
+                    break;
+                }
+            case "BOOKING":
+                {
+                    New_Load_Container_Data.Booking = string.IsNullOrEmpty((string?)value) ? "" : ((string)value).ToUpper();
+                    break;
+                }
+        }
+    }
+
+    private void TryModifyNewContainerField(object? value, string field_name)
+    {
+        if (New_Container_Data is not null)
+        {
+            switch (field_name)
+            {
+                case "CONTAINERSIZETYPE":
+                    {
+                        New_Container_Data.Size_Type = (EmptyContainerInfoTriplet?)value;
+                        break;
+                    }
+                case "SHIPVOYAGE":
+                    {
+                        New_Container_Data.Ship_Voyage = (KeyValue?)value;
+                        break;
+                    }
+                case "CONTAINERSERIAL":
+                    {
+                        New_Container_Data.Container_Serial = (string?)value is null ? (string?)value : ((string)value).ToUpper();
+                        break;
+                    }
+                case "REFERENCE":
+                    {
+                        New_Container_Data.Reference = string.IsNullOrEmpty((string?)value) ? "" : ((string)value).ToUpper();
+                        break;
+                    }
+                case "BILLOFLADING":
+                    {
+                        New_Container_Data.Bill_Of_Lading = string.IsNullOrEmpty((string?)value) ? "" : ((string)value).ToUpper();
+                        break;
+                    }
+            }
+        }
+    }
+
+    private async Task TryModifyDocument(int document_subtype_id, FullDocumentData? document)
+    {
+        switch (document_subtype_id)
+        {
+            case 3:
+                {
+                    if (document is null)
+                    {
+                        ContainersInfo.BL_Document = null;
+                    }
+                    else
+                    {
+                        ContainersInfo!.BL_Document = new DocumentData()
+                            {
+                                Document_Uploaded = document.Document_Uploaded,
+                                Uploaded_Document_ID = document.Uploaded_Document_ID,
+                                Document_Rejection_Reason = document.Document_Rejection_Reason,
+                                Document_Status = document.Document_Status
+                            };
+                    }
+                }
+
+                await TryWriteStorageValue();
+                break;
+            case 1032:
+                {
+                    if (document is null)
+                    {
+                        ContainersInfo.Payment_Receipt_Document = null;
+                    }
+                    else
+                    {
+                        ContainersInfo!.Payment_Receipt_Document = new DocumentData()
+                            {
+                                Document_Uploaded = document.Document_Uploaded,
+                                Uploaded_Document_ID = document.Uploaded_Document_ID,
+                                Document_Rejection_Reason = document.Document_Rejection_Reason,
+                                Document_Status = document.Document_Status
+                            };
+                    }
+                }
+
+                await TryWriteStorageValue();
+                break;
+            case 1037:
+                {
+                    if (document is null)
+                    {
+                        ContainersInfo.Temporary_Document = null;
+                    }
+                    else
+                    {
+                        ContainersInfo!.Temporary_Document = new DocumentData()
+                            {
+                                Document_Uploaded = document.Document_Uploaded,
+                                Uploaded_Document_ID = document.Uploaded_Document_ID,
+                                Document_Rejection_Reason = document.Document_Rejection_Reason,
+                                Document_Status = document.Document_Status
+                            };
+                    }
+                }
+
+                await TryWriteStorageValue();
+                break;
+            case 1040:
+                {
+                    if (document is null)
+                    {
+                        ContainersInfo.Assignment_Letter_Document = null;
+                    }
+                    else
+                    {
+                        ContainersInfo!.Assignment_Letter_Document = new DocumentData()
+                            {
+                                Document_Uploaded = document.Document_Uploaded,
+                                Uploaded_Document_ID = document.Uploaded_Document_ID,
+                                Document_Rejection_Reason = document.Document_Rejection_Reason,
+                                Document_Status = document.Document_Status
+                            };
+                    }
+                }
+
+                await TryWriteStorageValue();
+                break;
+        }
+    }
+
+    /*
+     * Eliminar los modulos JS cargados al terminar de usar el componente actual
+     */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_download is not null)
+        {
+            await module_download.DisposeAsync();
+        }
+    }
+}

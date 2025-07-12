@@ -1,0 +1,194 @@
+﻿@page "/user_maneuvers/add_clients"
+@using PCG_ENTITIES.Enums;
+@using PCG_ENTITIES.Constants.CimaSimplex;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex;
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Payments;
+@using PCG_ENTITIES.Requests;
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.AuthManagement;
+@using PCG_FDF.Data.ComponentDI.Booking;
+@using PCG_FDF.Components.CimaSimplexPaymentsInvoices
+@using PCG_FDF.Data.ComponentDI.Tracking;
+@using PCG_FDF.Data.DataAccess;
+@using PCG_FDF.Data.Localization;
+@using Newtonsoft.Json;
+@using PCG_FDF.Data.Comparers;
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities;
+
+@inject GlobalBreakpointService breakpointService
+@inject PCG_FDF_DB dataAccessService
+@inject GlobalLocalizer localize
+@inject NavigationManager navigationManager
+@inject WhiteLabelManager whiteLabelServices
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@* @inject AuthenticationStateProvider AuthProvider *@
+@inject ApplicationState AppState
+@* @attribute [Authorize] *@
+
+<PageTitle>@(whiteLabelServices.GetPageName())</PageTitle>
+<div style="@invoices_wrapper">
+	<MudPaper Height="90%" Width="90%" Elevation="5" Style="@paper_grey">
+		<MudText Typo="Typo.h4">@localize.Get("label_businessname_consulting")</MudText>
+		<GridListPager @ref="@Pager_Reference" DisplayItem="CompanyInfoTriplet" ItemQueryResult="@Business_Names" TotalCount="@Total_Business_Names" UpdatePage="@UpdateSourceAsync" NotShowGridItem="true" InitialItemsPerPage="50">
+			<ControlsDisplay>
+				<MudStack Row="true" Style="width: 100%" AlignItems="@AlignItems.Center">
+					@*SEARCH TEXT*@
+					<MudTextField T="string"
+								  Style="height: 4rem; margin-top: 5.5px; max-width: 400px"
+								  MaxLength="500"
+								  Clearable="true"
+								  DebounceInterval="1500"
+								  Variant="Variant.Outlined"
+								  Value="@Search_Query"
+								  ValueChanged="@((string arg) => OnValueChange(arg))"
+								  Placeholder="@localize.Get("placeholder_search")" />
+
+					@*BUTTON REFRESH*@
+					<MudButton Style="height: 4rem; margin-top: 5.5px"
+							   HtmlTag="label"
+							   Variant="Variant.Filled"
+							   Color="Color.Primary"
+							   StartIcon="@Icons.Material.Filled.Refresh"
+							   OnClick="OnClickButtonRefresh">
+						@localize.Get("lbl_update")
+					</MudButton>
+
+					@*BUTTON CREATE*@
+					<MudButton Style="height: 4rem; margin-top: 5.5px"
+							   HtmlTag="label"
+							   Variant="Variant.Filled"
+							   Color="Color.Success"
+							   StartIcon="@Icons.Material.Filled.Add"
+							   OnClick="OnClickButtonAdd">
+						@localize.Get("btn_add")
+					</MudButton>
+				</MudStack>
+			</ControlsDisplay>
+
+			<NoItemsDisplay>
+				<MudText>@localize.Get("businessname_noitems")</MudText>
+			</NoItemsDisplay>
+
+			<InvoiceTotal />
+
+			<HeaderDisplay>
+				<MudStack Style="@pager_header_wrapper">
+					<div style="@pager_header">
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.body1"><strong>Folio</strong></MudText>
+						</MudItem>
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.body1"><strong>@localize.Get("label_business_name")</strong></MudText>
+						</MudItem>
+						@* <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">RFC</MudText>
+                        </MudItem> *@
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.body1"><strong>@localize.Get("label_coin")</strong></MudText>
+						</MudItem>
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.body1"><strong>@localize.Get("label_status")</strong></MudText>
+						</MudItem>
+						<MudItem>
+							<MudText Color="Color.Primary" Typo="Typo.body1"><strong>@localize.Get("label_actions")</strong></MudText>
+						</MudItem>
+					</div>
+				</MudStack>
+			</HeaderDisplay>
+			<ListItemDisplay>
+				<MudPaper Class="list-row" Style="@GetColorsByStatus("")">
+					<div style="@inner_row">
+						<MudText Color="Color.Primary" Typo="Typo.body1">@context.Key</MudText>
+						<MudText Color="Color.Primary" Typo="Typo.body1">@context.Value</MudText>
+						@* <MudText Color="Color.Primary" Typo="Typo.h6">@context.RFC</MudText> *@
+						<MudText Color="Color.Primary" Typo="Typo.body1">[MXN]-PESOS</MudText>
+						<MudText Color="Color.Primary" Typo="Typo.body1">@(string.IsNullOrEmpty(context.Status) ? "" : context.Status.ToUpper())</MudText>
+
+						<MudStack Row="true" Style="flex-wrap: wrap; gap: 8px">
+							<MudTooltip Text="@localize.Get("btn_view_razon")" Arrow="true" Placement="Placement.Top" Color="Color.Info">
+								<MudIconButton Icon="@Icons.Material.Filled.Visibility"
+											   Variant="Variant.Outlined"
+											   Color="Color.Info"
+											   OnClick="@(() => OnViewRazon(context.Key))"
+											   Size="Size.Medium" />
+							</MudTooltip>
+							<MudTooltip Text="@localize.Get("lbl_edit_csf")" Arrow="true" Placement="Placement.Top" Color="Color.Primary">
+								<MudIconButton Icon="@Icons.Material.Filled.Edit"
+											   Variant="Variant.Outlined"
+											   Color="Color.Primary"
+											   OnClick="@(() => OnEditRazon(context.Key))"
+											   Size="Size.Medium" />
+							</MudTooltip>
+							<MudTooltip Text="@localize.Get("lbl_eliminar_csf")" Arrow="true" Placement="Placement.Top" Color="Color.Error">
+								<MudIconButton Icon="@Icons.Material.Filled.Delete"
+											   Variant="Variant.Outlined"
+											   Color="Color.Error"
+											   OnClick="@(() => OnDesactivarRazon(context.Key))"
+											   Size="Size.Medium" />
+							</MudTooltip>
+						</MudStack>
+						@*<MudStack Row="true" Style="flex-wrap: wrap; gap: 8px">
+                            <MudTooltip Text="@localize.Get("label_totalpayment")" Arrow="true" Placement="Placement.Top" Color="@GetButtonColor(null, true)">
+                                <MudIconButton Variant="Variant.Filled"
+                                               OnClick="@(() => OnClickTotalPayment(null))"
+                                               Color="@GetButtonColor(null, true)"
+                                               Icon="@Icons.Material.Filled.Circle"
+                                               Disabled="@DisabledPaymentButton(null, true)">
+                                </MudIconButton>
+                            </MudTooltip>
+                            <MudTooltip Text="@localize.Get("label_partialpayment")" Arrow="true" Placement="Placement.Top" Color="@GetButtonColor(null, false)">
+                                <MudIconButton Variant="Variant.Filled"
+                                               OnClick="@(() => OnClickParcialPayment(null))"
+                                               Color="@GetButtonColor(null, false)"
+                                               Icon="@Icons.Material.Outlined.IncompleteCircle"
+                                               Disabled="@DisabledPaymentButton(null, false)">
+                                </MudIconButton>
+                            </MudTooltip>
+                            <MudTooltip Text="@localize.Get("label_deletereference")" Arrow="true" Placement="Placement.Top" Color="Color.Error">
+                                <MudIconButton Variant="Variant.Filled"
+                                               OnClick="@(() => OnClickDeleteReference(null))"
+                                               Color="Color.Error"
+                                               Icon="@Icons.Material.Outlined.Delete"
+                                               hidden="false">
+                                </MudIconButton>
+                            </MudTooltip>
+                        </MudStack> *@
+					</div>
+				</MudPaper>
+			</ListItemDisplay>
+			<GridItemDisplay />
+		</GridListPager>
+
+		@* <MudCard Style="margin-top: 20px; width: 100%;">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Style="font-size: 2.3em !important" Typo="Typo.h5">
+                        @localize.Get("label_detail_businessname")
+                    </MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTable Items="@Selected_Business_Name" Hover="true" Breakpoint="Breakpoint.Sm" Loading="false">
+                    <HeaderContent>
+                        <MudTh>@localize.Get("label_customsbroker")</MudTh>
+        <MudTh>@localize.Get("label_business_name")</MudTh>
+                        <MudTh>Email</MudTh>
+                        <MudTh>@localize.Get("label_phonenumber")</MudTh>
+                        <MudTh>@localize.Get("label_sat m ")</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Nr"></MudTd>
+                        <MudTd DataLabel="Sign"></MudTd>
+                        <MudTd DataLabel="Name"></MudTd>
+                        <MudTd DataLabel="Position"></MudTd>
+                        <MudTd DataLabel="Molar mass"></MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard> *@
+	</MudPaper>
+</div>

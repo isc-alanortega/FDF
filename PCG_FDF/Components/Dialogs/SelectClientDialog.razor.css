@@ -1,0 +1,13 @@
+@charset "UTF-8";
+.dialog-stack {
+  width: 25vw;
+}
+
+/* Aplica estilos a inputs específicos dentro de componentes MudAutocomplete */
+.text-in-mobil.mud-input-label .mud-input-label-animated .mud-input-label-text .mud-input-label-inputcontrol {
+  font-size: 1.9em !important;
+}
+
+::after .mud-input-label .mud-input-label-animated .mud-input-label-text .mud-input-label-inputcontrol {
+  font-size: 1.9em !important;
+}

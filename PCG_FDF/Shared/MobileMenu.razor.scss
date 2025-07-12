@@ -1,0 +1,24 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+
+$info-bar-height: 50px;
+$app-bar-height: 64px;
+$calculated-height: $info-bar-height + $app-bar-height;
+
+.mobile-nav-items-container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    row-gap: 10px;
+    padding-top: $calculated-height;
+}
+
+::deep .nav-button {
+    color: css-color-var(global-fullwhite);
+    font-size: 2.5rem;
+}
+
+::deep .nav-button:hover {
+    .mud-nav-link {
+        color: css-color-var(secondary);
+    }
+}

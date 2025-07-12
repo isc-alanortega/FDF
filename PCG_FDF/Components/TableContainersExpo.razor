@@ -1,0 +1,92 @@
+﻿@using PCG_ENTITIES.PCG_FDF.CimaSimplex.Containers
+@using PCG_FDF.Data.ComponentDI.CimaSimlexUserManeuvers
+@inject CimaSimlexUserManeuverServices cimaSimlexUserManeuverServices
+
+@if (Data != null)
+{
+    <MudTable Items="@Data.Details" Dense="true" Hover="true" Bordered="true" Striped="true" Style="margin: 16px;">
+        <HeaderContent>
+            <MudTh>Booking</MudTh>
+            <MudTh>#Programada</MudTh>
+            <MudTh>#Asignados</MudTh>
+            <MudTh>#Entregados</MudTh>
+            <MudTh>Tipo / Tamaño</MudTh>
+            <MudTh>Calidad</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="item">
+            <MudTd>@item.Booking</MudTd>
+            <MudTd>@item.CantidadProgramada</MudTd>
+            <MudTd>@item.CantidadAsignada</MudTd>
+            <MudTd>@item.CantidadSalida</MudTd>
+            <MudTd>@item.Embalaje</MudTd>
+            <MudTd>@item.Calidad</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    @if (Data.Containers != null && Data.Containers.Any())
+    {
+        <MudTable Items="@Data.Containers" Dense="true" Hover="true" Bordered="true" Striped="true" Style="margin: 16px;">
+            <HeaderContent>
+                <MudTh>No.</MudTh>
+                <MudTh>Serie</MudTh>
+                <MudTh>Embalaje</MudTh>
+                <MudTh>Fecha</MudTh>
+                <MudTh>EIR</MudTh>
+                <MudTh>Factura</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="container">
+                <MudTd>@container.IdAsignacion</MudTd>
+                <MudTd>@container.Serie</MudTd>
+                <MudTd>@container.Embalaje</MudTd>
+                <MudTd>@container.Fecha</MudTd>
+                <MudTd>
+                    @if (container.Estatus == "Con EIR")
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            @container.Estatus
+                            <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => cimaSimlexUserManeuverServices.DownloadEIRContainer(container.Eir, "expo"))"
+                                           AriaLabel="Descargar contenedor" />
+                        </MudStack>
+                    }
+                    else
+                    {
+                        @container.Estatus
+                    }
+                </MudTd>
+                <MudTd>
+                    @if (container.FacturaEncabezado.HasValue)
+                    {
+                        <MudTooltip Text="Descargar factura">
+                            <MudIconButton Icon="@Icons.Material.Filled.FolderZip"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           AriaLabel="Descargar factura"
+                                           OnClick="@(async () => await cimaSimlexUserManeuverServices.DownloadZipInvoiceContainer(container.FacturaEncabezado))" />
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Dark">Factura aún no disponible</MudText>
+                    }
+                </MudTd>
+
+            </RowTemplate>
+        </MudTable>
+    }
+}
+else
+{
+    <MudText>No hay datos disponibles.</MudText>
+}
+
+@code {
+    [Parameter]
+    public ManeuversContainerInfoExpo? Data { get; set; }
+
+    [Parameter]
+    public bool IsLoading { get; set; } = false;
+
+}

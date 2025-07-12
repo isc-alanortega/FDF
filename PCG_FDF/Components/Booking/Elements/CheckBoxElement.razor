@@ -1,0 +1,52 @@
+﻿@inherits BookingElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            <MudCheckBox Class="@(BreakpointService.GetIsMobile() ? "resize-it" : "")"
+                         T="bool" Value="TryGetStorageValue()"
+                         ValueChanged="@(async(args) => await TryWriteStorageValue(args))"
+                         Color="Color.Tertiary"
+                         ReadOnly="@GetElementReadonly()"
+                         Disabled="@GetElementReadonly()"
+                         Required="@ElementData.Required"
+                         RequiredError="@Localize.Get("errmsg_required")" >
+            </MudCheckBox>
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+        </MudStack>
+    </MudStack>
+</div>
+
+@code {
+    private bool TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<bool?>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID) ?? false;
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedElementValueAs<bool?>(ElementData.Element_ID) ?? false;
+        }
+    }
+
+    private async Task TryWriteStorageValue(bool value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedElementValue(value, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedElementValue(value, ElementData.Element_ID);
+        }
+    }
+}

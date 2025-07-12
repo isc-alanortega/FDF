@@ -1,0 +1,144 @@
+@charset "UTF-8";
+:root {
+  --color-primary: #0045AC;
+  --color-primary-darken: #1E2637;
+  --color-primary-lighten: #384051;
+  --color-primary-lighten-2: #334756;
+  --color-primary-text-blue: #143377;
+  --color-secondary: #D03631;
+  --color-secondary-darken: #BB302C;
+  --color-secondary-lighten: #D44A45;
+  --color-secondary-text-red: #E31E25;
+  --color-tertiary: #DA291C;
+  --color-tertiary-darken: #E54424;
+  --color-tertiary-lighten: #FF5D3E;
+  --color-tertiary-disable: #FF8169;
+  --color-global-fullwhite: #FFFFFF;
+  --color-global-midwhite: #FAFAFA;
+  --color-global-lowwhite: #F0F0F0;
+  --color-global-fullblack: #000000;
+  --color-global-theme-grey: #E9E9E9;
+  --color-global-grey: #8F8F8F;
+  --color-global-grey-2: #E1E4E4;
+  --color-global-green-success: #40C240;
+  --color-global-red-error: #DB3632;
+  --color-global-notepad-yellow: #FFFEE0;
+  --color-CIMA-blue: #384A9C;
+  --color-CIMA-red: #CE3439;
+  --color-badge-ok: #C4DAFF;
+  --color-badge-needinfo: #EBA8A6;
+  --color-global-RGBA-black-50: rgba(0, 0, 0, 0.5019607843);
+  --color-global-RGBA-black-40: rgba(0, 0, 0, 0.4);
+  --color-global-RGBA-black-16: rgba(0, 0, 0, 0.1607843137);
+  --color-global-RGBA-transparent: rgba(255, 255, 255, 0);
+  --color-global-RGBA-grey-2-31: rgba(139, 139, 139, 0.3137254902);
+  --color-global-RGBA-grey-31: rgba(80, 80, 80, 0.3137254902);
+  --color-global-RGBA-grey-25: rgba(143, 143, 143, 0.2509803922);
+  --color-RGBA-primary-80: rgba(34, 43, 62, 0.8);
+  --color-RGBA-primary-50: rgba(34, 43, 62, 0.5019607843);
+  --color-RGBA-primary-25: rgba(34, 43, 62, 0.2509803922);
+  --color-RGBA-tertiary-50: rgba(255, 76, 41, 0.5019607843);
+  --color-RGBA-tertiary-25: rgba(255, 76, 41, 0.2509803922);
+  --color-nav-menu: #112f5c;
+  --color-nav-info: #112f5c;
+  --color-package-subtitle: #A1B5D3;
+  --color-complex-chip: #EDF4FA;
+  --color-booking-panel: #869AAC;
+}
+
+/*
+    Módulo global de efectos CSS
+*/
+.bill-wrapper {
+  overflow-y: auto;
+  padding: 3rem 2.3rem;
+  min-height: 92vh;
+}
+.bill-wrapper.add-padding {
+  padding-bottom: 110px;
+}
+
+::deep .billing-title {
+  margin-bottom: 10px;
+}
+
+::deep .billing-text {
+  color: var(--color-primary);
+}
+
+::deep .billing-subtitle {
+  color: var(--color-primary-darken);
+  margin-top: 1.6rem;
+  font-weight: 600 !important;
+}
+
+::deep .divider-packages {
+  opacity: 1;
+  width: 100%;
+  align-self: center;
+  background-color: var(--color-secondary);
+  height: 1px;
+  margin: 1rem 0;
+  -webkit-filter: drop-shadow(0px 5px 5px var(--color-global-RGBA-black-16));
+  filter: drop-shadow(0px 5px 5px var(--color-global-RGBA-black-16));
+}
+
+::deep .divider-services {
+  opacity: 1;
+  width: 100%;
+  align-self: center;
+  background-color: var(--color-secondary);
+  height: 1px;
+  margin: 1rem 0;
+  -webkit-filter: drop-shadow(0px 5px 5px var(--color-global-RGBA-black-16));
+  filter: drop-shadow(0px 5px 5px var(--color-global-RGBA-black-16));
+}
+
+::deep .internal-icon {
+  fill: var(--color-global-fullwhite) !important;
+  stroke: var(--color-global-fullwhite);
+}
+
+::deep .billing-icon {
+  fill: var(--color-primary) !important;
+}
+::deep .billing-icon.resize-it {
+  font-size: 4rem !important;
+}
+
+::deep .stack-active {
+  padding: 5px;
+  border: 1px solid var(--color-secondary);
+  border-radius: 15px;
+}
+
+::deep .paper-blue {
+  border-radius: 7px;
+  background-color: var(--color-global-fullwhite);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+::deep .service-item-badge {
+  width: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  background: var(--color-global-fullwhite);
+  margin-top: 10px;
+  padding: 0px;
+}
+
+::deep .package-item-badge {
+  width: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  background: var(--color-global-fullwhite);
+  margin-top: 10px;
+  padding: 0px;
+}

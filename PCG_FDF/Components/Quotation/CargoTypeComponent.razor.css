@@ -1,0 +1,15 @@
+::deep .chip-set-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.chipset-wrapper {
+  width: 100%;
+}
+
+::deep .mud-input-control.mud-input-control-boolean-input.resize-it .mud-icon-root {
+  font-size: 2rem;
+}
+::deep .mud-input-control.mud-input-control-boolean-input.resize-it .mud-typography {
+  font-size: 2rem;
+}

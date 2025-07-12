@@ -1,0 +1,147 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_ENTITIES.Enums
+@inherits LayoutComponentBase
+@inject DrawerBridge Bridge
+@inject WhiteLabelManager WhiteLabel
+@inject CIMAChatService Chat
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<MudThemeProvider Theme="@_theme" />
+<MudSnackbarProvider />
+<MudDialogProvider />
+<MudBreakpointProvider OnBreakpointChanged="@breakpointToggle">
+    <div>
+        <MudLayout>
+            <div class="holder">
+                <MudAppBar Class="bar-nav">
+                    <NavMenuItems></NavMenuItems>
+                </MudAppBar>
+            </div>
+            <MudDrawer Class="mobile-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
+                <MobileMenu></MobileMenu>
+            </MudDrawer>
+            <div class="chat-drawer">
+                <div class="chat-drawer-header">
+                    <MudIconButton Class="chat-close-button" OnClick="@(async () => await OpenChatDrawer())" Icon="@Icons.Material.Filled.Minimize"></MudIconButton>
+                </div>
+                <div class="drawer-content">
+                    <ChatComponent></ChatComponent>
+                </div>
+            </div>
+            <MudMainContent Class="@($"{GetClass()} main-content-layout")">
+                @Body
+            </MudMainContent>
+            <Footer></Footer>
+            @if (WhiteLabel.GetUseChat())
+            {
+                <div class="@($"cima-chat-tab {(_chatDrawerOpen ? "invisible" : "visible")}")" @onclick="@(async () => await OpenChatDrawer())">
+                    <MudIcon Class="chat-tab-icon" Icon="@Icons.Material.Filled.ChatBubble"></MudIcon>
+                </div>
+            }
+        </MudLayout>
+    </div>
+</MudBreakpointProvider>
+
+@code {
+    private Breakpoint CurrentBreakpoint { get; set; }
+    bool _drawerOpen = false;
+    bool _chatDrawerOpen = false;
+    private bool ClickEnable = true;
+    private IJSObjectReference? module_self;
+
+    private MudTheme _theme { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _theme = new MudTheme()
+            {
+                Palette = new PaletteLight()
+                {
+                    Primary = WhiteLabel.Current_Theme_Data.MudBlazor_Theme_Data["Primary"],
+                    Secondary = WhiteLabel.Current_Theme_Data.MudBlazor_Theme_Data["Secondary"],
+                    Tertiary = WhiteLabel.Current_Theme_Data.MudBlazor_Theme_Data["Tertiary"],
+                },
+                PaletteDark = new PaletteDark()
+                {
+                    Primary = Colors.Blue.Lighten1
+                },
+                Typography = new Typography()
+                {
+                    Default = new Default()
+                    {
+                        FontFamily = new[] { "Poppins", "Roboto", "sans-serif" }
+                    }
+                }
+            };
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (WhiteLabel.GetUseChat())
+            {
+                module_self = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/main_layout_helper.js");
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    void breakpointToggle(Breakpoint breakpoint)
+    {
+        CurrentBreakpoint = breakpoint;
+        if (breakpoint >= Breakpoint.Lg)
+        {
+            _drawerOpen = false;
+        }
+    }
+
+    private async Task OpenChatDrawer()
+    {
+        if (WhiteLabel.GetUseChat())
+        {
+            if (ClickEnable)
+            {
+                ClickEnable = false;
+                _chatDrawerOpen = !_chatDrawerOpen;
+                var height = "60vh";
+                await module_self!.InvokeVoidAsync("setCssVariable", "--drawer-height", height);
+                await module_self!.InvokeVoidAsync("toggleDrawer");
+                await Chat.Initialize();
+                ClickEnable = true;
+            }
+        }
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+        Bridge.SetNavBind(_drawerOpen);
+    }
+
+    private string GetClass()
+    {
+        if (WhiteLabel.Current_Page == EPages.CargoPi)
+        {
+            return "noinfo";
+        }
+        else if (CurrentBreakpoint == Breakpoint.Md || CurrentBreakpoint == Breakpoint.Sm || CurrentBreakpoint == Breakpoint.Xs)
+        {
+            return "minimal";
+        }
+        else
+        {
+            return "max";
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_self is not null)
+        {
+            await module_self.DisposeAsync();
+        }
+    }
+}

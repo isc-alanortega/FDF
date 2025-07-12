@@ -1,0 +1,48 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.DataAccess
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div>
+    <MudPaper Class="@($"stack-card {CSSClass}")" Elevation="0">
+        <MudStack Class="@($"text-stack {CSSClass}")" Row="true">
+            <MudIcon Class="@($"internal-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Icon="@Servicio.Icon" ViewBox="@Servicio.ViewBox"></MudIcon>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body1)" Class="billing-text body servicesbillcard">@Servicio.Name</MudText>
+        </MudStack>
+        @if (!IsStatic)
+        {
+            <CompletionBadge Complete="@ServiceComplete"></CompletionBadge>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    [CascadingParameter(Name = "IsStatic")]
+    public bool IsStatic { get; set; }
+
+    [Parameter, EditorRequired]
+    public ComplexService Servicio { get; set; }
+    [Parameter]
+    public bool ServiceComplete { get; set; }
+    [Parameter]
+    public string CSSClass { get; set; } = "";
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        await BreakpointService.ReCheckSize();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

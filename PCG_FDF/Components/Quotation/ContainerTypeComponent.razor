@@ -1,0 +1,108 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Utility
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    @if (elementData is not null)
+    {
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack>
+                @if (elementData.GetChipFields() is not null && elementData.GetGuidFields() is not null)
+                {
+                    var f20_exclusions = elementData.GetFieldExclusions(20);
+                    <div class="chipset-wrapper">
+                        <MudChipSet ReadOnly="@quotationService.GetQuotationLocked()" MudChipEqualityComparer="@Comparer" ValueExpression="@(() => GetSelectedChip(20))" SelectedChip="@GetSelectedChip(20)" SelectedChipChanged="@(async (chip) => await ChipHasChanged(20, chip))" Class="@($"chip-set-selector {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")" Mandatory="true">
+                            @if (!f20_exclusions.Contains(guid_dry))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![20] == guid_dry)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_dry" ChipIcon="@CustomIcons.highCube.GetIcon()" IconViewBox="@CustomIcons.highCube.GetViewBox()" ChipText="@localize.Get("quot_container_dry")"></SimpleChip>
+                            }
+                            @if (!f20_exclusions.Contains(guid_reefer))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![20] == guid_reefer)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_reefer" ChipIcon="@CustomIcons.reeferContainer.GetIcon()" IconViewBox="@CustomIcons.reeferContainer.GetViewBox()" ChipText="@localize.Get("quot_container_reefer")"></SimpleChip>
+                            }
+                            @if (!f20_exclusions.Contains(guid_flatrack))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![20] == guid_flatrack)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_flatrack" ChipIcon="@CustomIcons.flatRack.GetIcon()" IconViewBox="@CustomIcons.flatRack.GetViewBox()" ChipText="@localize.Get("quot_container_flat")"></SimpleChip>
+                            }
+                            @if (!f20_exclusions.Contains(guid_opentop))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![20] == guid_opentop)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_opentop" ChipIcon="@CustomIcons.openTop.GetIcon()" IconViewBox="@CustomIcons.openTop.GetViewBox()" ChipText="@localize.Get("quot_container_open")"></SimpleChip>
+                            }
+                            @if (!f20_exclusions.Contains(guid_isotank))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![20] == guid_isotank)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_isotank" ChipIcon="@CustomIcons.isotank.GetIcon()" IconViewBox="@CustomIcons.isotank.GetViewBox()" ChipText="@localize.Get("quot_container_isotank")"></SimpleChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                }
+            </MudStack>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Row="true">
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <MudItem xs="2">
+                        <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+    }
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 13;
+    private ElementQuotationData? elementData;
+    private ChipUUIDComparer Comparer { get; } = new();
+    private Guid guid_dry = new Guid("949C67FA-0415-4ECA-9100-9210BCBFD96E");
+    private Guid guid_reefer = new Guid("93748646-C1A6-4AF8-8CA4-BDF3A5A4E35E");
+    private Guid guid_flatrack = new Guid("69474F7D-4C76-4615-B7FA-5E8348FEA039");
+    private Guid guid_opentop = new Guid("40C67A1C-70C9-4767-B35F-1CB62C111D94");
+    private Guid guid_isotank = new Guid("F1F3B990-4B90-4784-A721-89537606892B");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        elementData.ElementHasChips(new List<int>() { 20 });
+        await base.OnInitializedAsync();
+    }
+
+    private async Task ChipHasChanged(int id, MudChip chip)
+    {
+        await elementData!.SetChipValue(id, chip);
+        await elementData!.SetGuidValue(id, (Guid)chip.Tag);
+    }
+
+    private MudChip? GetSelectedChip(int id)
+    {
+        return elementData!.GetChipFields()![id];
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

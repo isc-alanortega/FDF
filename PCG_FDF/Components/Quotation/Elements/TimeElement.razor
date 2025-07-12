@@ -1,0 +1,55 @@
+﻿@inherits QuotationElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null && !SingleElement)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            @if (!SingleElement)
+            {
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@GetElementName()</strong></MudText>
+                <MudText Typo="@(Breakpoint_Service.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text quotation-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudTimePicker Required="true"
+                       RequiredError="@Localize.Get("errmsg_required")"
+                       Disabled="@GetElementReadonly()"
+                       ReadOnly="@GetElementReadonly()"
+                       AmPm="true"
+                       Time="@TryGetStorageValue()"
+                       TimeChanged="@(async (args) => await TryWriteStorageValue(args))"
+                       TimeFormat="hh:mm tt"
+                       Placeholder="@($"{Localize.Get("placeholder_set")} {GetElementName()}")" />
+    </MudStack>
+</div>
+
+@code {
+    private TimeSpan? TryGetStorageValue()
+    {
+        TimeSpan? time = null;
+        DateTime? value = null;
+
+        value = Quotation_Data.GetElementValueAs<DateTime?>(Card.Card_ID, ElementData.Element_ID);
+
+        if (value.HasValue)
+        {
+            time = new TimeSpan(value.Value.Hour, value.Value.Minute, 0);
+        }
+
+        return time;
+    }
+
+    private async Task TryWriteStorageValue(TimeSpan? value)
+    {
+        DateTime? data = null;
+
+        if (value.HasValue)
+        {
+            data = DateTime.Today.AddHours(value.Value.Hours).AddMinutes(value.Value.Minutes);
+        }
+
+        await Quotation_Data.WriteSharedElementValue(data, Card.Card_ID, ElementData.Element_ID);
+    }
+}

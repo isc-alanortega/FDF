@@ -1,0 +1,48 @@
+﻿@using PCG_ENTITIES.PCG
+
+<div>
+    <MudPaper Class="stack-card" Elevation="0">
+        <MudStack Class="mobile-text-stack">
+            <MudExpansionPanels DisableBorders="true" Elevation="0">
+                <MudExpansionPanel @bind-IsExpanded="isOpen" Class="package-panel" HideIcon=true>
+                    <TitleContent>
+                        <MudStack Row="true">
+                            <MudTooltip Text="@Paquete.Paquete.Nombre_Categoria" Arrow="true" Placement="Placement.Top">
+                                <MudIcon Class="mobile-chip-text-icon" Color="Color.Tertiary" ViewBox="@Paquete.Paquete.Viewbox" Icon="@Paquete.Paquete.Icon" Size="Size.Large"></MudIcon>
+                            </MudTooltip>
+                            <MudText Typo="Typo.h4" Class="package-item-text"><strong>@Paquete.Paquete.Nombre_Paquete</strong></MudText>
+                            <MudIcon Color="Color.Tertiary" Icon="@(isOpen ? Icons.Material.Rounded.KeyboardArrowUp : Icons.Material.Rounded.KeyboardArrowDown)" Class="ml-auto mobile-package-arrow"></MudIcon>
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudStack Class="services-stack" Spacing="0">
+                            @foreach (PaquetesServiciosCompletosEntidad servicio in Paquete.Servicios)
+                            {
+                                var servicio_local = servicio;
+                                <div class="mobile-card-package-row">
+                                    <MudIcon Class="card-bullet" Color="Color.Tertiary" Icon="@Icons.Material.Filled.ArrowForwardIos"></MudIcon>
+                                    <MudText Class="mobile-card-text body" Typo="Typo.h4">@servicio_local.Servicio.Nombre_Corto_Servicio</MudText>
+                                </div>
+                            }
+                        </MudStack>
+                    </ChildContent>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudStack>
+        <div class="card-package-btn-container">
+            <MudButton Class="mobile-card-package-button" OnClick="@(() => AgregarPaquete(Paquete))" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.AddCircleOutline" IconClass="card-package-button-icon">Anadir</MudButton>
+        </div>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PaquetesCompletosEntidad Paquete { get; set; }
+    [Parameter, EditorRequired]
+    public Action<PaquetesCompletosEntidad> AddPackage { get; set; }
+    private bool isOpen;
+
+    private void AgregarPaquete(PaquetesCompletosEntidad paquete) {
+        AddPackage.Invoke(paquete);
+    }
+}

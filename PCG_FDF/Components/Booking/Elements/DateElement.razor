@@ -1,0 +1,70 @@
+﻿@inherits BookingElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text booking-required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudDatePicker Editable="true"
+                       Mask="@(new DateMask("dd/MM/yyyy"))"
+                       DateFormat="dd/MM/yyyy"
+                       Date="@TryGetStorageValue()"
+                       DateChanged="@(async(args) => await TryWriteStorageValue(args))"
+                       ReadOnly="@GetElementReadonly()"
+                       Disabled="@GetElementReadonly()"
+                       Required="@ElementData.Required"
+                       RequiredError="@Localize.Get("errmsg_required")"
+                       Placeholder="@($"{Localize.Get("placeholder_set")} {ElementData.Element_Name}")" />
+    </MudStack>
+</div>
+
+@code {
+    protected async override Task OnInitializedAsync()
+    {
+        if (ElementData.Preloaded_Value is not null)
+        {
+            if (TryGetStorageValue() is null)
+            {
+                var init_value = GetPreloadedValueAs<DateTime?>();
+                await TryWriteStorageValue(init_value);
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private DateTime? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<DateTime?>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedElementValueAs<DateTime?>(ElementData.Element_ID);
+        }
+    }
+
+    private async Task TryWriteStorageValue(DateTime? value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedElementValue(value, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedElementValue(value, ElementData.Element_ID);
+        }
+    }
+}

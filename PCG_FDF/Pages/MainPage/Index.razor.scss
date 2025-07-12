@@ -1,0 +1,590 @@
+﻿@import '../../Styles/ColorsGlobal.scss';
+@import '../../Styles/Core/_app_animations.scss';
+@import '../../Styles/Core/_app_fx.scss';
+
+::deep .main-container {
+    padding: 0px !important;
+    margin: 0 auto !important;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.secondary-container {
+    width: 100%;
+    margin-bottom: 50px;
+    margin-top: -40px;
+    z-index: 1;
+}
+
+.landing-container {
+    padding: 20px;
+    align-items: center;
+}
+
+::deep .landing-slogan {
+    color: css-color-var(primary);
+}
+
+::deep .booking-logo {
+    width: 14rem !important;
+    height: 4rem;
+}
+
+::deep .landing-cards {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6rem;
+    margin-bottom: 6rem;
+    gap: 4rem;
+    width: 100%;
+
+    @media screen and (max-width: 1064px) {
+        flex-direction: column;
+    }
+}
+
+.landing-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.6rem;
+}
+
+::deep .landing-card-desc strong {
+    font-weight: 400;
+}
+
+::deep .card-icon {
+    width: 10rem;
+    height: 8rem;
+}
+
+.page-title-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: min-content;
+    align-items: center;
+}
+
+.hero-container {
+    position: relative;
+    width: 100%;
+}
+
+.top-level {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: css-color-var(global-RGBA-black-40);
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.global-wrapper {
+    z-index: 1200;
+    position: absolute;
+    height: 100%;
+    width: 100vw;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.main-text-wrapper {
+    z-index: 10;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.mobile-main-text-wrapper {
+    z-index: 10;
+    background: css-color-var(global-RGBA-grey-25);
+    box-shadow: 0px 0px 0px 15px css-color-var(global-RGBA-grey-25);
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+}
+
+.inner-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.single-wrapper {
+    display: flex;
+    min-width: max-content;
+}
+
+.text-mini-wrapper {
+    min-width: 56rem;
+    text-align: center;
+    margin-top: 20px;
+}
+
+::deep .title-button {
+    max-width: max-content;
+    border: 2px solid css-color-var(secondary-text-red);
+    color: css-color-var(global-fullwhite);
+    margin-top: 20px;
+
+    &.resize-it {
+        font-size: 1.5rem;
+    }
+
+    &:hover {
+        background-color: css-color-var(secondary) !important;
+    }
+}
+
+::deep .title-button-shipping {
+    max-width: max-content;
+    border: 2px solid css-color-var(primary-darken);
+    color: css-color-var(global-fullwhite);
+    margin-top: 20px;
+
+    &.resize-it {
+        font-size: 1.5rem;
+    }
+
+    &:hover {
+        background-color: css-color-var(primary) !important;
+    }
+}
+
+::deep .title-text {
+    text-shadow: -3px 3px 4px rgba(150, 150, 150, 0.3);
+
+    &.t-blue {
+        color: css-color-var(primary-text-blue);
+    }
+
+    &.t-white {
+        color: css-color-var(global-fullwhite);
+    }
+
+    &.t-red {
+        color: css-color-var(secondary-text-red);
+    }
+
+    &.mini {
+        color: css-color-var(global-fullwhite);
+        font-weight: 300 !important;
+    }
+
+    &.t-gold {
+        color: css-color-var(tertiary-darken);
+    }
+}
+
+::deep .title-important {
+    font-weight: 800;
+}
+
+.h-spacer {
+    width: 6rem;
+
+    &.resize-it {
+        width: 15px;
+    }
+}
+
+::deep .icon-cima-square {
+    font-size: 4rem;
+}
+
+::deep .subtitle {
+    color: css-color-var(primary);
+    margin-left: 24px;
+    margin-bottom: 2.2rem;
+}
+
+.search-component-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+::deep .button-back {
+    margin-bottom: 20px;
+    align-self: flex-start;
+
+    &.resize-it {
+        font-size: 1.5rem;
+    }
+}
+
+::deep .paper-grey {
+    border-radius: 15px;
+    padding-left: 25px;
+    padding-right: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.base-component-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.switching-component-wrapper {
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+}
+
+::deep .card-package {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+    height: 100%;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+.floating-card-chip {
+    position: relative;
+    padding: 14px;
+    border-radius: 70px;
+    background-color: css-color-var(primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .card-text {
+    &.title {
+        color: css-color-var(primary);
+    }
+
+    &.card-subtitle {
+        color: css-color-var(package-subtitle);
+        padding-top: 0px;
+    }
+
+    &.body {
+        padding-left: 4px;
+        color: black;
+        text-align: left;
+        grid-column-start: 2;
+        align-self: start;
+    }
+
+    &.badge {
+        color: white;
+    }
+}
+
+::deep .card-bullet {
+    font-size: 0.75rem;
+}
+
+::deep .chip-text-icon {
+    fill: css-color-var(global-fullwhite) !important;
+    stroke: css-color-var(global-fullwhite);
+}
+
+::deep .card-package-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-bottom: 0px !important;
+    padding-top: 25px
+}
+
+::deep .card-package-list {
+    flex: 1;
+    flex-grow: 1;
+    gap: 30px;
+    padding-inline: 0px;
+    align-items: center;
+    position: relative;
+}
+
+.card-package-row {
+    display: flex;
+    align-items: center;
+}
+
+.complex-selector-main {
+    display: flex;
+    justify-content: center;
+}
+
+::deep .breadcrumb-icon {
+    fill: css-color-var(tertiary) !important;
+}
+
+::deep .mud-breadcrumb-item.mud-disabled > a {
+    color: black !important;
+}
+
+::deep .mud-breadcrumb-item.mud-disabled {
+    font-size: 1rem !important;
+}
+
+::deep .package-item-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: css-color-var(global-fullwhite);
+    background: css-color-var(secondary);
+    padding: 8px;
+}
+
+::deep .service-search-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .package-search-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+::deep .service-item-icon {
+    stroke: css-color-var(tertiary);
+    fill: css-color-var(tertiary) !important;
+
+    &.resize-it {
+        font-size: 3.5rem;
+    }
+}
+
+::deep .search-service-button-icon {
+    color: css-color-var(tertiary);
+    margin: 0px !important;
+    margin-inline: 0px !important;
+}
+
+::deep .search-package-button-icon {
+    color: css-color-var(tertiary);
+    margin: 0px !important;
+    margin-inline: 0px !important;
+}
+
+::deep .package-item-icon {
+    stroke: css-color-var(tertiary);
+    fill: css-color-var(tertiary) !important;
+
+    &.resize-it {
+        font-size: 3.5rem;
+    }
+}
+
+.search-engine-wrapper {
+    justify-content: center;
+    align-items: center;
+}
+
+::deep .service-trace {
+    &.resize-it {
+        .mud-breadcrumb-item {
+            a {
+                font-size: 1.5rem;
+            }
+        }
+    }
+}
+
+::deep .breadcrumb-icon {
+    &.resize-it {
+        font-size: 1.6rem;
+    }
+}
+
+::deep .service-item-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: css-color-var(global-fullwhite);
+    background: css-color-var(primary);
+    padding: 8px;
+}
+
+::deep .card-package-btn-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+::deep .card-package-button {
+    color: css-color-var(global-fullwhite);
+    background: css-color-var(tertiary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-inline: 35px;
+    padding-top: 11px;
+    padding-bottom: 11px;
+    border-radius: 50px;
+
+    &:hover {
+        background: css-color-var(tertiary);
+        opacity: .8;
+    }
+}
+
+::deep .card-package-button-icon {
+    color: css-color-var(global-fullwhite);
+    margin-left: 0 !important;
+}
+
+::deep .card-package-header {
+    padding: 0px;
+}
+
+::deep .card-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+}
+
+.search-container {
+    position: absolute;
+    bottom: -30px;
+    transform: translateX(-50%);
+    left: 50%;
+    z-index: 999;
+    background: css-color-var(global-RGBA-transparent);
+    border: 0px;
+    border-radius: 100px;
+    width: 40%;
+    -webkit-box-shadow: 0px 3px 9px -5px var(--color-global-fullblack);
+    box-shadow: 0px 3px 9px -5px var(--color-global-fullblack);
+
+    &.resize-it {
+        width: 70%;
+    }
+
+    @media (max-width: 500px) {
+        width: 90% !important;
+    }
+}
+
+::deep .services-search {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    background: css-color-var(global-fullwhite);
+    border-radius: 100px;
+
+    &.resize-it {
+        .mud-input-adornment {
+            .mud-icon-root {
+                font-size: 3rem;
+            }
+        }
+
+        .mud-input-slot {
+            font-size: 2rem;
+        }
+    }
+}
+
+::deep .services-search .mud-input-adorned-end {
+    padding-right: 8px !important;
+}
+
+::deep .services-search .mud-input-adornment-end button {
+    background-color: css-color-var(primary);
+    margin-right: 0px;
+    color: css-color-var(global-fullwhite);
+    transition: all ease-in-out .2s;
+
+    &:hover {
+        background-color: css-color-var(primary);
+        opacity: .9;
+    }
+}
+
+::deep .mud-input.mud-input-outlined .mud-input-outlined-border {
+    border-radius: 100px;
+    border-width: 0px;
+}
+
+::deep .divider-mid {
+    opacity: 1;
+    width: 70%;
+    align-self: center;
+    background-color: css-color-var(global-grey);
+    margin-top: 25px;
+    margin-bottom: 25px;
+    height: 1px;
+    @include shadow-divider(css-color-var(global-RGBA-black-16));
+}
+
+::deep .services-container {
+    max-width: 1800px;
+    margin-top: 115px;
+
+    @media (max-width: 650px) {
+        padding-inline: 0 !important;
+    }
+}
+
+::deep .floating-cart {
+    overflow: visible;
+    z-index: 20;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 0;
+    margin: 0;
+    border-radius: 50%;
+    min-height: 80px;
+    min-width: 80px;
+
+    .mud-button-label {
+        position: relative;
+    }
+
+    .cart-badge {
+        position: absolute;
+        top: -10px;
+        left: 4%;
+    }
+}
+
+::deep .package-favorite-icon {
+    margin-left: auto;
+    color: #D1AC00;
+}
+
+::deep .internal-floating-icon {
+    stroke: css-color-var(global-fullwhite);
+    font-size: 42px;
+}
+
+::deep .cart-boxes {
+    overflow: visible;
+    z-index: 19;
+    font-size: 42px;
+    position: fixed;
+    bottom: 130px;
+    right: 40px;
+    stroke: css-color-var(secondary);
+}
+
+.floating-package-badge {
+    position: absolute;
+    right: 12%;
+    top: 0;
+    transform: translate(50%, -30%);
+    padding: 2px;
+    height: fit-content;
+    background-color: var(--color-primary-lighten-2);
+    border-radius: 4px;
+}

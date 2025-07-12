@@ -1,0 +1,32 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using Syncfusion.Blazor.SplitButtons
+@inject GlobalBreakpointService BreakpointService
+
+<SfDropDownButton CssClass=@($"notificacion-menu e-custom {(BreakpointService.GetIsMobile() ? "e-caret-hide ayuda-icon-mobile" : "")}")
+                  IconCss="fa-solid fa-bell"
+                  style="color: white; background-color:transparent; border-color:transparent"
+                  Content="">
+</SfDropDownButton>
+<style>
+    .notificacion-menu .e-dropdown-btn {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 1.8rem;
+        display: flex !important;
+        align-items: center !important;
+        color: white !important; /* Asegura el color blanco */
+    }
+
+    .notificacion-menu .fa-bell {
+        font-size: 1.8rem !important;
+        color: white !important;
+    }
+
+    .ayuda-icon-mobile .fa-bell {
+        font-size: 2.8rem !important;
+    }
+
+</style>

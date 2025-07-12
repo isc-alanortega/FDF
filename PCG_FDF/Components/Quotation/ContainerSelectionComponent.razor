@@ -1,0 +1,145 @@
+﻿@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_FDF.Data.Comparers
+@using PCG_FDF.Utility
+@inject QuotationDataCollection_LEGACY quotationService
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div class="card-wrapper">
+    @if (elementData is not null)
+    {
+        <MudStack>
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@elementData.GetElementName()</MudText>
+            <MudStack>
+                @if (elementData.GetChipFields() is not null && elementData.GetGuidFields() is not null)
+                {
+                    var f11_exclusions = elementData.GetFieldExclusions(11);
+                    var f12_exclusions = elementData.GetFieldExclusions(12);
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@localize.Get("quot_container_size")</MudText>
+                    <div class="chipset-wrapper">
+                        <MudChipSet ReadOnly="@quotationService.GetQuotationLocked()" MudChipEqualityComparer="@Comparer" ValueExpression="@(() => GetSelectedChip(12))" SelectedChip="@GetSelectedChip(12)" SelectedChipChanged="@(async (chip) => await ChipHasChanged(12, chip))" Class="@($"chip-set-selector {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")" Mandatory="true">
+                            @if (!f12_exclusions.Contains(guid_container_20))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![12] == guid_container_20)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_container_20" ChipIcon="@CustomIcons.container20ft.GetIcon()" IconViewBox="@CustomIcons.container20ft.GetViewBox()" ChipText="@localize.Get("quot_container_20ft")"></SimpleChip>
+                            }
+                            @if (!f12_exclusions.Contains(guid_container_40))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![12] == guid_container_40)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_container_40" ChipIcon="@CustomIcons.container40ft.GetIcon()" IconViewBox="@CustomIcons.container40ft.GetViewBox()" ChipText="@localize.Get("quot_container_40ft")"></SimpleChip>
+                            }
+                            @if (!f12_exclusions.Contains(guid_container_40HC))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![12] == guid_container_40HC)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_container_40HC" ChipIcon="@CustomIcons.container40hc.GetIcon()" IconViewBox="@CustomIcons.container40hc.GetViewBox()" ChipText="@localize.Get("quot_container_40hc")"></SimpleChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                    <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h6)" Color="Color.Primary">@localize.Get("quot_container_type")</MudText>
+                    <div class="chipset-wrapper">
+                        <MudChipSet ReadOnly="@quotationService.GetQuotationLocked()" MudChipEqualityComparer="@Comparer" ValueExpression="@(() => GetSelectedChip(11))" SelectedChip="@GetSelectedChip(11)" SelectedChipChanged="@(async (chip) => await ChipHasChanged(11, chip))" Class="@($"chip-set-selector {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")" Mandatory="true">
+                            @if (!f11_exclusions.Contains(guid_dry))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![11] == guid_dry)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_dry" ChipIcon="@CustomIcons.highCube.GetIcon()" IconViewBox="@CustomIcons.highCube.GetViewBox()" ChipText="@localize.Get("quot_container_dry")"></SimpleChip>
+                            }
+                            @if (!f11_exclusions.Contains(guid_reefer))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![11] == guid_reefer)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_reefer" ChipIcon="@CustomIcons.reeferContainer.GetIcon()" IconViewBox="@CustomIcons.reeferContainer.GetViewBox()" ChipText="@localize.Get("quot_container_reefer")"></SimpleChip>
+                            }
+                            @if (!f11_exclusions.Contains(guid_flatrack))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![11] == guid_flatrack)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_flatrack" ChipIcon="@CustomIcons.flatRack.GetIcon()" IconViewBox="@CustomIcons.flatRack.GetViewBox()" ChipText="@localize.Get("quot_container_flat")"></SimpleChip>
+                            }
+                            @if (!f11_exclusions.Contains(guid_opentop))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![11] == guid_opentop)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_opentop" ChipIcon="@CustomIcons.openTop.GetIcon()" IconViewBox="@CustomIcons.openTop.GetViewBox()" ChipText="@localize.Get("quot_container_open")"></SimpleChip>
+                            }
+                            @if (!f11_exclusions.Contains(guid_isotank))
+                            {
+                                <SimpleChip Default="@(elementData.GetGuidFields()![11] == guid_isotank)" IconCSS="extra-extra-large unconstrain" ChipTag="guid_isotank" ChipIcon="@CustomIcons.isotank.GetIcon()" IconViewBox="@CustomIcons.isotank.GetViewBox()" ChipText="@localize.Get("quot_container_isotank")"></SimpleChip>
+                            }
+                        </MudChipSet>
+                    </div>
+                    <MudStack Row="true">
+                        <MudNumericField Disabled="@quotationService.GetQuotationLocked()" Class="@($"container-amount {(BreakpointService.GetIsMobile() ? "increase-it" : "")}")" ValueExpression="@(() => elementData.GetIntFields()![10])" Value="@elementData.GetIntFields()![10]" ValueChanged="@((int? args) => elementData.SetIntValue(10, args))" Label="@localize.Get("label_amount")" Variant="Variant.Outlined" Min="1" Max="500" />
+                    </MudStack>
+                }
+            </MudStack>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Row="true">
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <MudItem xs="2">
+                        <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+        <MudStack Row="true">
+            <MudGrid Class="skeleton-grid" Spacing="6" Justify="Justify.FlexStart">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <MudItem xs="2">
+                        <MudSkeleton Height="60px" Width="150px" SkeletonType="SkeletonType.Rectangle" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+    }
+</div>
+
+@code {
+    private readonly int ELEMENT_ID = 5;
+    private ElementQuotationData? elementData;
+    private ChipUUIDComparer Comparer { get; } = new();
+
+    private Guid guid_container_20 = new Guid("84145766-16AB-491C-B364-EAD7D7CDF191");
+    private Guid guid_container_40 = new Guid("08248D1C-6287-4CDB-817C-BDF8D609142F");
+    private Guid guid_container_40HC = new Guid("44ABE747-6BC9-437C-B718-CC4E3F77A178");
+
+    private Guid guid_dry = new Guid("38B288B6-2658-47C0-A697-BC02049E7149");
+    private Guid guid_reefer = new Guid("440E2496-3C22-415C-8493-D8EE8040A135");
+    private Guid guid_flatrack = new Guid("1FEC3AFC-3E05-4950-A16F-2502B26D6AB4");
+    private Guid guid_opentop = new Guid("DE5B5049-6C00-4608-8D1D-26D742B4640E");
+    private Guid guid_isotank = new Guid("111E4CCA-512C-4C60-A1DC-7F9199DF072C");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        elementData = quotationService.GetElementQuotationData(ELEMENT_ID);
+        elementData.ElementHasChips(new List<int>() { 11, 12 });
+        await base.OnInitializedAsync();
+    }
+
+    private async Task ChipHasChanged(int id, MudChip chip)
+    {
+        await elementData!.SetChipValue(id, chip);
+        await elementData!.SetGuidValue(id, (Guid)chip.Tag);
+    }
+
+    private MudChip? GetSelectedChip(int id)
+    {
+        return elementData!.GetChipFields()![id];
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+    }
+}

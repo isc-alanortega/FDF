@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta lang="es-mx" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <title>Loading...</title>
+    <base href="/" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <!--Init Leaflet-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+
+    <!--full screen-->
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+    <!--Edn Leaflet-->
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="css/AppGlobal.css" rel="stylesheet" />
+    <link href="css/ColorsGlobal.css" rel="stylesheet" />
+    <link href="PCG_FDF.styles.css" rel="stylesheet" />
+    <link href="css/FontsAwesome/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="css/FontsAwesome/css/duotone.min.css" rel="stylesheet"/>
+    <link href="css/FontsAwesome/css/solid.min.css" rel="stylesheet"/>
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link href="_content/Syncfusion.Blazor/styles/bootstrap5.css" rel="stylesheet" />
+    <script src="_content/Syncfusion.Blazor/scripts/syncfusion-blazor.min.js" type="text/javascript"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <style>
+            .logo_container {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                align-items: center;
+                font-family: Poppins;
+                width: max-content;
+                height: max-content;
+                padding: 1rem;
+            }
+
+            .main-logo-spacer {
+                width: 4rem;
+            }
+
+            .cima-title-full {
+                font-size: 1.5rem;
+                font-weight: bold;
+                display: flex;
+                color: #384A9C
+            }
+
+            .cima-logo {
+                transform: scale(3);
+            }
+
+            .spinner {
+                position: relative;
+                width: 88px;
+                height: 88px;
+            }
+
+                .spinner > div {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    border: 21.1px solid #D0363116;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    animation: spinner-g7vlvwhg 0.65s linear infinite;
+                    z-index: 0;
+                }
+
+                    .spinner > div::before {
+                        content: '';
+                        height: 21.1px;
+                        width: 21.1px;
+                        border-radius: 50%;
+                        background: #222B3E;
+                        position: absolute;
+                        top: 50%;
+                        animation: spinner-h1vps1hg 1.3s infinite reverse steps(1);
+                        transform: translate(calc(2 * var(--translate-2)), calc(var(--translate) * 1%));
+                        z-index: 1;
+                    }
+
+                    .spinner > div:nth-of-type(1) {
+                        --translate: -50;
+                        --translate-2: calc(88px / 8);
+                    }
+
+                        .spinner > div:nth-of-type(1)::before {
+                            right: 0;
+                        }
+
+                    .spinner > div:nth-of-type(2) {
+                        --translate: 50;
+                        --translate-2: calc(-88px / 8);
+                        animation-delay: 0.65s;
+                        animation-direction: reverse;
+                        transform: translate(33.45px, 0);
+                    }
+
+                        .spinner > div:nth-of-type(2)::before {
+                            left: 0;
+                            transform: translate(calc(-88px / 4), -50%);
+                            animation-direction: normal;
+                        }
+
+            @keyframes spinner-h1vps1hg {
+                0% {
+                    opacity: 0;
+                }
+
+                50% {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes spinner-g7vlvwhg {
+                from {
+                    transform: translate(calc(var(--translate) * 1%), 0) translate(calc(var(--translate-2)), 0) rotate(0deg);
+                }
+
+                to {
+                    transform: translate(calc(var(--translate) * 1%), 0) translate(calc(var(--translate-2)), 0) rotate(360deg);
+                }
+            }
+        </style>
+        <div class="logo_container">
+            <div class="spinner">
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+    <script>
+    </script>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        if (window.location.hostname.includes("centralinformatica") || window.location.hostname.includes("smargo.cimagroup.online") || window.location.hostname.includes("evergreen.cimagroup.online") || window.location.hostname.includes("bafar.cimagroup.online") || window.location.hostname.includes("thesharks.cimagroup.online")) {
+            Blazor.start({
+                environment: "Staging"
+            });
+        } else {
+            Blazor.start();
+        }
+    </script>
+</body>
+
+</html>

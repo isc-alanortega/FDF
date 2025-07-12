@@ -1,0 +1,651 @@
+﻿@page "/"
+@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Data.DataAccess
+@using PCG_ENTITIES.PCG
+@using PCG_ENTITIES.Enums
+@using PCG_FDF.Utility
+@implements IAsyncDisposable
+@implements IDisposable
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject PCG_FDF_DB DATA_ACCESS
+@inject ComplexTreeService ServicesTree
+@inject ShoppingCartContainer shoppingCart
+@inject ApplicationState AppState
+@inject GlobalLocalizer localize
+@inject GlobalBreakpointService BreakpointService
+@inject WhiteLabelManager WhiteLabel
+
+<PageTitle>@(WhiteLabel.GetPageName())</PageTitle>
+<div class="global-wrapper d-none"></div>
+@if (BreakpointService.GetIsMobile())
+{
+    <MudDrawer Width="80vw" @bind-Open="@_cartDrawerOpen" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="4" Variant="@DrawerVariant.Temporary">
+        <ShoppingCartComponent ResetAnimatedCheck="@SetSuggestionAnimated" ActivateAnimation="@AnimateSuggestion" ResetCart="@resetCart"></ShoppingCartComponent>
+    </MudDrawer>
+}
+else
+{
+    <MudDrawer Width="35vw" @bind-Open="@_cartDrawerOpen" ClipMode="DrawerClipMode.Always" Anchor="Anchor.End" Elevation="4" Variant="@DrawerVariant.Temporary">
+        <ShoppingCartComponent ResetAnimatedCheck="@SetSuggestionAnimated" ActivateAnimation="@AnimateSuggestion" ResetCart="@resetCart"></ShoppingCartComponent>
+    </MudDrawer>
+}
+<div class="content-wrapper">
+    <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="main-container">
+        <div class="hero-container">
+            <div class="top-level">
+                @switch (WhiteLabel.Current_Page)
+                {
+                    case EPages.Cima_Shipping:
+                        {
+                            <div class="@(BreakpointService.GetIsMobile() ? "mobile-main-text-wrapper" : "main-text-wrapper")">
+                                <div class="page-title-wrapper">
+                                    <div class="inner-text-wrapper">
+                                        <div class="single-wrapper">
+                                            <MudText Color="Color.Primary" Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text"><strong>@localize.Get("idx_slogan_shipping_1")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_shipping_2")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_shipping_3")&nbsp;</strong></MudText>
+                                        </div>
+                                    </div>
+                                    <MudButton OnClick="@scrollToContent" Class="@($"title-button-shipping {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Variant="Variant.Outlined">@localize.Get("btn_see_more")</MudButton>
+                                </div>
+                            </div>
+                            break;
+                        }
+                    case EPages.The_Sharks:
+                        {
+                            <div class="@(BreakpointService.GetIsMobile() ? "mobile-main-text-wrapper" : "main-text-wrapper")">
+                                <div class="page-title-wrapper">
+                                    <div class="inner-text-wrapper">
+                                        <div class="single-wrapper">
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_sharks_1")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_sharks_2")</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>,&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_sharks_3")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_sharks_4")&nbsp;</strong></MudText>
+                                        </div>
+                                    </div>
+                                    @if (!BreakpointService.GetIsMobile())
+                                    {
+                                        <div class="text-mini-wrapper">
+                                            <MudText Class="title-text mini" Typo="Typo.h6">
+                                                @localize.Get("idx_slogan_sharks_5")
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <MudButton OnClick="@scrollToContent" Class="@($"title-button-shipping {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Variant="Variant.Outlined">@localize.Get("btn_see_more")</MudButton>
+                                </div>
+                            </div>
+                            break;
+                        }
+                    case EPages.Grupo_Bafar:
+                        {
+                            <div class="@(BreakpointService.GetIsMobile() ? "mobile-main-text-wrapper" : "main-text-wrapper")">
+                                <div class="page-title-wrapper">
+                                    <div class="inner-text-wrapper">
+                                        <div class="single-wrapper">
+                                            <MudText Color="Color.Primary" Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text"><strong>@localize.Get("idx_slogan_bafar_1")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_bafar_2")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-gold"><strong>@localize.Get("idx_slogan_bafar_3")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>@localize.Get("idx_slogan_bafar_4")&nbsp;</strong></MudText>
+                                        </div>
+                                    </div>
+                                    @if (!BreakpointService.GetIsMobile())
+                                    {
+                                        <div class="text-mini-wrapper">
+                                            <MudText Class="title-text mini" Typo="Typo.h6">
+                                                @localize.Get("idx_slogan_bafar_5")
+                                            </MudText>
+                                        </div>
+                                    }
+                                    <MudButton OnClick="@scrollToContent" Class="@($"title-button-shipping {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Variant="Variant.Outlined">@localize.Get("btn_see_more")</MudButton>
+                                </div>
+                            </div>
+                            break;
+                        }
+                    case EPages.Evergreen:
+                        {
+                            break;
+                        }
+                    case EPages.SmarGo:
+                        {
+                            break;
+                        }
+                    case EPages.CargoPi:
+                        {
+                            break;
+                        }
+                    default:
+                        {
+                            <div class="@(BreakpointService.GetIsMobile() ? "mobile-main-text-wrapper" : "main-text-wrapper")">
+                                <div class="page-title-wrapper">
+                                    <div class="inner-text-wrapper">
+                                        <div class="single-wrapper">
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white">@localize.Get("idx_slogan_0")&nbsp;</MudText>
+                                        </div>
+                                        <div class="single-wrapper">
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white">@localize.Get("idx_slogan_1")</MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white"><strong>
+                                                    &nbsp; @localize.Get("idx_slogan_2")&nbsp;</strong></MudText>
+                                            <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h2" Class="title-text t-white">@localize.Get("idx_slogan_3")&nbsp;</MudText>
+                                        </div>
+                                    </div>
+                                    @if (!BreakpointService.GetIsMobile())
+                                    {
+                                        <div class="text-mini-wrapper">
+                                            <MudText Class="title-text mini" Typo="Typo.h6">
+                                                @localize.Get("idx_slogan_6")
+                                            </MudText>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            break;
+                        }
+                }
+            </div>
+            <Carousel></Carousel>
+            <div class="@($"search-container {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")">
+                <MudTextField Class="@($"services-search {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Immediate="true" @bind-Value="@search_text" OnKeyPress="@(async (args) => await switchToSearch(args))" Adornment="Adornment.End" AdornmentColor="Color.Default" OnAdornmentClick="@(async () => await switchToSearch())" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Placeholder="@localize.Get("idx_searchbar")" Margin="Margin.None"></MudTextField>
+            </div>
+        </div>
+        <div class="secondary-container">
+            <MudContainer Class="services-container">
+                @if (WhiteLabel.Current_Page == EPages.Cima_Group)
+                {
+                    <MudPaper Height="100%" Width="100%" Elevation="0" Square="true" Class="paper-grey">
+                        <div class="landing-container base-component-wrapper">
+                            <MudIcon class="booking-logo" Size="Size.Large" Icon="@WhiteLabel.GetBookingIcon().GetIcon()" ViewBox="@WhiteLabel.GetBookingIcon().GetViewBox()"></MudIcon>
+                            <MudText Class="landing-slogan" Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4"><strong>@localize.Get("landing_slogan")</strong></MudText>
+                            <div class="landing-cards">
+                                <div class="landing-card">
+                                    <MudText Class="landing-card-tite" Typo="BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5"><strong>@localize.Get("landing_card_title_1")</strong></MudText>
+                                    <MudIcon class="card-icon" Size="Size.Large" Icon="@WhiteLabel.GetLandingQuoteIcon().GetIcon()" ViewBox="@WhiteLabel.GetLandingQuoteIcon().GetViewBox()"></MudIcon>
+                                    <MudText Class="landing-card-desc" Typo="Typo.h6"><strong>@localize.Get("landing_card_desc_1")</strong></MudText>
+                                </div>
+                                <div class="landing-card">
+                                    <MudText Class="landing-card-tite" Typo="BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5"><strong>@localize.Get("landing_card_title_2")</strong></MudText>
+                                    <MudIcon class="card-icon" Size="Size.Large" Icon="@WhiteLabel.GetLandingContractIcon().GetIcon()" ViewBox="@WhiteLabel.GetLandingContractIcon().GetViewBox()"></MudIcon>
+                                    <MudText Class="landing-card-desc" Typo="Typo.h6"><strong>@localize.Get("landing_card_desc_2")</strong></MudText>
+                                </div>
+                                <div class="landing-card">
+                                    <MudText Class="landing-card-tite" Typo="BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5"><strong>@localize.Get("landing_card_title_3")</strong></MudText>
+                                    <MudIcon class="card-icon" Size="Size.Large" Icon="@WhiteLabel.GetLandingTrackingIcon().GetIcon()" ViewBox="@WhiteLabel.GetLandingTrackingIcon().GetViewBox()"></MudIcon>
+                                    <MudText Class="landing-card-desc" Typo="Typo.h6"><strong>@localize.Get("landing_card_desc_3")</strong></MudText>
+                                </div>
+                            </div>
+                        </div>
+                    </MudPaper>
+                }
+                <MudPaper Height="100%" Width="100%" Elevation="0" Square="true" Class="paper-grey">
+                    <div class="base-component-wrapper">
+                        <MudDivider Class="divider-first" />
+                        <div class="switching-component-wrapper">
+                            @if (paquetes is not null && paquetes.Any())
+                            {
+                                <MudText Class="subtitle" Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4"><strong>@localize.Get("idx_packages")</strong></MudText>
+                                <div>
+                                    @if (BreakpointService.GetIsMobile())
+                                    {
+                                        <PackagesTable ListQuery="@paquetes" ItemsPerPage="@ItemsPerPage" TotalCount="@TotalPackages" UpdatePage="@UpdatePackages">
+                                            <ItemDisplay>
+                                                <MudItem xs="12">
+                                                    <MobilePackageCard Paquete="@context" AddPackage="@onPackageAdd"></MobilePackageCard>
+                                                </MudItem>
+                                            </ItemDisplay>
+                                        </PackagesTable>
+                                    }
+                                    else
+                                    {
+                                        <PackagesTable ListQuery="@paquetes" TotalCount="@TotalPackages" UpdatePage="@UpdatePackages">
+                                            <ItemDisplay>
+                                                <MudItem xs="4">
+                                                    <MudCard Class="card-package" Outlined="true">
+                                                        <MudCardHeader Class="card-package-header">
+                                                            <CardHeaderContent>
+                                                                <div class="d-flex card-header-content">
+                                                                    <div class="floating-card-chip">
+                                                                        <MudTooltip Text="@context.Paquete.Nombre_Categoria" Arrow="true" Placement="Placement.Top">
+                                                                            <MudIcon Class="chip-text-icon" ViewBox="@context.Paquete.Viewbox" Icon="@context.Paquete.Icon" Size="Size.Large"></MudIcon>
+                                                                        </MudTooltip>
+                                                                    </div>
+                                                                    <MudStack Spacing="0">
+                                                                        <MudText Typo="Typo.h6" Class="card-text title"><strong>@context.Paquete.Nombre_Corto_Paquete</strong></MudText>
+                                                                        @if (!string.IsNullOrEmpty(context.Paquete.Descripcion_Paquete))
+                                                                        {
+                                                                            <MudText Typo="Typo.body1" Class="card-text card-subtitle">@context.Paquete.Descripcion_Paquete</MudText>
+                                                                        }
+                                                                    </MudStack>
+                                                                    @if (AppState.GetUserAuthenticated())
+                                                                    {
+                                                                        <MudIconButton Class="package-favorite-icon" OnClick="@(async() => await SetFavoriteStatus(context.Paquete.ID, context.Paquete.ID_Favorito, context.Paquete.Favorito))" Icon="@((context.Paquete.Favorito ?? false) ? Icons.Material.Filled.Star : Icons.Material.Filled.StarBorder)"></MudIconButton>
+                                                                    }
+                                                                    @if (!string.IsNullOrEmpty(context.Paquete.Badge) && !string.IsNullOrWhiteSpace(context.Paquete.Badge))
+                                                                    {
+                                                                        <div class="floating-package-badge">
+                                                                            <MudText Typo="Typo.body1" Class="card-text badge">@context.Paquete.Badge</MudText>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </CardHeaderContent>
+                                                        </MudCardHeader>
+                                                        <MudCardContent Class="card-package-content">
+                                                            <div class="card-package-list">
+                                                                @foreach (PaquetesServiciosCompletosEntidad servicio in context.Servicios)
+                                                                {
+                                                                    var servicio_local = servicio;
+                                                                    <div class="card-package-row">
+                                                                        <MudIcon Class="card-bullet" Color="Color.Tertiary" Icon="@Icons.Material.Filled.ArrowForwardIos"></MudIcon>
+                                                                        <MudText Class="card-text body" Typo="Typo.subtitle1">@servicio_local.Servicio.Nombre_Corto_Servicio</MudText>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                            <div class="card-package-btn-container">
+                                                                <MudButton Class="card-package-button" OnClick="@(() => onPackageAdd(context))" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.AddCircleOutline" IconClass="card-package-button-icon">Anadir</MudButton>
+                                                            </div>
+                                                        </MudCardContent>
+                                                    </MudCard>
+                                                </MudItem>
+                                            </ItemDisplay>
+                                        </PackagesTable>
+                                    }
+                                </div>
+                            }
+                            @if (_show_services)
+                            {
+                                <MudText Class="subtitle" Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4"><strong>@localize.Get("idx_services")</strong></MudText>
+                                <div class="complex-selector-main">
+                                    <ComplexSelector addService="@(async () => await onServiceAdd())"></ComplexSelector>
+                                </div>
+                            }
+                        </div>
+                        <div class="search-component-wrapper d-none">
+                            <MudText Class="subtitle" Typo="BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4"><strong>@localize.Get("idx_search_title")</strong></MudText>
+                            <div class="search-engine-wrapper">
+                                <MicroSearchEngine PackageListQuery="@searchPackagesResult" ServiceListQuery="@searchServicesResult">
+                                    <PackageItemDisplay>
+                                        <MudStack Class="package-search-row" Row="true">
+                                            <MudButton Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")" OnClick="@(() => onPackageAdd(context))" Variant="Variant.Text" EndIcon="@Icons.Material.Rounded.Add" IconClass="search-service-button-icon"></MudButton>
+                                            <MudPaper Class="package-item-badge">
+                                                <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body1">@localize.Get("com_packageitem_package")</MudText>
+                                                </MudPaper>
+                                                <MudIcon Class="@($"package-item-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Icon="@context.Paquete.Icon" ViewBox="@context.Paquete.Viewbox"></MudIcon>
+                                                <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body1" Class="package-item-text">@context.Paquete.Nombre_Paquete</MudText>
+                                            </MudStack>
+                                        </PackageItemDisplay>
+                                        <ServiceItemDisplay>
+                                            <MudStack Class="service-search-row" Row="true">
+                                                <MudButton Class="@(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")" OnClick="@(async () => await onSearchServiceAdd(context))" Variant="Variant.Text" EndIcon="@Icons.Material.Rounded.Add" IconClass="search-package-button-icon"></MudButton>
+                                                <MudPaper Class="service-item-badge">
+                                                    <MudText Typo="BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body1">@localize.Get("com_serviceitem_service")</MudText>
+                                                </MudPaper>
+                                                <MudIcon Class="@($"service-item-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Icon="@context.Last().Icon" ViewBox="@context.Last().ViewBox"></MudIcon>
+                                                <MudBreadcrumbs Class="@($"service-trace {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Items="@GeneratorsUtil.GenerateBreadcrumb(context)">
+                                                    <SeparatorTemplate>
+                                                        <MudIcon Class="@($"breadcrumb-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Icon="@Icons.Material.Filled.ArrowForwardIos" Size="Size.Small" />
+                                                    </SeparatorTemplate>
+                                                </MudBreadcrumbs>
+                                            </MudStack>
+                                        </ServiceItemDisplay>
+                                    </MicroSearchEngine>
+                                </div>
+                                <MudButton Class="@($"button-back {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Size="Size.Large" Variant="Variant.Filled" Color="Color.Secondary" OnClick="@returnTestJS">@localize.Get("btn_return")</MudButton>
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudContainer>
+            </div>
+            <MudIcon Class="cart-boxes d-none" ViewBox="@CustomIcons.suelta.GetViewBox()" Icon="@CustomIcons.suelta.GetIcon()"></MudIcon>
+            <MudButton Variant="Variant.Filled" OnClick="@(async () => await OpenDrawer())" Color="Color.Secondary" Size="Size.Large" Class="@($"floating-cart {floatingClass}")">
+                <MudBadge Class="cart-badge" Origin="@Origin.TopLeft" Content="@shoppingCart.GetTotalItems()" Color="Color.Primary" Overlap="true" Bordered="true"></MudBadge>
+                <MudIcon Class="internal-floating-icon" Icon="@CustomIcons.highCube.GetIcon()" ViewBox="@CustomIcons.highCube.GetViewBox()" Size="Size.Large"></MudIcon>
+            </MudButton>
+        </MudContainer>
+    </div>
+
+    @code {
+    private IJSObjectReference? module_animejs, module_self;
+    private IEnumerable<PaquetesCompletosEntidad>? paquetes { get; set; } = null;
+    private IList<PaquetesCompletosEntidad> searchPackagesResult;
+    private IList<IList<ComplexService>> searchServicesResult;
+    private string search_text;
+    private string floatingClass = "d-none";
+    private int shadow = 0;
+    private int ItemsPerPage { get; set; } = 6;
+    private int TotalPackages { get; set; } = 0;
+    private bool _cartDrawerOpen = false;
+    private bool _searching = false;
+    private bool _suggestionAnimated = false;
+    private bool _show_services = false;
+
+    private void SetSuggestionAnimated()
+    {
+        _suggestionAnimated = false;
+    }
+
+    private async Task OpenDrawer()
+    {
+        _cartDrawerOpen = !_cartDrawerOpen;
+        if (_cartDrawerOpen && shoppingCart.GetSuggestion() is not null && module_self is not null && !_suggestionAnimated)
+        {
+            await module_self!.InvokeVoidAsync("animateSuggestion");
+            _suggestionAnimated = true;
+        }
+    }
+
+    private async void AnimateSuggestion()
+    {
+        await module_self!.InvokeVoidAsync("animateSuggestion");
+        _suggestionAnimated = true;
+    }
+
+    private async Task SetFavoriteStatus(int Package_ID, int? Favorite_ID, bool? Favorite)
+    {
+        var result = await DATA_ACCESS.PostUpdateFavorite(new ActualizarPaqueteFavorito()
+            {
+                Favorite_ID = Favorite_ID,
+                Favorite = !(Favorite ?? false),
+                Package_ID = Package_ID,
+                Client_ID = AppState.GetCurrentClientID()!.Value
+            });
+        if (result.Operation_Succeeded)
+        {
+            var item = paquetes!.First(p => p.Paquete.ID == Package_ID);
+            item.Paquete.Favorito = result.Result.Favorite;
+            item.Paquete.ID_Favorito = result.Result.Favorite_ID;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        shoppingCart._onChange += StateHasChanged;
+        AppState.OnChange += StateHasChanged;
+        if (shoppingCart.GetTotalItems() > 0)
+        {
+            floatingClass = "cart-display";
+        }
+        base.OnInitialized();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        //if (LoginData.GetCurrentUser() is not null)
+        //{
+        //    var coins = await DATA_ACCESS.GetCoins(LoginData.GetCurrentUser()!.ID_Usuario);
+        //    if (coins is not null)
+        //    {
+        //        LoginData.UpdateCoins((int)coins!);
+        //    }
+        //}
+
+        var show_services = await DATA_ACCESS.GetServiciosExist(LanguageUtil.getCurrentCulture(), WhiteLabel.GetPageID());
+        _show_services = show_services ?? false;
+        var res = await DATA_ACCESS.GetPaquetes(LanguageUtil.getCurrentCulture(), WhiteLabel.GetPageID(), AppState.GetCurrentClientID(), 1, ItemsPerPage);
+        if (res.Operation_Succeeded)
+        {
+            paquetes = res.Result.Packages.ToList();
+            TotalPackages = res.Result.Total_Count;
+        }
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task UpdatePackages(int page_number)
+    {
+        var res = await DATA_ACCESS.GetPaquetes(LanguageUtil.getCurrentCulture(), WhiteLabel.GetPageID(), AppState.GetCurrentClientID(), page_number, ItemsPerPage);
+        if (res.Operation_Succeeded)
+        {
+            paquetes = res.Result.Packages.ToList();
+            TotalPackages = res.Result.Total_Count;
+        }
+        else
+        {
+            paquetes = Enumerable.Empty<PaquetesCompletosEntidad>();
+        }
+    }
+
+    private void scrollToContent()
+    {
+        if (module_self is not null)
+        {
+            module_self.InvokeVoidAsync("scrollToContent");
+        }
+    }
+
+    /*
+    * Si es la primera vez que se renderiza el componente, cargar los modulos JS y ejecutar una función de inicialización
+    */
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module_self = await JS.InvokeAsync<IJSObjectReference>("import", "./scripts/index_script.js");
+            await BreakpointService.ReCheckSize();
+            if (BreakpointService.GetIsMobile())
+            {
+                ItemsPerPage = 2;
+            }
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task onServiceAdd()
+    {
+        // Si ya hay algún servicio en el carrito, no permitir agregar más
+        if (shoppingCart.GetServiceTraces().Count > 0)
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_limitoneservice"), Severity.Error);
+            return;
+        }
+        var package = shoppingCart.CheckPackageServices(ServicesTree.getSelectedTree().Values.ToList().Last().Id);
+        if (shoppingCart.GetFullTrace().TryGetValue(ServicesTree.getSelectedTree().Values.ToList().Last().Id, out _))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_serviceserror"), Severity.Error);
+        }
+        else
+        {
+            if (package is not null)
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(localize.Get("snackbar_servicespackageerror_1") + " " + package + " " + localize.Get("snackbar_servicespackageerror_2"), Severity.Error);
+            }
+            else
+            {
+                if (ServicesTree.getSelectedTree().Values.Last().Calculo_Cantidad is not null && shoppingCart.GetServiceTraces().Values.Select(trace => trace.Last()).Any(service => service.Calculo_Cantidad != ServicesTree.getSelectedTree().Values.Last().Calculo_Cantidad))
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(localize.Get("snackbar_serviceincompatible"), Severity.Error);
+                }
+                else
+                {
+                    shoppingCart.AddServiceTrace(ServicesTree.getSelectedTree().Values.ToList());
+                    await shoppingCart.ServiceCheck(LanguageUtil.getCurrentCulture());
+                    floatingClass = "cart-display";
+                    if (module_self is not null)
+                    {
+                        await module_self.InvokeVoidAsync("animateAddProduct");
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task onSearchServiceAdd(IList<ComplexService> services)
+    {
+        var package = shoppingCart.CheckPackageServices(services.Last().Id);
+        if (shoppingCart.GetFullTrace().TryGetValue(services.Last().Id, out _))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_serviceserror"), Severity.Error);
+        }
+        else
+        {
+            if (package is not null)
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(localize.Get("snackbar_servicespackageerror_1") + " " + package + " " + localize.Get("snackbar_servicespackageerror_2"), Severity.Error);
+            }
+            else
+            {
+                if (ServicesTree.getSelectedTree().Values.Last().Calculo_Cantidad is not null && shoppingCart.GetServiceTraces().Values.SelectMany(trace => trace.Last()).Any(service => service.Calculo_Cantidad != ServicesTree.getSelectedTree().Values.Last().Calculo_Cantidad))
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(localize.Get("snackbar_serviceincompatible"), Severity.Error);
+                }
+                else
+                {
+                    shoppingCart.AddCleanServiceTrace(services);
+                    await shoppingCart.ServiceCheck(LanguageUtil.getCurrentCulture());
+                    floatingClass = "cart-display";
+                    if (module_self is not null)
+                    {
+                        await module_self.InvokeVoidAsync("animateAddProduct");
+                    }
+                }
+            }
+        }
+    }
+
+    private void onPackageAdd(PaquetesCompletosEntidad paquete)
+    {
+        if (shoppingCart.GetPackages().TryGetValue(paquete.Paquete.ID, out _))
+        {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            Snackbar.Add(localize.Get("snackbar_packageserror"), Severity.Error);
+        }
+        else
+        {
+            var package = shoppingCart.CheckPackageAdd(paquete);
+            if (package is not null)
+            {
+                Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                Snackbar.Add(localize.Get("snackbar_packagesserviceerror_1") + " " + package + " " + localize.Get("snackbar_packagesserviceerror_2"), Severity.Error);
+            }
+            else
+            {
+                var service = shoppingCart.CheckPackageServicesAdd(paquete);
+                if (service is not null)
+                {
+                    Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+                    Snackbar.Add(localize.Get("snackbar_packageserviceserror_1") + " " + service + " " + localize.Get("snackbar_packageserviceserror_2"), Severity.Error);
+                }
+                else
+                {
+                    shoppingCart.AddPackage(paquete);
+                    floatingClass = "cart-display";
+                    if (module_self is not null)
+                    {
+                        module_self.InvokeVoidAsync("animateAddProduct");
+                    }
+                }
+            }
+        }
+    }
+
+    private void resetCart()
+    {
+        _cartDrawerOpen = false;
+        _suggestionAnimated = false;
+        floatingClass = "d-none";
+        shoppingCart.SetTotalItems(0);
+        StateHasChanged();
+    }
+
+    private async Task switchToSearch()
+    {
+        if (module_self is not null && !_searching && !string.IsNullOrEmpty(search_text.Trim()))
+        {
+            await module_self.InvokeVoidAsync("animateAndSwitch");
+        }
+        if (!string.IsNullOrEmpty(search_text.Trim()))
+        {
+            var searchPackages = await DATA_ACCESS.GetBuscarPaquetes(LanguageUtil.getCurrentCulture(), search_text, WhiteLabel.GetPageID());
+            var searchServices = await DATA_ACCESS.GetBuscarServicios(LanguageUtil.getCurrentCulture(), search_text, WhiteLabel.GetPageID());
+            if (searchPackages is not null && searchPackages.Any())
+            {
+                searchPackagesResult = searchPackages.ToList();
+            }
+            else
+            {
+                searchPackagesResult = new List<PaquetesCompletosEntidad>();
+            }
+            searchServicesResult = new List<IList<ComplexService>>();
+            if (searchServices is not null)
+            {
+                foreach (var trace in searchServices)
+                {
+                    searchServicesResult.Add(GeneratorsUtil.GenerateComplexServiceFromTrace(trace));
+                }
+            }
+            _searching = true;
+        }
+    }
+
+    private async Task switchToSearch(KeyboardEventArgs args)
+    {
+        if (args.Code == "Enter" || args.Code == "NumpadEnter")
+        {
+            if (module_self is not null && !_searching && !string.IsNullOrEmpty(search_text.Trim()))
+            {
+                await module_self.InvokeVoidAsync("animateAndSwitch");
+            }
+            if (!string.IsNullOrEmpty(search_text.Trim()))
+            {
+                var searchPackages = await DATA_ACCESS.GetBuscarPaquetes(LanguageUtil.getCurrentCulture(), search_text, WhiteLabel.GetPageID());
+                var searchServices = await DATA_ACCESS.GetBuscarServicios(LanguageUtil.getCurrentCulture(), search_text, WhiteLabel.GetPageID());
+                if (searchPackages is not null && searchPackages.Any())
+                {
+                    searchPackagesResult = searchPackages.ToList();
+                }
+                else
+                {
+                    searchPackagesResult = new List<PaquetesCompletosEntidad>();
+                }
+                searchServicesResult = new List<IList<ComplexService>>();
+                if (searchServices is not null)
+                {
+                    foreach (var trace in searchServices)
+                    {
+                        searchServicesResult.Add(GeneratorsUtil.GenerateComplexServiceFromTrace(trace));
+                    }
+                }
+                _searching = true;
+            }
+        }
+    }
+
+    private void returnTestJS()
+    {
+        _searching = false;
+        if (module_self is not null)
+        {
+            module_self.InvokeVoidAsync("returnToMain");
+        }
+    }
+
+    /*
+    * Eliminar los modulos JS cargados al terminar de usar el componente actual
+       */
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module_self is not null)
+        {
+            await module_self.DisposeAsync();
+        }
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        shoppingCart._onChange -= StateHasChanged;
+        AppState.OnChange += StateHasChanged;
+    }
+}

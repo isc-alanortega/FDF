@@ -1,0 +1,103 @@
+﻿@using PCG_ENTITIES.PCG_FDF.UtilityEntities;
+@using PCG_FDF.Data.DataAccess;
+@inject PCG_FDF_DB DATA_ACCESS
+@inherits BookingElementBase
+
+<div class="element-boundary">
+    <MudStack Spacing="1">
+        <MudStack Row="true">
+            @if (ElementData.Element_Icon is not null)
+            {
+                <MudIcon Size="Size.Medium" Icon="@ElementData.Element_Icon" ViewBox="@ElementData.Icon_ViewBox"></MudIcon>
+            }
+            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text"><strong>@ElementData.Element_Name</strong></MudText>
+            @if (ElementData.Required)
+            {
+                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.h6)" Class="title-text required-information"><strong>*</strong></MudText>
+            }
+        </MudStack>
+        <MudAutocomplete T="KeyValue"
+                         Class="@($"booking-searchbar {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                         PopoverClass="@($"booking-popover {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"
+                         ToStringFunc="@CustomConverter"
+                         ResetValueOnEmptyText="false"
+                         CoerceText="true"
+                         CoerceValue="false"
+                         AdornmentIcon="@Icons.Material.Filled.Search"
+                         AdornmentColor="Color.Primary"
+                         Required="@ElementData.Required"
+                         Clearable="@(!ElementData.Required)"
+                         Value="@TryGetStorageValue()"
+                         ValueChanged="@(async(args) => await TryWriteStorageValue(args))"
+                         Disabled="@GetElementReadonly()"
+                         SearchFunc="@SearchDynamicQuery"
+                         RequiredError="@Localize.Get("errmsg_required")"
+                         Placeholder="@($"{Localize.Get("placeholder_select")} {ElementData.Element_Name}")" />
+    </MudStack>
+</div>
+
+@code {
+    private Func<KeyValue, string> CustomConverter = kvp => kvp?.Value!;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (ElementData.Preload_Value && ElementData.Preloaded_Value is not null)
+        {
+            if (TryGetStorageValue() is null)
+            {
+                await TryWriteStorageValue(GetPreloadedValueAs<KeyValue>());
+            }
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<IEnumerable<KeyValue>> SearchDynamicQuery(string value)
+    {
+        var query_request = new DynamicQueryRequestBooking()
+            {
+                Booking_UUID = BookingData.UUID,
+                Client_ID = BookingData.Client_ID,
+                User_ID = BookingData.User_ID,
+                Query_ID = ElementData.Query_ID,
+                Language = BookingData.GetBookingLanguage(),
+                Query = value
+            };
+        var result = await DATA_ACCESS.PostLeerQuery(query_request);
+        if (result is not null && result.Operation_Succeeded && result.Result is not null)
+        {
+            return result.Result;
+        }
+        else
+        {
+            return Enumerable.Empty<KeyValue>();
+        }
+    }
+
+    private KeyValue? TryGetStorageValue()
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            return BookingData.GetUnsharedElementValueAs<KeyValue?>(SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            return BookingData.GetSharedElementValueAs<KeyValue?>(ElementData.Element_ID);
+        }
+    }
+
+    private async Task TryWriteStorageValue(KeyValue? value)
+    {
+        // Unshared
+        if (IsCollection)
+        {
+            await BookingData.WriteUnsharedElementValue(value, SectionData.Key, SectionData.Value.Keys.First(), ElementData.Element_ID);
+        }
+        // Shared
+        else
+        {
+            await BookingData.WriteSharedElementValue(value, ElementData.Element_ID);
+        }
+    }
+}

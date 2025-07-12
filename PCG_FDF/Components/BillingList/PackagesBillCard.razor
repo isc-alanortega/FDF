@@ -1,0 +1,169 @@
+﻿@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.ComponentDI;
+@using PCG_FDF.Data.ComponentDI.Quotation
+@inject EstimationWrapperContainer estimationService
+@inject GlobalBreakpointService BreakpointService
+@implements IDisposable
+
+<div>
+    <MudPaper Class="@($"stack-card {CSSClass}")" Elevation="0">
+        <MudExpansionPanels DisableBorders="true" Elevation="0">
+            <MudExpansionPanel Disabled="@ExpandDisable" IsExpanded="@IsOpen" IsExpandedChanged="@IsExpandedChanged" Class="@($"package-panel {CSSClass}")" HideIcon=true>
+                <TitleContent>
+                    @if (ChangePackage is not null)
+                    {
+                        <div onclick="@(async () => await onPackageChange(Paquete.Value))">
+                            <MudStack Class="title-row" Row="true">
+                                <MudIcon Size="Size.Large" Color="Color.Tertiary" Icon="@(IsOpen ? Icons.Material.Rounded.KeyboardArrowUp : Icons.Material.Rounded.KeyboardArrowDown)" Class="@($"ml-auto {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"></MudIcon>
+                                <MudIcon Class="@($"internal-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Icon="@Paquete.Value.Paquete.Icon" ViewBox="@Paquete.Value.Paquete.Viewbox"></MudIcon>
+                                <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body1)" Class="package-item-text"><strong>@Paquete.Value.Paquete.Nombre_Corto_Paquete</strong></MudText>
+                                <CompletionBadge Complete="@CheckCompletion()"></CompletionBadge>
+                            </MudStack>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudStack Class="title-row" Row="true">
+                            <MudIcon Size="Size.Large" Color="Color.Tertiary" Icon="@(IsOpen ? Icons.Material.Rounded.KeyboardArrowUp : Icons.Material.Rounded.KeyboardArrowDown)" Class="@($"ml-auto {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")"></MudIcon>
+                            <MudIcon Class="@($"internal-icon {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" Icon="@Paquete.Value.Paquete.Icon" ViewBox="@Paquete.Value.Paquete.Viewbox"></MudIcon>
+                            <MudText Typo="@(BreakpointService.GetIsMobile() ? Typo.h5 : Typo.body1)" Class="package-item-text"><strong>@Paquete.Value.Paquete.Nombre_Corto_Paquete</strong></MudText>
+                            @if (!IsStatic)
+                            {
+                                <CompletionBadge Complete="@CheckCompletion()"></CompletionBadge>
+                            }
+                        </MudStack>
+                    }
+                </TitleContent>
+                <ChildContent>
+                    <MudStack Class="services-stack" Spacing="0">
+                        @if (IsStatic)
+                        {
+                            @foreach (var composite_data in Paquete.Value.Servicios.Values)
+                            {
+                                if (composite_data.Active)
+                                {
+                                    <MudPaper @key=composite_data.GUID Elevation="0" Outlined="false" Class="@($"service-package-card {CSSClass}")">
+                                        <MudCheckBox Class="@($"service-checkbox {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" StopClickPropagation="false" ReadOnly="true" @bind-Checked="@composite_data.Active" Label="@composite_data.Name" Color="Color.Tertiary"></MudCheckBox>
+                                    </MudPaper>
+                                }
+                                else
+                                {
+                                    <MudPaper @key=composite_data.GUID Elevation="0" Outlined="false" Class="@($"service-package-card {CSSClass}")">
+                                        <MudCheckBox Class="@($"service-checkbox {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" ReadOnly="true" @bind-Checked="@composite_data.Active" Label="@composite_data.Name" Color="Color.Tertiary"></MudCheckBox>
+                                    </MudPaper>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            @foreach (var composite_data in Paquete.Value.Servicios.Values.Zip(CompletionData, Tuple.Create))
+                            {
+                                @if (estimationService.obtenerPaquete() is not null && estimationService.obtenerPaquete() == Paquete.Value && estimationService.obtenerServicio() is not null && estimationService.obtenerServicio()!.GUID == composite_data.Item1.GUID)
+                                {
+                                    <MudPaper @key=composite_data.Item1.GUID Elevation="0" Outlined="false" Class="@($"service-package-card {CSSClass} {ServiceCSSClass}")">
+                                        <MudCheckBox Class="@($"service-checkbox {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" StopClickPropagation="true" ReadOnly="true" @bind-Checked="@composite_data.Item1.Active" Label="@composite_data.Item1.Name" Color="Color.Tertiary"></MudCheckBox>
+                                        <CompletionBadge Complete="@((bool) composite_data.Item2!)"></CompletionBadge>
+                                    </MudPaper>
+                                }
+                                else
+                                {
+                                    if (composite_data.Item1.Active)
+                                    {
+                                        <div onclick="@(async () => await changeActiveService(composite_data.Item1))">
+                                            <MudPaper @key=composite_data.Item1.GUID Elevation="0" Outlined="false" Class="@($"service-package-card {CSSClass}")">
+                                                <MudCheckBox Class="@($"service-checkbox {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" StopClickPropagation="false" ReadOnly="true" @bind-Checked="@composite_data.Item1.Active" Label="@composite_data.Item1.Name" Color="Color.Tertiary"></MudCheckBox>
+                                                <CompletionBadge Complete="@((bool) composite_data.Item2!)"></CompletionBadge>
+                                            </MudPaper>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <MudPaper @key=composite_data.Item1.GUID Elevation="0" Outlined="false" Class="@($"service-package-card {CSSClass}")">
+                                            <MudCheckBox Class="@($"service-checkbox {(BreakpointService.GetIsMobile() ? "resize-it" : "")}")" ReadOnly="true" @bind-Checked="@composite_data.Item1.Active" Label="@composite_data.Item1.Name" Color="Color.Tertiary"></MudCheckBox>
+                                        </MudPaper>
+                                    }
+                                }
+                            }
+                        }
+                    </MudStack>
+                </ChildContent>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudPaper>
+</div>
+
+@code {
+    [CascadingParameter(Name = "IsStatic")]
+    public bool IsStatic { get; set; }
+
+    [Parameter, EditorRequired]
+    public KeyValuePair<int, PaquetesCompletosEditable> Paquete { get; set; }
+    [Parameter, EditorRequired]
+    public bool ExpandDisable { get; set; }
+    [Parameter]
+    public IEnumerable<bool?> CompletionData { get; set; }
+    [Parameter]
+    public EventCallback<Tuple<IService, bool, int?>> ChangeService { get; set; }
+    [Parameter]
+    public string CSSClass { get; set; } = "";
+    [Parameter]
+    public string ServiceCSSClass { get; set; } = "";
+    [Parameter]
+    public EventCallback<PaquetesCompletosEditable>? ChangePackage { get; set; }
+    private bool IsOpen { get; set; }
+    private bool service_selected { get; set; } = false;
+
+    private async Task changeActiveService(IService servicio)
+    {
+        service_selected = true;
+        await ChangeService.InvokeAsync(new Tuple<IService, bool, int?>(servicio, true, Paquete.Value.Paquete.ID));
+    }
+
+    private async Task onPackageChange(PaquetesCompletosEditable package)
+    {
+        await ChangePackage?.InvokeAsync(package)!;
+    }
+
+    private void IsExpandedChanged(bool value)
+    {
+        if (!service_selected)
+        {
+            service_selected = false;
+            IsOpen = value;
+        }
+        else
+        {
+            service_selected = false;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        estimationService.OnChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    private bool CheckCompletion()
+    {
+        return CompletionData.Where(item => item.HasValue).All(value => (bool)value!);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        await BreakpointService.ReCheckSize();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        estimationService.OnChange -= StateHasChanged;
+    }
+}

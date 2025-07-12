@@ -1,0 +1,146 @@
+﻿@using PCG_ENTITIES.PCG
+@using PCG_FDF.Data.ComponentDI.Quotation;
+@using PCG_FDF.Data.Entities
+@using PCG_FDF.Data.ComponentDI
+@using PCG_FDF.Data.Localization
+@using PCG_FDF.Components.Ticket
+@inject GlobalBreakpointService BreakpointService
+@inject GlobalLocalizer localize
+@inject EstimationWrapperContainer estimationService
+@inject QuotationDataCollection quotationService
+@implements IDisposable
+
+
+<div class="@($"bill-wrapper {(BreakpointService.GetIsMobile() ? "add-padding" : "")}")">
+    <MudStack>
+        <CascadingValue Value="@IsStatic" Name="IsStatic">
+            <MudPaper Class="paper-blue" Elevation="0">
+                <MudStack Class="billing-title" Row="true">
+                    <MudIcon Class="@($"billing-icon {(BreakpointService.GetIsMobile() ? "icon-rem-s4" : "")}")" Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large"></MudIcon>
+                    <MudText Class="billing-text title" Typo="@(BreakpointService.GetIsMobile() ? Typo.h3 : Typo.h4)">@localize.Get("cart_summary")</MudText>
+                </MudStack>
+                <MudStack>
+                    @if (quotationService.GetQuotationCart().GetPackages() is not null && quotationService.GetQuotationCart().GetPackages().Count != 0)
+                    {
+                        <MudText Class="billing-subtitle" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@localize.Get("com_shopping_packagesbadge")</strong></MudText>
+                        <MudDivider Class="divider-packages" />
+                        @if (IsStatic)
+                        {
+                            @foreach (KeyValuePair<int, PaquetesCompletosEditable> item in quotationService.GetQuotationCart().GetPackages())
+                            {
+                                <PackagesBillCard ExpandDisable="false" Paquete="@item"></PackagesBillCard>
+                            }
+                        }
+                        else if (quotationService.GetQuotationCart().GetPackages().Count == 1 && !quotationService.GetQuotationCart().GetServices().Any())
+                        {
+                            @foreach (KeyValuePair<int, PaquetesCompletosEditable> item in quotationService.GetQuotationCart().GetPackages())
+                            {
+                                IEnumerable<bool?> _completion_data = quotationService.PackageComplete(item.Value.Servicios.Values.ToList());
+                                <PackagesBillCard CSSClass="card-active" CompletionData="@_completion_data" ChangeService="@ChangeService" ServiceCSSClass="service-active" ExpandDisable="false" Paquete="@item" ChangePackage="@ChangePackage"></PackagesBillCard>
+                            }
+                        }
+                        else
+                        {
+                            @foreach (KeyValuePair<int, PaquetesCompletosEditable> item in quotationService.GetQuotationCart().GetPackages())
+                            {
+                                IEnumerable<bool?> _completion_data = quotationService.PackageComplete(item.Value.Servicios.Values.ToList());
+                                if (estimationService.obtenerPaquete() is not null && estimationService.obtenerPaquete() == item.Value)
+                                {
+                                    <PackagesBillCard CSSClass="card-active" CompletionData="@_completion_data" ChangeService="@ChangeService" ServiceCSSClass="service-active" ExpandDisable="false" Paquete="@item" ChangePackage="@ChangePackage"></PackagesBillCard>
+                                }
+                                else
+                                {
+                                    <div onclick="@(async () => await onPackageChange(item.Value))">
+                                        <PackagesBillCard CompletionData="@_completion_data" ExpandDisable="true" Paquete="@item"></PackagesBillCard>
+                                    </div>
+                                }
+                            }
+                        }
+                    }
+                    @if (quotationService.GetQuotationCart().GetServices() is not null && quotationService.GetQuotationCart().GetServices().Count != 0)
+                    {
+                        <MudText Class="billing-subtitle" Typo="@(BreakpointService.GetIsMobile() ? Typo.h4 : Typo.h5)"><strong>@localize.Get("com_shopping_servicesbadge")</strong></MudText>
+                        <MudDivider Class="divider-services" />
+                        @if (IsStatic)
+                        {
+                            @foreach (ComplexService service in quotationService.GetQuotationCart().GetServices().Values)
+                            {
+                                <ServicesBillCard Servicio="@service"></ServicesBillCard>
+                            }
+                        }
+                        else
+                        {
+                            @foreach (ComplexService service in quotationService.GetQuotationCart().GetServices().Values)
+                            {
+                                bool service_complete = quotationService.ServiceComplete(service.Id);
+                                if (estimationService.obtenerServicio() is not null && estimationService.obtenerServicio() == service)
+                                {
+                                    <ServicesBillCard ServiceComplete="@service_complete" Servicio="@service" CSSClass="card-active"></ServicesBillCard>
+                                }
+                                else
+                                {
+                                    <div onclick="@(async () => await onServiceChange(service))">
+                                        <ServicesBillCard ServiceComplete="@service_complete" Servicio="@service"></ServicesBillCard>
+                                    </div>
+                                }
+                            }
+                        }
+                    }
+                </MudStack>
+            </MudPaper>
+
+            <TicketComponent />
+        </CascadingValue>
+    </MudStack>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<PaquetesCompletosEditable> ChangePackage { get; set; }
+
+    [Parameter]
+    public EventCallback<Tuple<IService, bool, int?>> ChangeService { get; set; }
+    [Parameter]
+    public bool IsStatic { get; set; } = false;
+
+    private async Task onServiceChange(IService service)
+    {
+        await ChangeService.InvokeAsync(new Tuple<IService, bool, int?>(service, false, null));
+    }
+
+    private async Task onPackageChange(PaquetesCompletosEditable package)
+    {
+        await ChangePackage.InvokeAsync(package);
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        BreakpointService.OnChange += StateHasChanged;
+        await BreakpointService.InitializeService();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BreakpointService.ReCheckSize();
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override void OnInitialized()
+    {
+        quotationService.OnChange += StateHasChanged;
+        estimationService.OnChange += StateHasChanged;
+        base.OnInitialized();
+    }
+
+    public void Dispose()
+    {
+        BreakpointService.OnChange -= StateHasChanged;
+        estimationService.OnChange -= StateHasChanged;
+        quotationService.OnChange -= StateHasChanged;
+    }
+}

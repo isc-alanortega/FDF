@@ -1,0 +1,177 @@
+﻿@import '../Styles/ColorsGlobal.scss';
+@import '../Styles/Core/_app_animations.scss';
+
+$info-bar-height: 30px;
+$app-bar-height: 64px;
+$calculated-height: $info-bar-height + $app-bar-height;
+
+.holder {
+    position: fixed;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1303;
+}
+
+.cima-chat-tab {
+    z-index: 20;
+    position: fixed;
+    bottom: 0px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    left: 80vw;
+    border-radius: 30px 30px 0px 0px;
+    width: 5rem;
+    height: 3rem;
+    background-color: css-color-var(secondary);
+}
+
+::deep .chat-tab-icon {
+    color: white;
+}
+
+::deep .mobile-drawer {
+    background-color: css-color-var(primary) !important;
+}
+
+@include keyframes(color-change-wh-bl) {
+    @include anim-fill-color-change-2x-frames(css-color-var(global-fullwhite), css-color-var(CIMA-blue));
+}
+
+@include keyframes(color-change-wh-re) {
+    @include anim-fill-color-change-2x-frames(css-color-var(global-fullwhite), css-color-var(CIMA-red));
+}
+
+@include keyframes(color-change-tr-bl) {
+    @include anim-fill-color-change-2x-frames(css-color-var(global-RGBA-transparent), css-color-var(global-fullwhite));
+}
+
+@include keyframes(color-change-wh-gd) {
+    @include anim-fill-color-change-2x-frames(css-color-var(global-fullwhite), css-color-var(tertiary));
+}
+
+@include keyframes(color-shadow-dropfilter) {
+    @include anim-shadow-drop-frames(drop-shadow(0px 0px 0px #00000000), drop-shadow(0 0 6px rgba(255, 255, 255, 0.4)));
+}
+
+::deep .bar-nav {
+    position: relative !important;
+    z-index: inherit !important;
+    background-color: css-color-var(primary) !important;
+    box-shadow: none !important;
+
+    &:hover {
+        .internal-cima-icon {
+            #cima-logo-outline {
+                @include animation('color-change-wh-bl 0.6s linear alternate both');
+            }
+
+            #cima-logo-middle {
+                @include animation('color-change-wh-re 0.6s linear alternate both');
+            }
+
+            #cima-logo-triangle-left {
+                @include animation('color-change-wh-re 0.6s linear alternate both');
+            }
+
+            #cima-logo-triangle-right {
+                @include animation('color-change-wh-re 0.6s linear alternate both');
+            }
+
+            #cima-logo-triangle-top {
+                @include animation('color-change-wh-re 0.6s linear alternate both');
+            }
+        }
+
+        .internal-shipping-icon {
+            #blue-group {
+                @include animation('color-change-wh-bl 0.6s linear alternate both');
+            }
+
+            #red-group {
+                @include animation('color-change-wh-re 0.6s linear alternate both');
+            }
+        }
+
+        .internal-thesharks-icon {
+            @include animation('color-shadow-dropfilter 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+        }
+
+        .internal-evergreen-icon {
+            @include animation('color-shadow-dropfilter 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+        }
+
+        .internal-smargo-icon {
+            @include animation('color-shadow-dropfilter 0.6s cubic-bezier(0.215, 0.610, 0.355, 1.000) both');
+        }
+
+        .internal-bafar-icon {
+            #mane-gold {
+                @include animation('color-change-wh-gd 0.6s linear alternate both');
+            }
+        }
+    }
+}
+
+.chat-drawer {
+    box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),0px 5px 8px 0px rgba(0,0,0,0.14),0px 1px 14px 0px rgba(0,0,0,0.12);
+    position: fixed;
+    bottom: 0;
+    width: 25vw;
+    height: 0;
+    left: 60vw;
+    z-index: 999;
+    background-color: #fff;
+    overflow: hidden;
+    transition: height 0.3s ease-in-out;
+}
+
+.chat-drawer-header {
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    background-color: css-color-var(secondary);
+    justify-content: flex-end;
+}
+
+::deep .chat-close-button {
+    color: white;
+}
+
+.drawer-content {
+    height: 100%;
+    width: 100%;
+}
+
+::deep .bar-info {
+    height: $info-bar-height;
+    background-color: css-color-var(nav-info) !important;
+    position: relative !important;
+    z-index: inherit !important;
+}
+
+
+::deep .mud-main-content.max {
+    padding-top: 30px;
+}
+
+::deep .main-content-layout {
+    min-height: 100vh;
+    padding-top: 0px !important;
+    margin-top: 64px;
+
+    @media (max-width: 600px) {
+        margin-top: 56px;
+    }
+}
+
+::deep .hamburger-menu-icon {
+    .mud-icon-root {
+        font-size: 3.5rem;
+    }
+}
